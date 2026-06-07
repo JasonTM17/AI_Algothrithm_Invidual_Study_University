@@ -1,0 +1,38 @@
+name: Verify 8-Puzzle Coursework Lab
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r 8_puzzle_ai\requirements.txt
+
+      - name: Core self-test
+        run: python .\eight_puzzle_search_app.py --self-test
+
+      - name: Behavior regression tests
+        run: python .\tests\test_search_behavior.py
+
+      - name: Package tests
+        run: python .\8_puzzle_ai\tests\test_puzzle.py
+
+      - name: Python compile check
+        run: python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\8_puzzle_ai\app.py

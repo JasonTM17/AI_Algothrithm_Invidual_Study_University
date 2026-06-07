@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Streamlit and local app state
+.streamlit/
+streamlit*.log
+*.log
+
+# Browser/test temporary artifacts
+.playwright-mcp/
+playwright-report/
+test-results/
+screenshots/
+before-board-overlap.png
+after-board-layout-fix.png
+desktop-*.png
+mobile-*.png
+*.trace.zip
+
+# Generated coursework exports
+dist/
+exports/
+generated_reports/
+*.docx
+*.pdf
+*.csv
+
+# Local agent/tooling cache
+.commandcode/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
