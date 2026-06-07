@@ -4,7 +4,7 @@ description: >-
   Finalize the canonical 8-puzzle coursework lab for submission and GitHub
   publication: clean tracked files, polished academic documentation, UI grading
   checklist, automated verification, and remote publication.
-status: in-progress
+status: completed
 priority: P2
 branch: ''
 tags: []
@@ -44,7 +44,7 @@ Acceptance criteria:
 | 2 | [Documentation Polish](./phase-02-documentation-polish.md) | Completed |
 | 3 | [Academic UI Polish](./phase-03-academic-ui-polish.md) | Completed |
 | 4 | [Testing And CI](./phase-04-testing-and-ci.md) | Completed |
-| 5 | [Publication Verification](./phase-05-publication-verification.md) | In Progress |
+| 5 | [Publication Verification](./phase-05-publication-verification.md) | Completed |
 
 ## Dependencies
 

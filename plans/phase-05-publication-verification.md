@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: Publication Verification
-status: in-progress
+status: completed
 priority: P1
 effort: 1h
 dependencies:
