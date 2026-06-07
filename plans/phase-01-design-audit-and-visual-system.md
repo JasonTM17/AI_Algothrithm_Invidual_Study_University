@@ -1,9 +1,9 @@
 ---
 phase: 1
-title: "Design Audit And Visual System"
-status: pending
+title: Design Audit And Visual System
+status: completed
 priority: P1
-effort: "2h"
+effort: 2h
 dependencies: []
 ---
 

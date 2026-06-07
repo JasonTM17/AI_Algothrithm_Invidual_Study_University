@@ -109,3 +109,15 @@ Báo cáo nên có:
 - [ ] Có demo unsolvable dừng sớm.
 - [ ] Có báo cáo tải xuống.
 - [ ] Toàn bộ test local pass.
+
+## 10. Checklist UI/UX trước khi demo trực tiếp
+
+- [ ] First viewport nhìn rõ Start, Goal, Preset, Nhóm thuật toán, Thuật toán, Heuristic và nút `Chạy thuật toán đã chọn`.
+- [ ] Header và subtitle không bị chìm trên dark mode.
+- [ ] Ô trống hiển thị bằng số `0` gạch chân, không phải ô đen rỗng.
+- [ ] `h(n)` trong UI chỉ có `misplaced` và `manhattan`.
+- [ ] Thuật toán không dùng heuristic có ghi chú rõ h(n) chỉ để giải thích/certificate.
+- [ ] Thuật toán Complex/CSP/Adversarial có chip hoặc ghi chú `mô phỏng học thuật`.
+- [ ] Tab `Trace` có Trace Player, Frontier/Reached sau mở rộng, và vẫn còn bảng trace gốc.
+- [ ] Mobile `390x844` không có horizontal scroll.
+- [ ] Report Pack hiện đủ Markdown/DOCX/PDF/HTML/CSV.

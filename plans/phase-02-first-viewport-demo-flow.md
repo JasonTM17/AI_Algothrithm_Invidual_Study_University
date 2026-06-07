@@ -1,10 +1,11 @@
 ---
 phase: 2
-title: "First Viewport Demo Flow"
-status: pending
+title: First Viewport Demo Flow
+status: completed
 priority: P1
-effort: "3h"
-dependencies: [1]
+effort: 3h
+dependencies:
+  - 1
 ---
 
 # Phase 2: First Viewport Demo Flow

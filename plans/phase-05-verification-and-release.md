@@ -1,10 +1,11 @@
 ---
 phase: 5
-title: "Verification And Release"
-status: pending
+title: Verification And Release
+status: completed
 priority: P1
-effort: "2h"
-dependencies: [4]
+effort: 2h
+dependencies:
+  - 4
 ---
 
 # Phase 5: Verification And Release

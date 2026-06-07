@@ -299,6 +299,11 @@ def test_six_group_registry_covers_coursework_spec() -> None:
         "Constraint Satisfaction Problems",
         "Adversarial / Stochastic Search",
     ]
+    assert puzzle.algorithm_run_mode("A*", "vi")["mode"] == "standard_solver"
+    assert "Solver chuẩn" in puzzle.algorithm_run_mode("A*", "vi")["label"]
+    assert puzzle.algorithm_run_mode("Partially Observable Search", "vi")["mode"] == "educational_complex"
+    assert puzzle.algorithm_run_mode("CSP Backtracking", "en")["mode"] == "educational_csp"
+    assert puzzle.algorithm_run_mode("Expectimax", "en")["mode"] == "educational_adversarial"
 
 
 def test_educational_algorithms_return_canonical_results() -> None:

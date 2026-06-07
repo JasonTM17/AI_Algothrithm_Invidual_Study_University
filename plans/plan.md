@@ -1,18 +1,18 @@
 ---
-title: "8-Puzzle UI/UX Beauty + Algorithm Correctness Polish"
+title: 8-Puzzle UI/UX Beauty + Algorithm Correctness Polish
 description: >-
   Polish the 8-Puzzle coursework lab into a cleaner, more beautiful demo while
   preserving algorithm semantics: only UI, explanation, guardrails, trace
   presentation, and verification should change unless a correctness bug is
   proven by tests.
-status: pending
+status: completed
 priority: P2
-branch: "main"
+branch: main
 tags: []
 blockedBy: []
 blocks: []
-created: "2026-06-07T15:30:19.376Z"
-createdBy: "ck:plan"
+created: '2026-06-07T15:30:19.376Z'
+createdBy: 'ck:plan'
 source: skill
 ---
 
@@ -42,11 +42,11 @@ Acceptance criteria:
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Design Audit And Visual System](./phase-01-design-audit-and-visual-system.md) | Pending |
-| 2 | [First Viewport Demo Flow](./phase-02-first-viewport-demo-flow.md) | Pending |
-| 3 | [Algorithm Correctness UX Guards](./phase-03-algorithm-correctness-ux-guards.md) | Pending |
-| 4 | [Academic Trace Visualization](./phase-04-academic-trace-visualization.md) | Pending |
-| 5 | [Verification And Release](./phase-05-verification-and-release.md) | Pending |
+| 1 | [Design Audit And Visual System](./phase-01-design-audit-and-visual-system.md) | Completed |
+| 2 | [First Viewport Demo Flow](./phase-02-first-viewport-demo-flow.md) | Completed |
+| 3 | [Algorithm Correctness UX Guards](./phase-03-algorithm-correctness-ux-guards.md) | Completed |
+| 4 | [Academic Trace Visualization](./phase-04-academic-trace-visualization.md) | Completed |
+| 5 | [Verification And Release](./phase-05-verification-and-release.md) | Completed |
 
 ## Dependencies
 

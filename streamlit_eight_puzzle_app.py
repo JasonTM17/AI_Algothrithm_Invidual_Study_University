@@ -54,7 +54,7 @@ TEXT: Dict[str, Dict[str, str]] = {
         "use_custom": "Dùng ma trận này",
         "run": "Chạy thuật toán",
         "run_selected": "Chạy thuật toán đã chọn",
-        "compare_all": "So sánh tất cả thuật toán",
+        "compare_all": "So sánh nhóm đang chọn",
         "notes": (
             "UCS dùng chi phí mỗi bước bằng 1 nên thường cho độ dài nghiệm giống BFS. "
             "A* với Manhattan tối ưu vì Manhattan admissible cho 8-puzzle. "
@@ -93,6 +93,19 @@ TEXT: Dict[str, Dict[str, str]] = {
         "academic_panel": "Cơ sở học thuật",
         "grading_checklist": "Checklist nộp bài",
         "heuristic_usage": "Cách dùng h(n)",
+        "demo_readiness": "Trạng thái demo",
+        "run_mode": "Kiểu chạy",
+        "solvable": "Solvable",
+        "unsolvable": "Unsolvable",
+        "current_preset": "Preset hiện tại",
+        "selected_heuristic": "h(n)",
+        "trace_player": "Trace Player học thuật",
+        "trace_replay_row": "Dòng trace cần xem",
+        "selected_node": "Node đang xét",
+        "frontier_after": "Frontier sau mở rộng",
+        "reached_after": "Reached sau mở rộng",
+        "generated_skipped": "Generated / Skipped",
+        "search_tree_preview": "Search Tree Preview",
         "peas_model": "PEAS",
         "problem_variant": "Dạng bài toán theo thuật toán",
         "problem_definition": "Mô hình bài toán",
@@ -171,7 +184,7 @@ TEXT: Dict[str, Dict[str, str]] = {
         "use_custom": "Use custom state",
         "run": "Run",
         "run_selected": "Run selected algorithm",
-        "compare_all": "Compare all algorithms",
+        "compare_all": "Compare selected group",
         "notes": puzzle.comparison_notes(),
         "choose_action": "Choose an action from the run panel.",
         "run_summary": "Run summary",
@@ -205,6 +218,19 @@ TEXT: Dict[str, Dict[str, str]] = {
         "academic_panel": "Academic foundation",
         "grading_checklist": "Submission checklist",
         "heuristic_usage": "How h(n) is used",
+        "demo_readiness": "Demo readiness",
+        "run_mode": "Run mode",
+        "solvable": "Solvable",
+        "unsolvable": "Unsolvable",
+        "current_preset": "Current preset",
+        "selected_heuristic": "h(n)",
+        "trace_player": "Academic Trace Player",
+        "trace_replay_row": "Trace row to inspect",
+        "selected_node": "Selected node",
+        "frontier_after": "Frontier after expansion",
+        "reached_after": "Reached after expansion",
+        "generated_skipped": "Generated / Skipped",
+        "search_tree_preview": "Search Tree Preview",
         "peas_model": "PEAS",
         "problem_variant": "Problem formulation by algorithm",
         "problem_definition": "Problem model",
@@ -262,7 +288,7 @@ HELP: Dict[str, Dict[str, str]] = {
         "custom_start": "Nhập 9 số từ 0 đến 8. Ví dụ: 1 2 3 4 5 6 0 7 8.",
         "use_custom": "Áp dụng ma trận bạn nhập làm Start state hiện tại.",
         "run_selected": "Chạy thuật toán đang chọn và hiển thị lời giải, trace, g(n), h(n), f(n).",
-        "compare_all": "Chạy tất cả thuật toán trên cùng Start để so sánh Expanded, Generated, Runtime và Optimal.",
+        "compare_all": "Chạy các thuật toán trong nhóm đang chọn trên cùng Start để so sánh Expanded, Generated, Runtime và Optimal.",
         "previous_step": "Lùi lại một bước trong đường đi lời giải.",
         "next_step": "Tiến tới một bước trong đường đi lời giải.",
         "step_slider": "Kéo để nhảy tới bước bất kỳ trong lời giải.",
@@ -299,7 +325,7 @@ HELP: Dict[str, Dict[str, str]] = {
         "custom_start": "Enter 9 numbers from 0 to 8. Example: 1 2 3 4 5 6 0 7 8.",
         "use_custom": "Apply the entered matrix as the current Start state.",
         "run_selected": "Run the selected algorithm and show solution path, trace, g(n), h(n), f(n).",
-        "compare_all": "Run all algorithms on the same Start to compare Expanded, Generated, Runtime, and Optimality.",
+        "compare_all": "Run algorithms in the selected group on the same Start to compare Expanded, Generated, Runtime, and Optimality.",
         "previous_step": "Move one step backward in the solution path.",
         "next_step": "Move one step forward in the solution path.",
         "step_slider": "Drag to jump to any solution step.",
@@ -836,28 +862,36 @@ def apply_theme() -> None:
         """
         <style>
           :root {
-            --surface: #f7f8f5;
+            --surface: #f6f8f7;
             --panel: #ffffff;
+            --panel-soft: #eef4f2;
             --ink: #17211b;
-            --muted: rgba(23, 33, 27, 0.76);
+            --muted: rgba(23, 33, 27, 0.78);
             --line: rgba(23, 33, 27, 0.14);
             --accent: #0f766e;
             --accent-strong: #0f766e;
             --accent-soft: rgba(15, 118, 110, 0.1);
-            --amber: #b7791f;
-            --tile-shadow: inset 0 -2px 0 rgba(128, 128, 128, 0.1), 0 1px 2px rgba(0, 0, 0, 0.1);
+            --amber: #9a5b13;
+            --amber-soft: rgba(183, 121, 31, 0.14);
+            --danger: #b42318;
+            --danger-soft: rgba(180, 35, 24, 0.1);
+            --tile-shadow: inset 0 -2px 0 rgba(128, 128, 128, 0.1), 0 6px 18px rgba(15, 23, 42, 0.08);
           }
           @media (prefers-color-scheme: dark) {
             :root {
               --surface: #0e1117;
               --panel: #171b22;
+              --panel-soft: #111820;
               --ink: #f4fbf8;
-              --muted: rgba(244, 251, 248, 0.76);
+              --muted: rgba(244, 251, 248, 0.8);
               --line: rgba(244, 251, 248, 0.16);
               --accent: #2dd4bf;
               --accent-strong: #5eead4;
               --accent-soft: rgba(45, 212, 191, 0.14);
               --amber: #f8c36a;
+              --amber-soft: rgba(248, 195, 106, 0.14);
+              --danger: #ff8a7a;
+              --danger-soft: rgba(255, 138, 122, 0.13);
               --tile-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.32);
             }
           }
@@ -865,14 +899,14 @@ def apply_theme() -> None:
             background: var(--surface);
           }
           .block-container {
-            padding-top: 2.6rem;
+            padding-top: 2rem;
             padding-bottom: 3rem;
-            max-width: 1160px;
+            max-width: 1220px;
           }
           .app-hero {
             border-bottom: 1px solid var(--line);
-            margin-bottom: 1.35rem;
-            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.85rem;
           }
           .app-kicker {
             color: var(--accent-strong);
@@ -883,7 +917,7 @@ def apply_theme() -> None:
           }
           .app-hero h1 {
             color: var(--ink);
-            font-size: clamp(2rem, 4vw, 3rem);
+            font-size: clamp(1.95rem, 3.5vw, 2.7rem);
             font-weight: 780;
             line-height: 1.05;
             letter-spacing: 0;
@@ -892,10 +926,61 @@ def apply_theme() -> None:
           .app-hero p {
             color: var(--muted);
             opacity: 1;
-            font-size: 1.02rem;
+            font-size: 0.98rem;
             line-height: 1.55;
             max-width: 760px;
             margin: 0;
+          }
+          .workbench-panel {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft));
+            padding: 1rem;
+            margin-bottom: 1rem;
+          }
+          .workbench-title {
+            color: var(--ink);
+            font-size: 1rem;
+            font-weight: 760;
+            margin: 0 0 0.55rem;
+          }
+          .readiness-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.55rem;
+            margin: 0.65rem 0 0.9rem;
+          }
+          .readiness-chip {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            padding: 0.6rem 0.7rem;
+            min-height: 58px;
+          }
+          .readiness-chip span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.74rem;
+            line-height: 1.2;
+          }
+          .readiness-chip strong {
+            display: block;
+            color: var(--ink);
+            font-size: 0.94rem;
+            line-height: 1.25;
+            margin-top: 0.18rem;
+          }
+          .readiness-chip.ok {
+            border-color: rgba(15, 118, 110, 0.42);
+            background: var(--accent-soft);
+          }
+          .readiness-chip.warn {
+            border-color: rgba(183, 121, 31, 0.42);
+            background: var(--amber-soft);
+          }
+          .readiness-chip.fail {
+            border-color: rgba(180, 35, 24, 0.42);
+            background: var(--danger-soft);
           }
           div[data-testid="stVerticalBlock"] > div:has(> .metric-grid) {
             width: 100%;
@@ -982,6 +1067,60 @@ def apply_theme() -> None:
             line-height: 1.5;
             margin: 0.1rem 0 0.75rem;
           }
+          .trace-player-grid {
+            display: grid;
+            grid-template-columns: minmax(210px, 0.85fr) minmax(260px, 1.15fr);
+            gap: 0.85rem;
+            align-items: start;
+            margin: 0.6rem 0 1rem;
+          }
+          .trace-detail {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            padding: 0.85rem 0.95rem;
+            min-height: 72px;
+          }
+          .trace-detail span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+          }
+          .trace-detail pre {
+            white-space: pre-wrap;
+            margin: 0;
+            color: var(--ink);
+            font: inherit;
+            line-height: 1.42;
+          }
+          .tree-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+            gap: 0.55rem;
+            margin: 0.55rem 0 1rem;
+          }
+          .tree-card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            padding: 0.62rem 0.68rem;
+            min-height: 104px;
+          }
+          .tree-card strong {
+            color: var(--ink);
+            font-size: 0.86rem;
+          }
+          .tree-card code {
+            display: block;
+            margin: 0.35rem 0;
+            white-space: pre-wrap;
+            color: var(--ink);
+          }
+          .tree-card span {
+            color: var(--muted);
+            font-size: 0.74rem;
+          }
           .puzzle-board {
             display: grid;
             grid-template-columns: repeat(3, clamp(48px, 7vw, 72px));
@@ -1044,6 +1183,15 @@ def apply_theme() -> None:
             .status-grid {
               grid-template-columns: repeat(2, minmax(0, 1fr));
             }
+            .readiness-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .trace-player-grid {
+              grid-template-columns: 1fr;
+            }
+            .tree-card-grid {
+              grid-template-columns: 1fr;
+            }
           }
         </style>
         """,
@@ -1083,6 +1231,26 @@ def metric_cards_html(result: puzzle.SearchResult, lang: str) -> str:
     return f'<div class="metric-grid">{cards}</div>'
 
 
+def readiness_chip(label: str, value: str, css_class: str = "") -> str:
+    class_attr = f"readiness-chip {css_class}".strip()
+    return f'<div class="{class_attr}"><span>{escape(label)}</span><strong>{escape(value)}</strong></div>'
+
+
+def demo_readiness_html(lang: str, algorithm: str, heuristic: str) -> str:
+    run_mode = puzzle.algorithm_run_mode(algorithm, lang=lang)
+    solvable = puzzle.is_solvable(st.session_state.start_state)
+    preset = st.session_state.get("last_preset_name") or ("Random/manual" if lang == "en" else "Random/nhập tay")
+    mode_class = "ok" if run_mode["mode"] == "standard_solver" else "warn"
+    chips = [
+        readiness_chip(text(lang, "run_mode"), run_mode["label"], mode_class),
+        readiness_chip(text(lang, "solvable"), text(lang, "solvable") if solvable else text(lang, "unsolvable"), "ok" if solvable else "fail"),
+        readiness_chip(text(lang, "current_preset"), preset, ""),
+        readiness_chip(text(lang, "selected_heuristic"), heuristic, "ok"),
+    ]
+    description = escape(run_mode["description"])
+    return f'<div class="readiness-grid">{"".join(chips)}</div><p class="section-note">{description}</p>'
+
+
 def board_matrix_html(state: puzzle.State, lang: str) -> str:
     cells = []
     for index, value in enumerate(state):
@@ -1100,8 +1268,9 @@ def board_matrix_html(state: puzzle.State, lang: str) -> str:
 
 
 def show_board(title: str, state: puzzle.State, lang: str, help_key: str | None = None) -> None:
-    tooltip = f' title="{escape(help_text(lang, help_key))}"' if help_key else ""
-    st.markdown(f"<strong{tooltip}>{escape(title)}</strong>", unsafe_allow_html=True)
+    if title:
+        tooltip = f' title="{escape(help_text(lang, help_key))}"' if help_key else ""
+        st.markdown(f"<strong{tooltip}>{escape(title)}</strong>", unsafe_allow_html=True)
     st.markdown(board_matrix_html(state, lang), unsafe_allow_html=True)
 
 
@@ -1625,6 +1794,98 @@ def show_trace_story(result: puzzle.SearchResult, lang: str, heuristic: str) -> 
     st.dataframe(localize_table(puzzle._to_table(story_rows[:20]), lang), width="stretch", hide_index=True)
 
 
+def trace_detail_card(label: str, value: Any) -> str:
+    return (
+        '<div class="trace-detail">'
+        f"<span>{escape(str(label))}</span>"
+        f"<pre>{escape(str(value) if value not in (None, '') else '-')}</pre>"
+        "</div>"
+    )
+
+
+def show_trace_replay_player(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
+    replay_rows = puzzle.build_trace_replay(result, heuristic, limit=80)
+    if not replay_rows:
+        st.info("Trace capture is disabled." if lang == "en" else "Trace đang bị tắt.")
+        return
+
+    story_rows = puzzle.build_trace_story(result, heuristic)
+    replay_index = st.slider(
+        text(lang, "trace_replay_row"),
+        min_value=0,
+        max_value=len(replay_rows) - 1,
+        value=0,
+    )
+    row = replay_rows[replay_index]
+    story = story_rows[replay_index] if replay_index < len(story_rows) else {}
+
+    st.markdown(
+        f"""
+        <div class="readiness-grid">
+          {readiness_chip("Step", str(row.get("Step", "")), "")}
+          {readiness_chip("g(n)", str(row.get("g", "")), "")}
+          {readiness_chip("h(n)", str(row.get("h", "")), "")}
+          {readiness_chip("f(n)", str(row.get("f", "")), "")}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    node_col, detail_col = st.columns([0.9, 1.1], gap="large")
+    with node_col:
+        st.markdown(f"**{text(lang, 'selected_node')}**")
+        try:
+            show_board("", puzzle.parse_state(str(row.get("Node", ""))), lang)
+        except Exception:
+            st.code(str(row.get("Node", "")), language="text")
+    with detail_col:
+        detail_html = "".join(
+            [
+                trace_detail_card(text(lang, "priority_rule"), row.get("Priority Rule", "")),
+                trace_detail_card("Selection Key", row.get("Selection Key", "")),
+                trace_detail_card(text(lang, "generated_skipped"), f"{row.get('Generated Children', '')} / {row.get('Skipped States', '')}"),
+                trace_detail_card("Why This Node?", story.get("Why This Node", row.get("Decision/Note", ""))),
+            ]
+        )
+        st.markdown(f'<div class="trace-player-grid">{detail_html}</div>', unsafe_allow_html=True)
+
+    preview_left, preview_right = st.columns(2)
+    with preview_left:
+        st.markdown(trace_detail_card(text(lang, "frontier_after"), row.get("Frontier After Expansion", "")), unsafe_allow_html=True)
+    with preview_right:
+        st.markdown(trace_detail_card(text(lang, "reached_after"), row.get("Reached After Expansion", "")), unsafe_allow_html=True)
+
+
+def search_tree_cards_html(tree: Dict[str, Any]) -> str:
+    cards = []
+    for row in tree.get("nodes", [])[:18]:
+        badges = []
+        if row.get("is_start"):
+            badges.append("START")
+        if row.get("is_goal"):
+            badges.append("GOAL")
+        badge_text = " · ".join(badges) if badges else f"depth {row.get('depth', '')}"
+        cards.append(
+            """
+            <div class="tree-card">
+              <strong>#{id} {badge}</strong>
+              <code>{state}</code>
+              <span>parent={parent} · action={action}<br>g={g} · h={h} · f={f}</span>
+            </div>
+            """.format(
+                id=escape(str(row.get("id", ""))),
+                badge=escape(badge_text),
+                state=escape(str(row.get("state", ""))),
+                parent=escape(str(row.get("parent", "-") or "-")),
+                action=escape(str(row.get("action", ""))),
+                g=escape(str(row.get("g", ""))),
+                h=escape(str(row.get("h", ""))),
+                f=escape(str(row.get("f", ""))),
+            )
+        )
+    return f'<div class="tree-card-grid">{"".join(cards)}</div>'
+
+
 def show_heuristic_inspector(state: puzzle.State, lang: str, heuristic: str) -> None:
     explanation = puzzle.explain_heuristic(state, heuristic)
     st.subheader(text(lang, "heuristic_inspector"))
@@ -1767,13 +2028,11 @@ def show_result(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
 
     with trace_tab:
         show_trace_story(result, lang, heuristic)
-        replay_rows = puzzle.build_trace_replay(result, heuristic, limit=80)
-        if replay_rows:
-            st.subheader("Trace Player")
-            replay_index = st.slider("Trace replay row", min_value=0, max_value=len(replay_rows) - 1, value=0)
-            st.json(replay_rows[replay_index], expanded=False)
-        st.subheader("Search Tree Preview")
+        st.subheader(text(lang, "trace_player"))
+        show_trace_replay_player(result, lang, heuristic)
+        st.subheader(text(lang, "search_tree_preview"))
         tree = puzzle.build_search_tree_preview(result.start, heuristic, max_depth=2, max_nodes=25)
+        st.markdown(search_tree_cards_html(tree), unsafe_allow_html=True)
         st.dataframe(localize_table(puzzle._to_table(tree["nodes"]), lang), width="stretch", hide_index=True)
         st.subheader(text(lang, "trace"))
         st.dataframe(localize_table(puzzle.render_trace_table(result), lang), width="stretch")
@@ -1885,43 +2144,9 @@ def main() -> None:
         )
         lang = "vi" if language_choice == "Tiếng Việt" else "en"
         st.header(text(lang, "controls"))
-        grouped_algorithms = puzzle.algorithms_by_group()
-        groups = puzzle.algorithm_groups()
-        default_group = puzzle.ALGORITHM_INFO["A*"]["group"]
-        algorithm_group = st.selectbox(
-            text(lang, "algorithm_group"),
-            groups,
-            index=groups.index(default_group) if default_group in groups else 0,
-            help=help_text(lang, "algorithm"),
-        )
-        group_algorithms = grouped_algorithms[algorithm_group]
-        algorithm = st.selectbox(
-            text(lang, "algorithm"),
-            group_algorithms,
-            index=group_algorithms.index("A*") if "A*" in group_algorithms else 0,
-            help=help_text(lang, "algorithm"),
-        )
-        heuristic = st.selectbox(
-            text(lang, "heuristic"),
-            puzzle.DEFAULT_HEURISTICS,
-            index=puzzle.DEFAULT_HEURISTICS.index("manhattan"),
-            help=help_text(lang, "heuristic"),
-        )
-        st.caption(f"{text(lang, 'heuristic_usage')}: {heuristic_usage_note(lang, algorithm)}")
-        partial_goal_controls(lang, algorithm)
-        preset_name = st.selectbox(text(lang, "demo_preset"), list(puzzle.DEMO_PRESETS.keys()))
-        if st.button(text(lang, "load_preset"), width="stretch", key="sidebar_load_preset"):
-            load_demo_preset(preset_name)
-            st.rerun()
-        st.number_input(text(lang, "seed"), min_value=0, max_value=1_000_000, value=1, key="seed", help=help_text(lang, "seed"))
-        scramble = st.slider(text(lang, "scramble_moves"), min_value=0, max_value=80, value=20, help=help_text(lang, "scramble_moves"))
-
-        if st.button(text(lang, "shuffle"), width="stretch", key="sidebar_shuffle", help=help_text(lang, "shuffle")):
-            shuffle_start_state(scramble)
-
-        st.divider()
         st.number_input(text(lang, "max_expansions"), min_value=1, max_value=200000, value=5000, key="max_expansions", help=help_text(lang, "max_expansions"))
         with st.expander(text(lang, "advanced_settings"), expanded=False):
+            st.number_input(text(lang, "seed"), min_value=0, max_value=1_000_000, value=1, key="seed", help=help_text(lang, "seed"))
             st.number_input(text(lang, "max_trace_rows"), min_value=0, max_value=5000, value=300, key="max_trace_rows", help=help_text(lang, "max_trace_rows"))
             st.number_input(text(lang, "frontier_preview"), min_value=1, max_value=30, value=5, key="frontier_preview", help=help_text(lang, "frontier_preview"))
             st.number_input(text(lang, "reached_preview"), min_value=1, max_value=30, value=5, key="reached_preview", help=help_text(lang, "reached_preview"))
@@ -1938,9 +2163,22 @@ def main() -> None:
 
     show_page_header(lang)
 
+    grouped_algorithms = puzzle.algorithms_by_group()
+    groups = puzzle.algorithm_groups()
+    default_group = puzzle.ALGORITHM_INFO["A*"]["group"]
+
     col_left, col_right = st.columns([1, 1.45], gap="large")
     with col_left:
         st.subheader(text(lang, "board_panel"))
+        preset_col, load_col = st.columns([1.25, 0.75])
+        with preset_col:
+            preset_name = st.selectbox(text(lang, "demo_preset"), list(puzzle.DEMO_PRESETS.keys()), key="main_preset_name")
+        with load_col:
+            st.write("")
+            if st.button(text(lang, "load_preset"), width="stretch", key="main_load_preset"):
+                load_demo_preset(preset_name)
+                st.rerun()
+        scramble = st.slider(text(lang, "scramble_moves"), min_value=0, max_value=80, value=20, key="scramble_moves", help=help_text(lang, "scramble_moves"))
         if st.button(text(lang, "shuffle"), type="primary", width="stretch", key="main_shuffle", help=help_text(lang, "shuffle")):
             shuffle_start_state(scramble)
         st.caption(current_shuffle_note(lang))
@@ -1968,6 +2206,28 @@ def main() -> None:
 
     with col_right:
         st.subheader(text(lang, "run"))
+        algorithm_group = st.selectbox(
+            text(lang, "algorithm_group"),
+            groups,
+            index=groups.index(default_group) if default_group in groups else 0,
+            help=help_text(lang, "algorithm"),
+        )
+        group_algorithms = grouped_algorithms[algorithm_group]
+        algorithm = st.selectbox(
+            text(lang, "algorithm"),
+            group_algorithms,
+            index=group_algorithms.index("A*") if "A*" in group_algorithms else 0,
+            help=help_text(lang, "algorithm"),
+        )
+        heuristic = st.selectbox(
+            text(lang, "heuristic"),
+            puzzle.DEFAULT_HEURISTICS,
+            index=puzzle.DEFAULT_HEURISTICS.index("manhattan"),
+            help=help_text(lang, "heuristic"),
+        )
+        st.markdown(demo_readiness_html(lang, algorithm, heuristic), unsafe_allow_html=True)
+        st.caption(f"{text(lang, 'heuristic_usage')}: {heuristic_usage_note(lang, algorithm)}")
+        partial_goal_controls(lang, algorithm)
         st.caption(f"{text(lang, 'algorithm')}: {algorithm} | {text(lang, 'heuristic')}: {heuristic}")
         action_cols = st.columns(2)
         with action_cols[0]:
@@ -1985,6 +2245,7 @@ def main() -> None:
         elif compare_clicked:
             st.session_state.last_comparison = puzzle.compare_algorithms(
                 st.session_state.start_state,
+                algorithms=group_algorithms,
                 heuristic=heuristic,
                 config=config,
             )

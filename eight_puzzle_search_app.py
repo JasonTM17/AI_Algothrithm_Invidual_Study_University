@@ -418,6 +418,52 @@ def algorithms_by_group() -> Dict[str, List[str]]:
     return grouped
 
 
+def algorithm_run_mode(algorithm: str, lang: str = "en") -> Dict[str, str]:
+    """Return the demo mode used to label standard solvers vs educational models."""
+
+    canonical = normalize_algorithm(algorithm)
+    group = ALGORITHM_INFO[canonical]["group"]
+    if group in {"Uninformed Search", "Informed Search", "Local Search"}:
+        mode = "standard_solver"
+        label = "Solver chuẩn" if lang == "vi" else "Standard solver"
+        description = (
+            "Chạy trực tiếp trên ma trận 8-puzzle chuẩn. Nhóm local search vẫn có thể không complete/optimal."
+            if lang == "vi"
+            else "Runs directly on the standard 8-puzzle board. Local search entries may still be incomplete/non-optimal."
+        )
+    elif group == "Complex Environments":
+        mode = "educational_complex"
+        label = "Mô phỏng môi trường phức tạp" if lang == "vi" else "Complex-environment demo"
+        description = (
+            "Mô hình học thuật cho belief state, quan sát một phần, online search hoặc nondeterministic outcome."
+            if lang == "vi"
+            else "Coursework model for belief states, partial observation, online search, or nondeterministic outcomes."
+        )
+    elif group == "Constraint Satisfaction Problems":
+        mode = "educational_csp"
+        label = "Mô phỏng CSP" if lang == "vi" else "CSP demo"
+        description = (
+            "Diễn đạt 8-puzzle bằng biến, miền giá trị và ràng buộc theo planning horizon."
+            if lang == "vi"
+            else "Represents 8-puzzle with variables, domains, and constraints over a planning horizon."
+        )
+    else:
+        mode = "educational_adversarial"
+        label = "Mô phỏng đối kháng/xác suất" if lang == "vi" else "Adversarial/stochastic demo"
+        description = (
+            "Mô hình mở rộng có utility, đối thủ hoặc chance node; không phải solver chuẩn của 8-puzzle deterministic."
+            if lang == "vi"
+            else "Extended model with utility, opponent, or chance nodes; not a standard deterministic 8-puzzle solver."
+        )
+    return {
+        "algorithm": canonical,
+        "group": group,
+        "mode": mode,
+        "label": label,
+        "description": description,
+    }
+
+
 def normalize_algorithm(name: str) -> str:
     key = "".join(ch for ch in name.lower() if ch.isalnum() or ch in "*_")
     key = key.replace("_", "")
