@@ -1,50 +1,52 @@
 ---
-title: AI Coursework Lab Final Polish + GitHub Publication
+title: "8-Puzzle UI/UX Beauty + Algorithm Correctness Polish"
 description: >-
-  Finalize the canonical 8-puzzle coursework lab for submission and GitHub
-  publication: clean tracked files, polished academic documentation, UI grading
-  checklist, automated verification, and remote publication.
-status: completed
+  Polish the 8-Puzzle coursework lab into a cleaner, more beautiful demo while
+  preserving algorithm semantics: only UI, explanation, guardrails, trace
+  presentation, and verification should change unless a correctness bug is
+  proven by tests.
+status: pending
 priority: P2
-branch: ''
+branch: "main"
 tags: []
 blockedBy: []
 blocks: []
-created: '2026-06-07T15:06:17.267Z'
-createdBy: 'ck:plan'
+created: "2026-06-07T15:30:19.376Z"
+createdBy: "ck:plan"
 source: skill
 ---
 
-# AI Coursework Lab Final Polish + GitHub Publication
+# 8-Puzzle UI/UX Beauty + Algorithm Correctness Polish
 
 ## Overview
 
-This plan prepares the project for a personal AI coursework submission and a
-clean GitHub publication. The canonical app remains
-`eight_puzzle_search_app.py` + `streamlit_eight_puzzle_app.py`; the
-`8_puzzle_ai/` package stays educational/supporting.
+This plan improves the final submission experience for a lecturer/demo audience:
+the first viewport should feel polished and easy to operate, algorithm choices
+should be impossible to misunderstand, and the trace must continue to represent
+real `Node / Frontier / Reached` behavior rather than decorative storytelling.
 
 Acceptance criteria:
-- The repository has Git metadata, a clean ignore policy, and the requested
-  GitHub remote configured.
-- README and `docs/demo_script.md` explain how to run, demo, test, and grade
-  the project.
-- The Streamlit UI exposes a compact grading checklist and keeps h(n) limited
-  to `misplaced` and `manhattan`.
-- CI can run the same self-test, behavior tests, package tests, and py_compile
-  commands used locally.
-- Publication verification confirms there are no logs/cache files staged for
-  the initial GitHub commit.
+- The Streamlit UI has a calmer academic-lab visual system, stronger contrast,
+  cleaner spacing, and responsive boards without horizontal scroll.
+- The first viewport exposes Start, Goal, preset, algorithm group, algorithm,
+  heuristic, and Run CTA without burying the main demo flow.
+- The UI clearly distinguishes standard 8-puzzle solvers from educational
+  Complex/CSP/Adversarial simulations.
+- h(n) remains exactly `misplaced` and `manhattan` in the canonical UI.
+- Algorithm traces keep compatible columns and truthfully show `Node`,
+  post-expansion `Frontier`, `Reached`, `Priority Rule`, and `Selection Key`.
+- Existing self-test, behavior tests, package tests, py_compile, and
+  Playwright desktop/mobile checks pass before release.
 
 ## Phases
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [GitHub Readiness](./phase-01-github-readiness.md) | Completed |
-| 2 | [Documentation Polish](./phase-02-documentation-polish.md) | Completed |
-| 3 | [Academic UI Polish](./phase-03-academic-ui-polish.md) | Completed |
-| 4 | [Testing And CI](./phase-04-testing-and-ci.md) | Completed |
-| 5 | [Publication Verification](./phase-05-publication-verification.md) | Completed |
+| 1 | [Design Audit And Visual System](./phase-01-design-audit-and-visual-system.md) | Pending |
+| 2 | [First Viewport Demo Flow](./phase-02-first-viewport-demo-flow.md) | Pending |
+| 3 | [Algorithm Correctness UX Guards](./phase-03-algorithm-correctness-ux-guards.md) | Pending |
+| 4 | [Academic Trace Visualization](./phase-04-academic-trace-visualization.md) | Pending |
+| 5 | [Verification And Release](./phase-05-verification-and-release.md) | Pending |
 
 ## Dependencies
 
