@@ -107,10 +107,29 @@ def self_test() -> int:
             "notebook did not switch to summary tab after _on_run"
         )
 
+        # Trace tab (cụm 4a)
+        for attr in ("trace_status_var", "trace_tree"):
+            assert hasattr(app, attr), f"trace widget missing: {attr}"
+        trace_rows = app.trace_tree.get_children()
+        assert len(trace_rows) > 0, "BFS on easy_2 should produce at least one trace row"
+        status_text = app.trace_status_var.get()
+        assert status_text.endswith("rows") and not status_text.startswith(app._t("trace_idle")), (
+            f"trace status not refreshed, got {status_text!r}"
+        )
+        assert str(len(trace_rows)) in status_text, (
+            f"trace status should mention row count, got {status_text!r}"
+        )
+
         # Error path: _show_run_error must surface the message in the Summary tab
         app._show_run_error("synthetic test error")
         assert app.summary_error_var.get() == "synthetic test error", (
             "error message not propagated to summary tab"
+        )
+        assert app.trace_status_var.get() == app._t("trace_idle"), (
+            "trace tab not reset to idle on error"
+        )
+        assert app.trace_tree.get_children() == (), (
+            "trace tree not cleared on error"
         )
     finally:
         root.destroy()

@@ -85,6 +85,10 @@ TEXT: Dict[str, Dict[str, str]] = {
         "cert_heuristic_values_valid": "Giá trị heuristic hợp lệ (≥ 0)",
         "cert_pass": "Đạt",
         "cert_fail": "Không đạt",
+        # Trace tab
+        "trace_title": "Trace theo từng bước",
+        "trace_idle": "Chưa có dữ liệu trace — hãy chạy Run trước.",
+        "trace_empty": "Thuật toán này không sinh trace rows.",
     },
     "en": {
         "app_title": "8-Puzzle Search Visualizer",
@@ -151,6 +155,10 @@ TEXT: Dict[str, Dict[str, str]] = {
         "cert_heuristic_values_valid": "Heuristic values valid (≥ 0)",
         "cert_pass": "Pass",
         "cert_fail": "Fail",
+        # Trace tab
+        "trace_title": "Step-by-step trace",
+        "trace_idle": "No trace yet — press Run first.",
+        "trace_empty": "This algorithm produced no trace rows.",
     },
 }
 

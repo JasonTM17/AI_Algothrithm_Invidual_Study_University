@@ -181,19 +181,21 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
     app.goal_editor = MatrixEditor(goal_frame, initial=GOAL_STATE)
     app.goal_editor.pack()
 
-    # Result tabs: Summary is fully built; Trace/Heuristics/Experiment/Report are placeholders.
     from .results import build_summary_tab
+    from .trace import build_trace_tab
 
     app.notebook = ttk.Notebook(parent)
     app.notebook.pack(fill=tk.BOTH, expand=True)
     app._tab_indices: Dict[str, int] = {}
     app.tab_frames: Dict[str, ttk.Frame] = {}
+    tab_builders = {"tab_summary": build_summary_tab, "tab_trace": build_trace_tab}
     for i, key in enumerate(["tab_summary", "tab_trace", "tab_heuristics", "tab_experiment", "tab_report"]):
         frame = ttk.Frame(app.notebook, padding=8)
         app.notebook.add(frame, text=app._t(key))
         app._tab_indices[key] = i
         app.tab_frames[key] = frame
-        if key == "tab_summary":
-            build_summary_tab(frame, app)
+        builder = tab_builders.get(key)
+        if builder:
+            builder(frame, app)
         else:
             ttk.Label(frame, text=f"({app._t('coming_soon')})").pack()

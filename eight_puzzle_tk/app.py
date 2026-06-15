@@ -135,15 +135,19 @@ class App:
             self._show_run_error(f"run_failed ({type(exc).__name__}): {exc}")
             return
         from .results import populate_summary
+        from .trace import populate_trace_tab
 
         populate_summary(self, result, certificate)
+        populate_trace_tab(self, result)
         self.notebook.select(self._tab_indices["tab_summary"])
 
     def _show_run_error(self, message: str) -> None:
         """Reset the Summary tab to a visible error state without running search."""
         from .results import show_error_state
+        from .trace import reset_trace_tab
 
         show_error_state(self, message)
+        reset_trace_tab(self)
         self.notebook.select(self._tab_indices["tab_summary"])
 
     def _on_compare(self) -> None:
