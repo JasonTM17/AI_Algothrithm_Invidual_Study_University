@@ -12,7 +12,12 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, List
 
-from eight_puzzle_search_app import SearchResult
+from eight_puzzle_search_app import (
+    SearchResult,
+    TraceConfig,
+    algorithms_by_group,
+    run_algorithm,
+)
 
 
 _COMPARE_COLS: tuple = (
@@ -85,3 +90,41 @@ def reset_compare_tab(app: Any) -> None:
     """Clear the Compare tab to its idle state."""
     app.compare_tree.delete(*app.compare_tree.get_children())
     app.compare_status_var.set(app._t("compare_idle"))
+
+
+def compare_for_group(app: Any, group: str) -> None:
+    """Run every algorithm in ``group`` on the current start/goal state."""
+    start = app.start_editor.get_state()
+    goal = app.goal_editor.get_state()
+    if start is None or goal is None:
+        app._show_run_error(app._t("state_invalid"))
+        return
+    try:
+        cfg = TraceConfig(**{k: int(v.get()) for k, v in app.limit_vars.items()})
+    except (TypeError, ValueError) as exc:
+        app._show_run_error(f"limits_invalid: {exc}")
+        return
+    algorithms = algorithms_by_group().get(group, [])
+    if not algorithms:
+        return
+    heur = app.heuristic_var.get()
+    results = []
+    for algo in algorithms:
+        try:
+            results.append(
+                run_algorithm(start, algo, heuristic=heur, config=cfg, goal=goal)
+            )
+        except Exception:
+            continue
+    populate_compare_tab(app, results, group)
+    app.notebook.select(app._tab_indices["tab_compare"])
+
+
+def on_compare(app: Any) -> None:
+    """Sidebar 'Compare all' button: run all algorithms in the current group."""
+    compare_for_group(app, app.group_var.get())
+
+
+def on_compare_run(app: Any) -> None:
+    """Compare tab 'Run' button: run all algorithms in the tab's selected group."""
+    compare_for_group(app, app.compare_group_var.get())

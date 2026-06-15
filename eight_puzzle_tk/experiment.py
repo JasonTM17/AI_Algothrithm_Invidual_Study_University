@@ -113,3 +113,16 @@ def reset_experiment_tab(app: Any) -> None:
     app.experiment_status_var.set(app._t("experiment_idle"))
     app.experiment_baseline_var.set("-")
     app.experiment_last_result = None
+
+
+def on_experiment_run(app: Any) -> None:
+    """Experiment tab 'Run' button: run the coursework benchmark suite."""
+    try:
+        result = run_experiment_suite(heuristic_name=app.heuristic_var.get())
+    except Exception as exc:
+        reset_experiment_tab(app)
+        app.experiment_status_var.set(
+            f"experiment_failed ({type(exc).__name__}): {exc}"
+        )
+        return
+    populate_experiment_tab(app, result)

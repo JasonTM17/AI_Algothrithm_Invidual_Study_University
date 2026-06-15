@@ -5,17 +5,31 @@
 App chính của bài nộp là:
 
 - Core thuật toán: `eight_puzzle_search_app.py`
-- Giao diện demo: `streamlit_eight_puzzle_app.py`
+- Giao diện web (Streamlit): `streamlit_eight_puzzle_app.py`
+- Giao diện desktop (Tkinter, song ngữ VI/EN): `eight_puzzle_tk_app.py`
+  + package `eight_puzzle_tk/`
 - Package phụ/educational: `8_puzzle_ai/`
 
-Chạy giao diện:
+Chạy giao diện web:
 
 ```powershell
 python -m pip install -r requirements.txt
 python -m streamlit run .\streamlit_eight_puzzle_app.py
 ```
 
-Chạy kiểm thử:
+Chạy giao diện desktop (Tkinter, **không cần pip install** — chỉ Python stdlib):
+
+```powershell
+python .\eight_puzzle_tk_app.py
+```
+
+Chạy kiểm thử desktop (headless smoke test cho cả package Tkinter):
+
+```powershell
+python .\eight_puzzle_tk_app.py --self-test
+```
+
+Chạy kiểm thử core:
 
 ```powershell
 python .\eight_puzzle_search_app.py --self-test

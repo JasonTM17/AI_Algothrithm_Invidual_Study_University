@@ -82,3 +82,52 @@ def reset_report_tab(app: Any) -> None:
     app.report_text.configure(state=tk.DISABLED)
     app.report_last_pack = None
     app.report_status_var.set(app._t("report_idle"))
+
+
+def on_report_generate(app: Any) -> None:
+    """Report tab 'Generate' button: build a submission pack from the last run."""
+    if app.last_result is None or app.last_certificate is None:
+        app.report_status_var.set(app._t("report_no_run"))
+        return
+    try:
+        pack = build_submission_pack(
+            app.last_result,
+            app.last_heuristic or "manhattan",
+            app.last_certificate,
+        )
+    except Exception as exc:
+        app.report_status_var.set(
+            f"report_failed ({type(exc).__name__}): {exc}"
+        )
+        return
+    populate_report_tab(app, pack)
+
+
+def on_report_save(app: Any) -> None:
+    """Report tab 'Save to file' button: write the Markdown to a user-chosen path."""
+    pack = getattr(app, "report_last_pack", None)
+    if pack is None:
+        app.report_status_var.set(app._t("report_no_pack"))
+        return
+    path = filedialog.asksaveasfilename(
+        parent=app.root,
+        defaultextension=".md",
+        filetypes=[("Markdown", "*.md"), ("Text", "*.txt"), ("All", "*.*")],
+        initialfile=f"{pack.get('title', 'report').replace(' ', '_').replace('/', '-')}.md",
+    )
+    if not path:
+        return
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(pack.get("markdown", ""))
+    app.report_status_var.set(app._t("report_saved").format(path=path))
+
+
+def on_report_copy(app: Any) -> None:
+    """Report tab 'Copy' button: copy the Markdown body to the clipboard."""
+    pack = getattr(app, "report_last_pack", None)
+    if pack is None:
+        app.report_status_var.set(app._t("report_no_pack"))
+        return
+    app.root.clipboard_clear()
+    app.root.clipboard_append(pack.get("markdown", ""))
+    app.report_status_var.set(app._t("report_copied"))

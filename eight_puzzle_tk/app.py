@@ -16,10 +16,8 @@ from eight_puzzle_search_app import (
     State,
     TraceConfig,
     algorithms_by_group,
-    build_submission_pack,
     generate_random_state,
     run_algorithm,
-    run_experiment_suite,
     validate_result,
 )
 
@@ -175,103 +173,38 @@ class App:
 
     def _compare_for_group(self, group: str) -> None:
         """Run every algorithm in ``group`` on the current start/goal state."""
-        start = self.start_editor.get_state()
-        goal = self.goal_editor.get_state()
-        if start is None or goal is None:
-            self._show_run_error(self._t("state_invalid"))
-            return
-        try:
-            cfg = TraceConfig(**{k: int(v.get()) for k, v in self.limit_vars.items()})
-        except (TypeError, ValueError) as exc:
-            self._show_run_error(f"limits_invalid: {exc}")
-            return
-        algorithms = algorithms_by_group().get(group, [])
-        if not algorithms:
-            return
-        heur = self.heuristic_var.get()
-        results = []
-        for algo in algorithms:
-            try:
-                results.append(
-                    run_algorithm(start, algo, heuristic=heur, config=cfg, goal=goal)
-                )
-            except Exception:
-                continue
-        from .compare import populate_compare_tab
-        populate_compare_tab(self, results, group)
-        self.notebook.select(self._tab_indices["tab_compare"])
+        from .compare import compare_for_group
+        compare_for_group(self, group)
 
     def _on_compare(self) -> None:
         """Sidebar 'Compare all' button: run all algorithms in the current group."""
-        self._compare_for_group(self.group_var.get())
+        from .compare import on_compare
+        on_compare(self)
 
     def _on_compare_run(self) -> None:
         """Compare tab 'Run' button: run all algorithms in the tab's selected group."""
-        self._compare_for_group(self.compare_group_var.get())
+        from .compare import on_compare_run
+        on_compare_run(self)
 
     def _on_experiment_run(self) -> None:
         """Experiment tab 'Run' button: run the coursework benchmark suite."""
-        try:
-            result = run_experiment_suite(heuristic_name=self.heuristic_var.get())
-        except Exception as exc:
-            from .experiment import reset_experiment_tab
-            reset_experiment_tab(self)
-            self.experiment_status_var.set(
-                f"experiment_failed ({type(exc).__name__}): {exc}"
-            )
-            return
-        from .experiment import populate_experiment_tab
-        populate_experiment_tab(self, result)
+        from .experiment import on_experiment_run
+        on_experiment_run(self)
 
     def _on_report_generate(self) -> None:
         """Report tab 'Generate' button: build a submission pack from the last run."""
-        if self.last_result is None or self.last_certificate is None:
-            self.report_status_var.set(self._t("report_no_run"))
-            return
-        try:
-            pack = build_submission_pack(
-                self.last_result,
-                self.last_heuristic or "manhattan",
-                self.last_certificate,
-            )
-        except Exception as exc:
-            self.report_status_var.set(
-                f"report_failed ({type(exc).__name__}): {exc}"
-            )
-            return
-        from .report import populate_report_tab
-        populate_report_tab(self, pack)
+        from .report import on_report_generate
+        on_report_generate(self)
 
     def _on_report_save(self) -> None:
         """Report tab 'Save to file' button: write the Markdown to a user-chosen path."""
-        from tkinter import filedialog
-        pack = getattr(self, "report_last_pack", None)
-        if pack is None:
-            self.report_status_var.set(self._t("report_no_pack"))
-            return
-        path = filedialog.asksaveasfilename(
-            parent=self.root,
-            defaultextension=".md",
-            filetypes=[("Markdown", "*.md"), ("Text", "*.txt"), ("All", "*.*")],
-            initialfile=f"{pack.get('title', 'report').replace(' ', '_').replace('/', '-')}.md",
-        )
-        if not path:
-            return
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write(pack.get("markdown", ""))
-        self.report_status_var.set(
-            self._t("report_saved").format(path=path)
-        )
+        from .report import on_report_save
+        on_report_save(self)
 
     def _on_report_copy(self) -> None:
         """Report tab 'Copy' button: copy the Markdown body to the clipboard."""
-        pack = getattr(self, "report_last_pack", None)
-        if pack is None:
-            self.report_status_var.set(self._t("report_no_pack"))
-            return
-        self.root.clipboard_clear()
-        self.root.clipboard_append(pack.get("markdown", ""))
-        self.report_status_var.set(self._t("report_copied"))
+        from .report import on_report_copy
+        on_report_copy(self)
 
     # --- lifecycle -------------------------------------------------------
 
