@@ -184,6 +184,8 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
     from .results import build_summary_tab
     from .trace import build_trace_tab
     from .heuristics import build_heuristics_tab
+    from .compare import build_compare_tab
+    from .playback import build_path_playback_section
 
     app.notebook = ttk.Notebook(parent)
     app.notebook.pack(fill=tk.BOTH, expand=True)
@@ -193,8 +195,12 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
         "tab_summary": build_summary_tab,
         "tab_trace": build_trace_tab,
         "tab_heuristics": build_heuristics_tab,
+        "tab_compare": build_compare_tab,
     }
-    for i, key in enumerate(["tab_summary", "tab_trace", "tab_heuristics", "tab_experiment", "tab_report"]):
+    tab_post_build = {
+        "tab_summary": build_path_playback_section,
+    }
+    for i, key in enumerate(["tab_summary", "tab_trace", "tab_heuristics", "tab_compare", "tab_experiment", "tab_report"]):
         frame = ttk.Frame(app.notebook, padding=8)
         app.notebook.add(frame, text=app._t(key))
         app._tab_indices[key] = i
@@ -204,3 +210,6 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
             builder(frame, app)
         else:
             ttk.Label(frame, text=f"({app._t('coming_soon')})").pack()
+        post = tab_post_build.get(key)
+        if post:
+            post(frame, app)

@@ -113,6 +113,8 @@ class App:
 
     def _on_group_change(self, _event: Optional[tk.Event] = None) -> None:
         self._refresh_algorithm_combo()
+        if hasattr(self, "compare_group_var"):
+            self.compare_group_var.set(self.group_var.get())
 
     def _on_run(self) -> None:
         """Run the selected algorithm and render the result into the Summary tab."""
@@ -135,28 +137,64 @@ class App:
             self._show_run_error(f"run_failed ({type(exc).__name__}): {exc}")
             return
         from .heuristics import populate_heuristics_tab
+        from .playback import populate_path_playback
         from .results import populate_summary
         from .trace import populate_trace_tab
 
         populate_summary(self, result, certificate)
         populate_trace_tab(self, result)
         populate_heuristics_tab(self, start, goal, heur)
+        populate_path_playback(self, result)
         self.notebook.select(self._tab_indices["tab_summary"])
 
     def _show_run_error(self, message: str) -> None:
         """Reset the Summary tab to a visible error state without running search."""
         from .heuristics import reset_heuristics_tab
+        from .playback import reset_path_playback
         from .results import show_error_state
         from .trace import reset_trace_tab
 
         show_error_state(self, message)
         reset_trace_tab(self)
         reset_heuristics_tab(self)
+        reset_path_playback(self)
         self.notebook.select(self._tab_indices["tab_summary"])
 
+    def _compare_for_group(self, group: str) -> None:
+        """Run every algorithm in ``group`` on the current start/goal state."""
+        start = self.start_editor.get_state()
+        goal = self.goal_editor.get_state()
+        if start is None or goal is None:
+            self._show_run_error(self._t("state_invalid"))
+            return
+        try:
+            cfg = TraceConfig(**{k: int(v.get()) for k, v in self.limit_vars.items()})
+        except (TypeError, ValueError) as exc:
+            self._show_run_error(f"limits_invalid: {exc}")
+            return
+        algorithms = algorithms_by_group().get(group, [])
+        if not algorithms:
+            return
+        heur = self.heuristic_var.get()
+        results = []
+        for algo in algorithms:
+            try:
+                results.append(
+                    run_algorithm(start, algo, heuristic=heur, config=cfg, goal=goal)
+                )
+            except Exception:
+                continue
+        from .compare import populate_compare_tab
+        populate_compare_tab(self, results, group)
+        self.notebook.select(self._tab_indices["tab_compare"])
+
     def _on_compare(self) -> None:
-        # Wired in cụm 3 (compare all algorithms).
-        pass
+        """Sidebar 'Compare all' button: run all algorithms in the current group."""
+        self._compare_for_group(self.group_var.get())
+
+    def _on_compare_run(self) -> None:
+        """Compare tab 'Run' button: run all algorithms in the tab's selected group."""
+        self._compare_for_group(self.compare_group_var.get())
 
     # --- lifecycle -------------------------------------------------------
 

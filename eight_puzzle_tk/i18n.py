@@ -98,6 +98,20 @@ TEXT: Dict[str, Dict[str, str]] = {
         "heuristics_manhattan": "Manhattan distance",
         "heuristics_linear_conflict": "Linear conflict",
         "heuristics_not_applicable": "—",
+        # Path playback (Summary tab)
+        "playback_title": "Đường đi lời giải",
+        "playback_state": "Trạng thái",
+        "playback_idle": "Chưa có đường đi — hãy chạy Run.",
+        "playback_no_path": "Thuật toán không tìm ra đường đi.",
+        "playback_step": "Bước {step}/{total}",
+        "playback_action_start": "Trạng thái bắt đầu",
+        # Compare tab
+        "compare_title": "So sánh thuật toán",
+        "compare_group": "Nhóm",
+        "compare_run": "Chạy so sánh",
+        "compare_idle": "Chưa chạy — nhấn nút ở thanh bên hoặc trên.",
+        "compare_table": "Bảng kết quả",
+        "compare_done": "Đã chạy {count} thuật toán trong nhóm {group}",
     },
     "en": {
         "app_title": "8-Puzzle Search Visualizer",
@@ -177,6 +191,20 @@ TEXT: Dict[str, Dict[str, str]] = {
         "heuristics_manhattan": "Manhattan distance",
         "heuristics_linear_conflict": "Linear conflict",
         "heuristics_not_applicable": "—",
+        # Path playback (Summary tab)
+        "playback_title": "Solution path",
+        "playback_state": "State",
+        "playback_idle": "No path yet — press Run first.",
+        "playback_no_path": "Algorithm did not return a path.",
+        "playback_step": "Step {step}/{total}",
+        "playback_action_start": "Start state",
+        # Compare tab
+        "compare_title": "Algorithm comparison",
+        "compare_group": "Group",
+        "compare_run": "Run comparison",
+        "compare_idle": "Not run yet — click the sidebar button or the one above.",
+        "compare_table": "Result table",
+        "compare_done": "Ran {count} algorithms in group {group}",
     },
 }
 

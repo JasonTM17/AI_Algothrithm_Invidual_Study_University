@@ -43,7 +43,7 @@ def self_test() -> int:
         # Main area widgets
         for attr in ("start_editor", "goal_editor", "notebook", "_tab_indices"):
             assert hasattr(app, attr), f"main area widget missing: {attr}"
-        assert len(app._tab_indices) == 5, "notebook should have 5 tabs"
+        assert len(app._tab_indices) == 6, "notebook should have 6 tabs"
 
         # Preset selection
         first_preset = next(iter(DEMO_PRESETS))
@@ -132,6 +132,53 @@ def self_test() -> int:
             f"expected 8 tile rows (tiles 1-8), got {len(h_tree_rows)}"
         )
 
+        # Path playback (cụm 5)
+        for attr in (
+            "playback_cells", "playback_status_var", "playback_action_var",
+            "_playback_path", "_playback_index",
+        ):
+            assert hasattr(app, attr), f"playback widget missing: {attr}"
+        assert len(app.playback_cells) == 9, "playback board should have 9 cells"
+        # After BFS on easy_2, path has 3 states (start, mid, goal) → step 0/2
+        assert len(app._playback_path) == 3, (
+            f"expected 3 path states, got {len(app._playback_path)}"
+        )
+        assert app._playback_index == 0, "playback should reset to step 0"
+        # Step through the path with the public step_playback API
+        from eight_puzzle_tk.playback import step_playback
+        step_playback(app, "next")
+        assert app._playback_index == 1, "playback next did not advance"
+        step_playback(app, "last")
+        assert app._playback_index == 2, "playback last did not jump to end"
+        step_playback(app, "prev")
+        assert app._playback_index == 1, "playback prev did not step back"
+        step_playback(app, "first")
+        assert app._playback_index == 0, "playback first did not jump to start"
+        # Board should show numbers (not "-") for populated steps
+        assert app.playback_cells[0].cget("text") != "-", (
+            "playback board not rendered after run"
+        )
+
+        # Compare tab widgets (cụm 5)
+        for attr in ("compare_tree", "compare_status_var", "compare_group_var"):
+            assert hasattr(app, attr), f"compare widget missing: {attr}"
+        assert app.compare_group_var.get() == app.group_var.get(), (
+            "compare tab group should default to sidebar group"
+        )
+        # _on_compare should populate the table and switch to the compare tab
+        app._on_compare()
+        compare_rows = app.compare_tree.get_children()
+        assert len(compare_rows) >= 1, (
+            f"compare should produce at least 1 row, got {len(compare_rows)}"
+        )
+        assert app.notebook.index(app.notebook.select()) == app._tab_indices["tab_compare"], (
+            "notebook did not switch to compare tab after _on_compare"
+        )
+        c_status = app.compare_status_var.get()
+        assert str(len(compare_rows)) in c_status, (
+            f"compare status should mention count, got {c_status!r}"
+        )
+
         # Error path: _show_run_error must surface the message in the Summary tab
         app._show_run_error("synthetic test error")
         assert app.summary_error_var.get() == "synthetic test error", (
@@ -145,6 +192,10 @@ def self_test() -> int:
         )
         assert app.heuristics_status_var.get() == app._t("heuristics_idle"), (
             "heuristics tab not reset to idle on error"
+        )
+        assert app._playback_path == [], "playback path not cleared on error"
+        assert app.playback_status_var.get() == app._t("playback_idle"), (
+            "playback not reset to idle on error"
         )
     finally:
         root.destroy()
