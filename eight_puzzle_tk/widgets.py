@@ -183,12 +183,17 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
 
     from .results import build_summary_tab
     from .trace import build_trace_tab
+    from .heuristics import build_heuristics_tab
 
     app.notebook = ttk.Notebook(parent)
     app.notebook.pack(fill=tk.BOTH, expand=True)
     app._tab_indices: Dict[str, int] = {}
     app.tab_frames: Dict[str, ttk.Frame] = {}
-    tab_builders = {"tab_summary": build_summary_tab, "tab_trace": build_trace_tab}
+    tab_builders = {
+        "tab_summary": build_summary_tab,
+        "tab_trace": build_trace_tab,
+        "tab_heuristics": build_heuristics_tab,
+    }
     for i, key in enumerate(["tab_summary", "tab_trace", "tab_heuristics", "tab_experiment", "tab_report"]):
         frame = ttk.Frame(app.notebook, padding=8)
         app.notebook.add(frame, text=app._t(key))

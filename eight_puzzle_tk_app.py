@@ -120,6 +120,18 @@ def self_test() -> int:
             f"trace status should mention row count, got {status_text!r}"
         )
 
+        # Heuristics tab (cụm 4b)
+        for attr in ("heuristics_status_var", "heuristics_totals", "heuristics_tree"):
+            assert hasattr(app, attr), f"heuristics widget missing: {attr}"
+        assert len(app.heuristics_totals) == 3, "expected 3 heuristic total rows"
+        h_status = app.heuristics_status_var.get()
+        # easy_2 is 2 moves from goal; BFS selected heuristic defaults to "misplaced" = 2.
+        assert "=" in h_status, f"heuristics status not refreshed, got {h_status!r}"
+        h_tree_rows = app.heuristics_tree.get_children()
+        assert len(h_tree_rows) == 8, (
+            f"expected 8 tile rows (tiles 1-8), got {len(h_tree_rows)}"
+        )
+
         # Error path: _show_run_error must surface the message in the Summary tab
         app._show_run_error("synthetic test error")
         assert app.summary_error_var.get() == "synthetic test error", (
@@ -130,6 +142,9 @@ def self_test() -> int:
         )
         assert app.trace_tree.get_children() == (), (
             "trace tree not cleared on error"
+        )
+        assert app.heuristics_status_var.get() == app._t("heuristics_idle"), (
+            "heuristics tab not reset to idle on error"
         )
     finally:
         root.destroy()

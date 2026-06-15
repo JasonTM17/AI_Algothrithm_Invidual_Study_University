@@ -89,6 +89,15 @@ TEXT: Dict[str, Dict[str, str]] = {
         "trace_title": "Trace theo từng bước",
         "trace_idle": "Chưa có dữ liệu trace — hãy chạy Run trước.",
         "trace_empty": "Thuật toán này không sinh trace rows.",
+        # Heuristics tab
+        "heuristics_title": "Phân tích heuristic h(n)",
+        "heuristics_idle": "Chưa có dữ liệu — hãy chạy Run.",
+        "heuristics_totals": "Tổng hợp",
+        "heuristics_per_tile": "Phân tích từng ô",
+        "heuristics_misplaced": "Misplaced tiles",
+        "heuristics_manhattan": "Manhattan distance",
+        "heuristics_linear_conflict": "Linear conflict",
+        "heuristics_not_applicable": "—",
     },
     "en": {
         "app_title": "8-Puzzle Search Visualizer",
@@ -159,6 +168,15 @@ TEXT: Dict[str, Dict[str, str]] = {
         "trace_title": "Step-by-step trace",
         "trace_idle": "No trace yet — press Run first.",
         "trace_empty": "This algorithm produced no trace rows.",
+        # Heuristics tab
+        "heuristics_title": "Heuristic h(n) breakdown",
+        "heuristics_idle": "No data yet — press Run first.",
+        "heuristics_totals": "Totals",
+        "heuristics_per_tile": "Per-tile breakdown",
+        "heuristics_misplaced": "Misplaced tiles",
+        "heuristics_manhattan": "Manhattan distance",
+        "heuristics_linear_conflict": "Linear conflict",
+        "heuristics_not_applicable": "—",
     },
 }
 
