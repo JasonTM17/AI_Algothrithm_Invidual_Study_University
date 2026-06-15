@@ -1,71 +1,125 @@
-"""Tkinter App class — minimal scaffold with sidebar, language toggle, placeholder.
+"""Tkinter App class — orchestrates layout, language toggle, and callbacks.
 
-Subsequent commits replace the placeholder with sidebar controls, matrix editors,
-algorithm selectors, run/compare buttons, and the result tabs (Summary / Trace /
-Heuristics / Experiment / Report).
+The App delegates Tkinter widget construction to :mod:`widgets`. Result rendering
+(Summary, Trace, Heuristics, Experiment, Report tabs) is wired in later commits.
 """
 
 from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Optional
+from typing import Any, Dict, Optional
+
+from eight_puzzle_search_app import (
+    DEMO_PRESETS,
+    GOAL_STATE,
+    State,
+    algorithms_by_group,
+    generate_random_state,
+)
 
 from .i18n import DEFAULT_LANG, t
+from .widgets import build_main_area, build_sidebar
 
 
 class App:
     def __init__(self, root: Optional[tk.Tk] = None) -> None:
         self.lang: str = DEFAULT_LANG
         self.root = root or tk.Tk()
-        self.root.title(t("app_title", self.lang))
+        self.root.title(self._t("app_title"))
         self.root.geometry("1280x820")
         self.root.minsize(1024, 720)
+        self._i18n_labels: Dict[str, Any] = {}
         self._build_layout()
+        self._refresh_algorithm_combo()
+
+    def _t(self, key: str) -> str:
+        return t(key, self.lang)
 
     def _build_layout(self) -> None:
         self.sidebar = ttk.Frame(self.root, padding=8)
         self.sidebar.pack(side=tk.LEFT, fill=tk.Y)
         self.main_area = ttk.Frame(self.root, padding=8)
         self.main_area.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-
         self._build_language_toggle()
-        self._build_placeholder()
+        build_sidebar(self.sidebar, self)
+        build_main_area(self.main_area, self)
 
     def _build_language_toggle(self) -> None:
         bar = ttk.Frame(self.sidebar)
         bar.pack(fill=tk.X, pady=(0, 8))
-        ttk.Label(bar, text=t("language", self.lang)).pack(side=tk.LEFT)
+        self._i18n_labels["language"] = ttk.Label(bar, text=self._t("language"))
+        self._i18n_labels["language"].pack(side=tk.LEFT)
         self.lang_var = tk.StringVar(value=self.lang)
-        ttk.Radiobutton(
-            bar,
-            text=t("lang_vi", self.lang),
-            value="vi",
-            variable=self.lang_var,
-            command=self._on_lang_change,
-        ).pack(side=tk.LEFT, padx=4)
-        ttk.Radiobutton(
-            bar,
-            text=t("lang_en", self.lang),
-            value="en",
-            variable=self.lang_var,
-            command=self._on_lang_change,
-        ).pack(side=tk.LEFT, padx=4)
+        self._i18n_labels["lang_vi"] = ttk.Radiobutton(
+            bar, text=self._t("lang_vi"), value="vi", variable=self.lang_var, command=self._on_lang_change,
+        )
+        self._i18n_labels["lang_vi"].pack(side=tk.LEFT, padx=4)
+        self._i18n_labels["lang_en"] = ttk.Radiobutton(
+            bar, text=self._t("lang_en"), value="en", variable=self.lang_var, command=self._on_lang_change,
+        )
+        self._i18n_labels["lang_en"].pack(side=tk.LEFT, padx=4)
 
-    def _build_placeholder(self) -> None:
-        ttk.Label(
-            self.sidebar,
-            text=t("section_controls", self.lang),
-            font=("", 11, "bold"),
-        ).pack(anchor=tk.W, pady=(8, 4))
-        ttk.Label(
-            self.main_area,
-            text=t("coming_soon", self.lang),
-        ).pack()
+    # --- language change -------------------------------------------------
 
     def _on_lang_change(self) -> None:
         self.lang = self.lang_var.get()
-        self.root.title(t("app_title", self.lang))
+        for key, widget in self._i18n_labels.items():
+            try:
+                widget.config(text=self._t(key))
+            except tk.TclError:
+                pass
+        # Preset combobox display values change between languages
+        old = self.preset_var.get()
+        self.preset_display = [self._t("preset_custom")] + self.preset_keys
+        self.preset_combo.config(values=self.preset_display)
+        if old not in self.preset_display:
+            self.preset_var.set(self.preset_display[0])
+        # Notebook tab labels
+        for key, idx in self._tab_indices.items():
+            self.notebook.tab(idx, text=self._t(key))
+        self.root.title(self._t("app_title"))
+
+    # --- sidebar callbacks ----------------------------------------------
+
+    def _refresh_algorithm_combo(self) -> None:
+        group = self.group_var.get()
+        algos = algorithms_by_group().get(group, [])
+        self.algorithm_combo.config(values=algos)
+        if algos:
+            self.algorithm_var.set(algos[0])
+
+    def _on_preset_change(self, _event: Optional[tk.Event] = None) -> None:
+        choice = self.preset_var.get()
+        if choice == self._t("preset_custom"):
+            return
+        preset = DEMO_PRESETS.get(choice)
+        if preset is not None:
+            self.start_editor.set_state(preset)
+
+    def _on_shuffle(self) -> None:
+        try:
+            moves = int(self.scramble_var.get())
+        except ValueError:
+            moves = 20
+        seed_str = self.seed_var.get().strip()
+        seed = int(seed_str) if seed_str else None
+        state = generate_random_state(scramble_moves=moves, seed=seed)
+        self.start_editor.set_state(state)
+        self.preset_var.set(self._t("preset_custom"))
+
+    def _on_group_change(self, _event: Optional[tk.Event] = None) -> None:
+        self._refresh_algorithm_combo()
+
+    def _on_run(self) -> None:
+        # Wired in cụm 3 (core search + Summary tab).
+        pass
+
+    def _on_compare(self) -> None:
+        # Wired in cụm 3 (compare all algorithms).
+        pass
+
+    # --- lifecycle -------------------------------------------------------
 
     def run(self) -> None:
         self.root.mainloop()
