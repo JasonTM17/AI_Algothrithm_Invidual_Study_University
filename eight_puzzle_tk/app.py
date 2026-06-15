@@ -16,8 +16,10 @@ from eight_puzzle_search_app import (
     State,
     TraceConfig,
     algorithms_by_group,
+    build_submission_pack,
     generate_random_state,
     run_algorithm,
+    run_experiment_suite,
     validate_result,
 )
 
@@ -33,6 +35,9 @@ class App:
         self.root.geometry("1280x820")
         self.root.minsize(1024, 720)
         self._i18n_labels: Dict[str, Any] = {}
+        self.last_result = None
+        self.last_certificate: Optional[Dict[str, Any]] = None
+        self.last_heuristic: Optional[str] = None
         self._build_layout()
         self._refresh_algorithm_combo()
 
@@ -145,12 +150,16 @@ class App:
         populate_trace_tab(self, result)
         populate_heuristics_tab(self, start, goal, heur)
         populate_path_playback(self, result)
+        self.last_result = result
+        self.last_certificate = certificate
+        self.last_heuristic = heur
         self.notebook.select(self._tab_indices["tab_summary"])
 
     def _show_run_error(self, message: str) -> None:
         """Reset the Summary tab to a visible error state without running search."""
         from .heuristics import reset_heuristics_tab
         from .playback import reset_path_playback
+        from .report import reset_report_tab
         from .results import show_error_state
         from .trace import reset_trace_tab
 
@@ -158,6 +167,10 @@ class App:
         reset_trace_tab(self)
         reset_heuristics_tab(self)
         reset_path_playback(self)
+        reset_report_tab(self)
+        self.last_result = None
+        self.last_certificate = None
+        self.last_heuristic = None
         self.notebook.select(self._tab_indices["tab_summary"])
 
     def _compare_for_group(self, group: str) -> None:
@@ -195,6 +208,70 @@ class App:
     def _on_compare_run(self) -> None:
         """Compare tab 'Run' button: run all algorithms in the tab's selected group."""
         self._compare_for_group(self.compare_group_var.get())
+
+    def _on_experiment_run(self) -> None:
+        """Experiment tab 'Run' button: run the coursework benchmark suite."""
+        try:
+            result = run_experiment_suite(heuristic_name=self.heuristic_var.get())
+        except Exception as exc:
+            from .experiment import reset_experiment_tab
+            reset_experiment_tab(self)
+            self.experiment_status_var.set(
+                f"experiment_failed ({type(exc).__name__}): {exc}"
+            )
+            return
+        from .experiment import populate_experiment_tab
+        populate_experiment_tab(self, result)
+
+    def _on_report_generate(self) -> None:
+        """Report tab 'Generate' button: build a submission pack from the last run."""
+        if self.last_result is None or self.last_certificate is None:
+            self.report_status_var.set(self._t("report_no_run"))
+            return
+        try:
+            pack = build_submission_pack(
+                self.last_result,
+                self.last_heuristic or "manhattan",
+                self.last_certificate,
+            )
+        except Exception as exc:
+            self.report_status_var.set(
+                f"report_failed ({type(exc).__name__}): {exc}"
+            )
+            return
+        from .report import populate_report_tab
+        populate_report_tab(self, pack)
+
+    def _on_report_save(self) -> None:
+        """Report tab 'Save to file' button: write the Markdown to a user-chosen path."""
+        from tkinter import filedialog
+        pack = getattr(self, "report_last_pack", None)
+        if pack is None:
+            self.report_status_var.set(self._t("report_no_pack"))
+            return
+        path = filedialog.asksaveasfilename(
+            parent=self.root,
+            defaultextension=".md",
+            filetypes=[("Markdown", "*.md"), ("Text", "*.txt"), ("All", "*.*")],
+            initialfile=f"{pack.get('title', 'report').replace(' ', '_').replace('/', '-')}.md",
+        )
+        if not path:
+            return
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(pack.get("markdown", ""))
+        self.report_status_var.set(
+            self._t("report_saved").format(path=path)
+        )
+
+    def _on_report_copy(self) -> None:
+        """Report tab 'Copy' button: copy the Markdown body to the clipboard."""
+        pack = getattr(self, "report_last_pack", None)
+        if pack is None:
+            self.report_status_var.set(self._t("report_no_pack"))
+            return
+        self.root.clipboard_clear()
+        self.root.clipboard_append(pack.get("markdown", ""))
+        self.report_status_var.set(self._t("report_copied"))
 
     # --- lifecycle -------------------------------------------------------
 

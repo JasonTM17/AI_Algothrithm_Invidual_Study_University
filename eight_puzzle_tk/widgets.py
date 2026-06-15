@@ -186,6 +186,8 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
     from .heuristics import build_heuristics_tab
     from .compare import build_compare_tab
     from .playback import build_path_playback_section
+    from .experiment import build_experiment_tab
+    from .report import build_report_tab
 
     app.notebook = ttk.Notebook(parent)
     app.notebook.pack(fill=tk.BOTH, expand=True)
@@ -196,6 +198,8 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
         "tab_trace": build_trace_tab,
         "tab_heuristics": build_heuristics_tab,
         "tab_compare": build_compare_tab,
+        "tab_experiment": build_experiment_tab,
+        "tab_report": build_report_tab,
     }
     tab_post_build = {
         "tab_summary": build_path_playback_section,

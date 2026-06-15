@@ -197,6 +197,62 @@ def self_test() -> int:
         assert app.playback_status_var.get() == app._t("playback_idle"), (
             "playback not reset to idle on error"
         )
+        assert app.last_result is None, "last_result not cleared on error"
+        assert app.report_status_var.get() == app._t("report_idle"), (
+            "report tab not reset to idle on error"
+        )
+
+        # Re-run a successful search so the Report tab has data to build on
+        app.preset_var.set("easy_2")
+        app._on_preset_change()
+        app.algorithm_var.set("A*")
+        app._on_run()
+        assert app.last_result is not None, "last_result not stored after _on_run"
+        assert app.last_certificate is not None, "last_certificate missing"
+        assert app.last_heuristic == app.heuristic_var.get(), "last_heuristic mismatch"
+
+        # Experiment tab (cụm 6)
+        for attr in (
+            "experiment_tree", "experiment_status_var", "experiment_baseline_var",
+        ):
+            assert hasattr(app, attr), f"experiment widget missing: {attr}"
+        app._on_experiment_run()
+        exp_rows = app.experiment_tree.get_children()
+        assert len(exp_rows) > 0, "experiment should produce at least 1 row"
+        exp_status = app.experiment_status_var.get()
+        assert str(len(exp_rows)) in exp_status or "presets" in exp_status, (
+            f"experiment status not refreshed, got {exp_status!r}"
+        )
+        assert app.experiment_baseline_var.get() != "-", "baseline not populated"
+
+        # Report tab (cụm 6)
+        for attr in ("report_text", "report_status_var", "report_last_pack"):
+            assert hasattr(app, attr), f"report widget missing: {attr}"
+        # Report with no pack → save/copy should show no-pack message
+        app._on_report_save()
+        assert app.report_status_var.get() == app._t("report_no_pack"), (
+            "save without pack should show report_no_pack"
+        )
+        app._on_report_copy()
+        assert app.report_status_var.get() == app._t("report_no_pack"), (
+            "copy without pack should show report_no_pack"
+        )
+        # Build the pack
+        app._on_report_generate()
+        assert app.report_last_pack is not None, "report pack not stored"
+        pack = app.report_last_pack
+        assert "markdown" in pack and len(pack["markdown"]) > 100, (
+            f"pack markdown too short: {len(pack.get('markdown', ''))} chars"
+        )
+        # Text widget should contain the markdown
+        preview_text = app.report_text.get("1.0", tk.END)
+        assert "8-Puzzle" in preview_text or "PEAS" in preview_text, (
+            "report preview should contain expected sections"
+        )
+        # Copy should succeed (clipboard receives text)
+        app._on_report_copy()
+        clipboard = app.root.clipboard_get()
+        assert len(clipboard) > 100, "clipboard should contain the markdown"
     finally:
         root.destroy()
 
