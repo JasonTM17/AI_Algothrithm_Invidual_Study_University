@@ -77,6 +77,41 @@ def self_test() -> int:
         app.lang_var.set("vi")
         app._on_lang_change()
         assert app.lang == "vi", "lang did not switch back to vi"
+
+        # Core search + Summary tab (cụm 3)
+        for attr in (
+            "summary_status_var", "summary_metrics", "summary_certificate",
+            "summary_error_var", "summary_conclusion_var",
+        ):
+            assert hasattr(app, attr), f"summary widget missing: {attr}"
+        assert len(app.summary_metrics) == 11, "expected 11 metric rows"
+        assert len(app.summary_certificate) == 5, "expected 5 cert rows"
+
+        app.preset_var.set("easy_2")
+        app._on_preset_change()
+        app.algorithm_var.set("BFS")
+        assert app.start_editor.get_state() == DEMO_PRESETS["easy_2"], "easy_2 preset did not load"
+        app._on_run()
+        assert app.summary_status_var.get() == app._t("summary_found"), (
+            f"expected found status, got {app.summary_status_var.get()!r}"
+        )
+        assert app.summary_metrics["algorithm"].get() == "BFS"
+        assert app.summary_metrics["path_cost"].get() == "2", (
+            f"expected path_cost=2 for easy_2, got {app.summary_metrics['path_cost'].get()!r}"
+        )
+        for key in ("path_valid", "cost_matches_actions", "terminal_matches_goal"):
+            assert app.summary_certificate[key].get() == app._t("cert_pass"), (
+                f"cert {key} not pass: {app.summary_certificate[key].get()!r}"
+            )
+        assert app.notebook.index(app.notebook.select()) == app._tab_indices["tab_summary"], (
+            "notebook did not switch to summary tab after _on_run"
+        )
+
+        # Error path: _show_run_error must surface the message in the Summary tab
+        app._show_run_error("synthetic test error")
+        assert app.summary_error_var.get() == "synthetic test error", (
+            "error message not propagated to summary tab"
+        )
     finally:
         root.destroy()
 

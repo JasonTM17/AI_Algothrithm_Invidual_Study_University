@@ -14,8 +14,11 @@ from eight_puzzle_search_app import (
     DEMO_PRESETS,
     GOAL_STATE,
     State,
+    TraceConfig,
     algorithms_by_group,
     generate_random_state,
+    run_algorithm,
+    validate_result,
 )
 
 from .i18n import DEFAULT_LANG, t
@@ -112,8 +115,36 @@ class App:
         self._refresh_algorithm_combo()
 
     def _on_run(self) -> None:
-        # Wired in cụm 3 (core search + Summary tab).
-        pass
+        """Run the selected algorithm and render the result into the Summary tab."""
+        start = self.start_editor.get_state()
+        goal = self.goal_editor.get_state()
+        if start is None or goal is None:
+            self._show_run_error(self._t("state_invalid"))
+            return
+        try:
+            cfg = TraceConfig(**{k: int(v.get()) for k, v in self.limit_vars.items()})
+        except (TypeError, ValueError) as exc:
+            self._show_run_error(f"limits_invalid: {exc}")
+            return
+        algo = self.algorithm_var.get()
+        heur = self.heuristic_var.get()
+        try:
+            result = run_algorithm(start, algo, heuristic=heur, config=cfg, goal=goal)
+            certificate = validate_result(result, heur, goal)
+        except Exception as exc:
+            self._show_run_error(f"run_failed ({type(exc).__name__}): {exc}")
+            return
+        from .results import populate_summary
+
+        populate_summary(self, result, certificate)
+        self.notebook.select(self._tab_indices["tab_summary"])
+
+    def _show_run_error(self, message: str) -> None:
+        """Reset the Summary tab to a visible error state without running search."""
+        from .results import show_error_state
+
+        show_error_state(self, message)
+        self.notebook.select(self._tab_indices["tab_summary"])
 
     def _on_compare(self) -> None:
         # Wired in cụm 3 (compare all algorithms).
