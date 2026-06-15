@@ -42,6 +42,12 @@ generated_reports/
 # Local agent/tooling cache
 .commandcode/
 
+# Local tooling/agent artifacts (do not commit)
+.claude/
+.codex/
+plans/
+CLAUDE.md
+
 # OS/editor
 .DS_Store
 Thumbs.db
