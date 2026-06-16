@@ -208,12 +208,12 @@ class App:
 
     # --- lifecycle -------------------------------------------------------
 
-    def run(self) -> None:
+    def start(self) -> None:
         self.root.mainloop()
 
 
 def run() -> None:
-    App().run()
+    App().start()
 
 
 if __name__ == "__main__":
