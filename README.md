@@ -44,6 +44,17 @@ Chế độ trò chơi trong desktop app:
 - Bộ đếm `Số nước chơi` và trạng thái thắng giúp phân biệt người chơi tự giải với
   đường đi do thuật toán sinh ra.
 
+Tab `Máy hút bụi / Vacuum Game` dùng để demo thuật toán không tự nhiên với
+8-puzzle:
+
+- Người xem có thể điều khiển máy hút bụi bằng `Up/Down/Left/Right/Suck`.
+- Có PEAS riêng cho Vacuum Agent.
+- Có `Tô màu / Color Plan`: mô hình graph coloring như CSP, trong đó phòng là
+  node, cạnh là quan hệ kề nhau, màu là batch/lượt dọn. Đây là nơi phù hợp hơn
+  cho thuật toán tô màu thay vì ép vào 8-puzzle.
+- Có `Auto clean` để máy hút bụi tự dọn toàn bộ phòng, giúp giáo viên chơi thử
+  và thấy rõ agent/action/sensor/performance.
+
 Chạy kiểm thử desktop (headless smoke test cho cả package Tkinter):
 
 ```powershell
@@ -470,6 +481,10 @@ Dự án cài đặt đủ 27 thuật toán/biến thể theo 6 nhóm học thu�
 | Adversarial / Stochastic Search | Minimax, Alpha-Beta Pruning, Expectimax |
 
 Lưu ý học thuật: nhóm `Complex Environments`, `CSP` và `Adversarial / Stochastic Search` không phải solver tự nhiên của 8-Puzzle deterministic/fully observable. App vẫn chạy phiên bản mô phỏng có giới hạn trên state hiện tại và ghi rõ trace, message, guarantee/failure mode để phục vụ báo cáo môn AI.
+
+Riêng thuật toán tô màu đồ thị/graph coloring không được trình bày như cách giải
+8-puzzle. Bản desktop đặt nó trong tab `Vacuum Game`: tô màu dùng để lập lịch
+các phòng bẩn kề nhau thành những batch dọn khác nhau, đúng bản chất CSP hơn.
 
 ## 9. Giải thích chi tiết từng thuật toán
 

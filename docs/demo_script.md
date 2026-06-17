@@ -70,7 +70,31 @@ hoặc bấm `Random Goal một phần`.
 - Với 8-puzzle, CSP được dùng như mô hình lập kế hoạch theo horizon.
 - Đây là demo học thuật, không quảng bá là solver chuẩn nhanh nhất.
 
-## 7. Demo đối kháng/xác suất
+## 7. Demo Graph Coloring bằng Vacuum Game
+
+Trong desktop app:
+
+```powershell
+python .\eight_puzzle_tk_app.py
+```
+
+Mở tab `Máy hút bụi / Vacuum Game`.
+
+1. Bấm `Random bụi` để tạo môi trường mới.
+2. Bấm `Tô màu / Color Plan`.
+3. Chỉ vào bảng bên phải:
+   - phòng là node;
+   - phòng kề nhau là edge;
+   - màu/slot là batch dọn;
+   - hai phòng kề nhau không cùng slot.
+4. Điều khiển máy hút bụi bằng `Up/Down/Left/Right/Suck`, hoặc bấm `Auto clean`.
+
+Điểm cần nói:
+- Graph coloring không giải 8-puzzle.
+- Đây là CSP lập lịch/constraint demo trong môi trường Vacuum Cleaner Agent.
+- PEAS của vacuum khác PEAS của 8-puzzle, nên app tách thành tab riêng để đúng học thuật.
+
+## 8. Demo đối kháng/xác suất
 
 1. Chọn nhóm `Adversarial / Stochastic Search`.
 2. Chọn `Minimax`, `Alpha-Beta Pruning`, hoặc `Expectimax`.
@@ -82,7 +106,7 @@ hoặc bấm `Random Goal một phần`.
   - MIN hoặc chance node tạo kết quả bất lợi/ngẫu nhiên.
 - Mục tiêu là chứng minh hiểu đúng tên và dạng bài toán của thuật toán.
 
-## 8. Xuất báo cáo
+## 9. Xuất báo cáo
 
 1. Sau khi chạy thuật toán, mở tab `Report`.
 2. Tải Markdown hoặc tạo Submission Pack.
@@ -98,7 +122,7 @@ Báo cáo nên có:
 - Benchmark/experiment.
 - Kết luận complete/optimal/failure mode.
 
-## 9. Checklist trước khi nộp
+## 10. Checklist trước khi nộp
 
 - [ ] Chạy được Streamlit app chính.
 - [ ] Chạy được A* Manhattan và xem được trace.
@@ -107,10 +131,11 @@ Báo cáo nên có:
 - [ ] Có Node / Frontier / Reached rõ trong trace.
 - [ ] Có giải thích `misplaced` và `manhattan`.
 - [ ] Có demo unsolvable dừng sớm.
+- [ ] Có demo Vacuum Game cho graph coloring/CSP không phù hợp với 8-puzzle.
 - [ ] Có báo cáo tải xuống.
 - [ ] Toàn bộ test local pass.
 
-## 10. Checklist UI/UX trước khi demo trực tiếp
+## 11. Checklist UI/UX trước khi demo trực tiếp
 
 - [ ] First viewport nhìn rõ Start, Goal, Preset, Nhóm thuật toán, Thuật toán, Heuristic và nút `Chạy thuật toán đã chọn`.
 - [ ] Header và subtitle không bị chìm trên dark mode.

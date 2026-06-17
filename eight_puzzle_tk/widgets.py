@@ -339,6 +339,7 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
     from .playback import build_path_playback_section
     from .experiment import build_experiment_tab
     from .report import build_report_tab
+    from .vacuum import build_vacuum_tab
 
     app.notebook = ttk.Notebook(parent)
     app.notebook.pack(fill=tk.BOTH, expand=True)
@@ -350,12 +351,21 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
         "tab_heuristics": build_heuristics_tab,
         "tab_compare": build_compare_tab,
         "tab_experiment": build_experiment_tab,
+        "tab_vacuum": build_vacuum_tab,
         "tab_report": build_report_tab,
     }
     tab_post_build = {
         "tab_summary": build_path_playback_section,
     }
-    for i, key in enumerate(["tab_summary", "tab_trace", "tab_heuristics", "tab_compare", "tab_experiment", "tab_report"]):
+    for i, key in enumerate([
+        "tab_summary",
+        "tab_trace",
+        "tab_heuristics",
+        "tab_compare",
+        "tab_experiment",
+        "tab_vacuum",
+        "tab_report",
+    ]):
         frame = ttk.Frame(app.notebook, padding=8)
         app.notebook.add(frame, text=app._t(key))
         app._tab_indices[key] = i

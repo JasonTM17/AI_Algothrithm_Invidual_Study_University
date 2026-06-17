@@ -43,9 +43,11 @@ def self_test() -> int:
         # Main area widgets
         for attr in ("start_editor", "goal_editor", "notebook", "_tab_indices"):
             assert hasattr(app, attr), f"main area widget missing: {attr}"
-        assert len(app._tab_indices) == 6, "notebook should have 6 tabs"
+        assert len(app._tab_indices) == 7, "notebook should have 7 tabs"
         for attr in ("game_moves_var", "game_status_var", "game_hint_var"):
             assert hasattr(app, attr), f"game widget missing: {attr}"
+        for attr in ("vacuum_cells", "vacuum_tree", "vacuum_status_var", "vacuum_coloring_note_var"):
+            assert hasattr(app, attr), f"vacuum widget missing: {attr}"
 
         # Preset selection
         first_preset = next(iter(DEMO_PRESETS))
@@ -266,6 +268,35 @@ def self_test() -> int:
         app._on_report_copy()
         clipboard = app.root.clipboard_get()
         assert len(clipboard) > 100, "clipboard should contain the markdown"
+
+        # Vacuum-cleaner game + graph-coloring CSP tab
+        from eight_puzzle_tk.vacuum import (
+            auto_clean_vacuum,
+            color_vacuum_rooms,
+            move_vacuum,
+            reset_vacuum,
+            room_neighbors,
+            suck_current_room,
+        )
+        reset_vacuum(app)
+        assert len(app.vacuum_cells) == 6, "vacuum grid should have 6 rooms"
+        assert app.vacuum_dirty, "vacuum reset should create dirty rooms"
+        color_vacuum_rooms(app)
+        assert app.vacuum_coloring, "graph coloring should assign slots to dirty rooms"
+        for room, slot in app.vacuum_coloring.items():
+            for neighbor in room_neighbors(room):
+                if neighbor in app.vacuum_coloring:
+                    assert slot != app.vacuum_coloring[neighbor], (
+                        "adjacent dirty rooms share the same graph-color slot"
+                    )
+        before_pos = app.vacuum_position
+        move_vacuum(app, "Right")
+        assert app.vacuum_position != before_pos, "vacuum move did not update position"
+        app.vacuum_dirty.add(app.vacuum_position)
+        suck_current_room(app)
+        assert app.vacuum_position not in app.vacuum_dirty, "suck should clean current room"
+        auto_clean_vacuum(app)
+        assert not app.vacuum_dirty, "auto-clean should clean every room"
     finally:
         root.destroy()
 

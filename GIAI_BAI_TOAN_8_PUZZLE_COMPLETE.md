@@ -1002,7 +1002,38 @@ App desktop `8PuzzleSearchLab.exe` được thiết kế để giảng viên có
 | Đi 1 bước tối ưu | Cho AI áp dụng một action từ nghiệm A* hiện tại |
 | Auto-solve | Trình diễn toàn bộ đường đi lời giải từng bước |
 
-### 7.3. Giá trị khi thuyết trình
+### 7.3. Máy hút bụi cho thuật toán tô màu / CSP
+
+Một số thuật toán CSP như **graph coloring / tô màu đồ thị** không phù hợp để
+giải trực tiếp 8-puzzle, vì 8-puzzle cần tìm chuỗi hành động trong không gian
+trạng thái. Do đó app tách riêng một tab **Vacuum Game** để minh họa graph
+coloring đúng bản chất hơn.
+
+**Mô hình Vacuum Cleaner Agent:**
+
+| PEAS | Xác định |
+|------|----------|
+| Performance | Làm sạch toàn bộ phòng với ít hành động |
+| Environment | Lưới phòng 2×3, mỗi phòng sạch/bẩn, deterministic, fully observable |
+| Actuators | Up, Down, Left, Right, Suck |
+| Sensors | Vị trí hiện tại và trạng thái sạch/bẩn của từng phòng |
+
+**Áp dụng tô màu đồ thị:**
+
+| Thành phần CSP | Trong Vacuum Game |
+|----------------|-------------------|
+| Biến | Các phòng đang bẩn |
+| Miền giá trị | Slot/batch dọn: 1, 2, 3, ... |
+| Ràng buộc | Hai phòng kề nhau không được dùng cùng slot |
+| Kết quả | Lịch dọn theo batch màu, không phải đường đi 8-puzzle |
+
+Nhờ vậy khi thuyết trình có thể nói rõ:
+
+- 8-puzzle chuẩn dùng BFS/UCS/A*/IDA* để tìm đường đi.
+- Graph coloring là CSP, nên demo bằng bài toán lập lịch dọn phòng của agent máy hút bụi.
+- Cả hai đều thuộc AI nhưng khác dạng bài toán: state-space search và constraint satisfaction.
+
+### 7.4. Giá trị khi thuyết trình
 
 Khi demo, có thể cho giảng viên thấy cùng một trạng thái được xử lý theo ba tầng:
 
