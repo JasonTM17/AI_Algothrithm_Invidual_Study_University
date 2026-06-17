@@ -38,8 +38,14 @@ class App:
         self.last_result = None
         self.last_certificate: Optional[Dict[str, Any]] = None
         self.last_heuristic: Optional[str] = None
+        self.game_move_count = 0
+        self.game_initial_state: State = GOAL_STATE
+        self._auto_play_after_id: Optional[str] = None
+        self._auto_play_path: list[State] = []
+        self._auto_play_actions: list[str] = []
         self._build_layout()
         self._refresh_algorithm_combo()
+        self._update_game_panel()
 
     def _t(self, key: str) -> str:
         return t(key, self.lang)
@@ -87,6 +93,7 @@ class App:
         for key, idx in self._tab_indices.items():
             self.notebook.tab(idx, text=self._t(key))
         self.root.title(self._t("app_title"))
+        self._update_game_panel()
 
     # --- sidebar callbacks ----------------------------------------------
 
@@ -103,7 +110,7 @@ class App:
             return
         preset = DEMO_PRESETS.get(choice)
         if preset is not None:
-            self.start_editor.set_state(preset)
+            self._load_game_state(preset)
 
     def _on_shuffle(self) -> None:
         try:
@@ -113,7 +120,7 @@ class App:
         seed_str = self.seed_var.get().strip()
         seed = int(seed_str) if seed_str else None
         state = generate_random_state(scramble_moves=moves, seed=seed)
-        self.start_editor.set_state(state)
+        self._load_game_state(state)
         self.preset_var.set(self._t("preset_custom"))
 
     def _on_group_change(self, _event: Optional[tk.Event] = None) -> None:
@@ -154,6 +161,120 @@ class App:
         self.last_certificate = certificate
         self.last_heuristic = heur
         self.notebook.select(self._tab_indices["tab_summary"])
+
+    # --- playable board callbacks --------------------------------------
+
+    def _load_game_state(self, state: State) -> None:
+        """Load a new puzzle as a fresh playable game."""
+        self._stop_auto_play()
+        self.game_initial_state = state
+        self.game_move_count = 0
+        self.start_editor.set_state(state)
+        self._update_game_panel(self._t("game_loaded"))
+
+    def _on_game_state_change(self, _state: Optional[State]) -> None:
+        self._update_game_panel()
+
+    def _on_player_move(self, tile: int, _state: State) -> None:
+        self._stop_auto_play()
+        self.game_move_count += 1
+        self._update_game_panel(self._t("game_moved").format(tile=tile))
+
+    def _on_game_reset(self) -> None:
+        self._load_game_state(self.game_initial_state)
+
+    def _on_game_hint(self) -> None:
+        result = self._solve_game_from_current()
+        if result is None:
+            return
+        if not result.found or len(result.path) < 2:
+            self.game_hint_var.set(self._t("game_no_hint"))
+            return
+        action = result.actions[0]
+        self.game_hint_var.set(
+            self._t("game_hint_value").format(action=action, cost=result.path_cost)
+        )
+
+    def _on_game_next_step(self) -> None:
+        result = self._solve_game_from_current()
+        if result is None:
+            return
+        if not result.found or len(result.path) < 2:
+            self.game_hint_var.set(self._t("game_no_hint"))
+            return
+        self.game_move_count += 1
+        self.start_editor.set_state(result.path[1])
+        self._update_game_panel(
+            self._t("game_ai_step").format(action=result.actions[0])
+        )
+
+    def _on_game_auto_solve(self) -> None:
+        self._stop_auto_play()
+        result = self._solve_game_from_current()
+        if result is None:
+            return
+        if not result.found or len(result.path) < 2:
+            self.game_hint_var.set(self._t("game_no_hint"))
+            return
+        self._auto_play_path = list(result.path[1:])
+        self._auto_play_actions = list(result.actions)
+        self.game_hint_var.set(
+            self._t("game_auto_ready").format(steps=len(self._auto_play_path))
+        )
+        self._auto_step()
+
+    def _stop_auto_play(self) -> None:
+        if self._auto_play_after_id is not None:
+            try:
+                self.root.after_cancel(self._auto_play_after_id)
+            except tk.TclError:
+                pass
+        self._auto_play_after_id = None
+        self._auto_play_path = []
+        self._auto_play_actions = []
+
+    def _auto_step(self) -> None:
+        if not self._auto_play_path:
+            self._auto_play_after_id = None
+            self._update_game_panel(self._t("game_auto_done"))
+            return
+        next_state = self._auto_play_path.pop(0)
+        action = self._auto_play_actions.pop(0) if self._auto_play_actions else "?"
+        self.game_move_count += 1
+        self.start_editor.set_state(next_state)
+        self._update_game_panel(self._t("game_ai_step").format(action=action))
+        self._auto_play_after_id = self.root.after(450, self._auto_step)
+
+    def _solve_game_from_current(self):
+        start = self.start_editor.get_state()
+        goal = self.goal_editor.get_state()
+        if start is None or goal is None:
+            self.game_hint_var.set(self._t("state_invalid"))
+            return None
+        try:
+            cfg = TraceConfig(max_expansions=50000, max_trace_rows=0)
+            result = run_algorithm(start, "A*", heuristic="manhattan", config=cfg, goal=goal)
+        except Exception as exc:
+            self.game_hint_var.set(f"hint_failed ({type(exc).__name__}): {exc}")
+            return None
+        if not result.found:
+            self.game_hint_var.set(result.message or self._t("game_no_hint"))
+        return result
+
+    def _update_game_panel(self, status: Optional[str] = None) -> None:
+        if not hasattr(self, "game_moves_var"):
+            return
+        self.game_moves_var.set(
+            self._t("game_moves").format(moves=self.game_move_count)
+        )
+        start = self.start_editor.get_state() if hasattr(self, "start_editor") else None
+        goal = self.goal_editor.get_state() if hasattr(self, "goal_editor") else None
+        if start is not None and goal is not None and start == goal:
+            self.game_status_var.set(
+                self._t("game_solved").format(moves=self.game_move_count)
+            )
+            return
+        self.game_status_var.set(status or self._t("game_ready"))
 
     def _show_run_error(self, message: str) -> None:
         """Reset the Summary tab to a visible error state without running search."""

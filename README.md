@@ -35,6 +35,15 @@ nhóm thuật toán, heuristic `misplaced`/`manhattan`, trace `Node / Frontier /
 certificate, experiment và report. Riêng Start board có thể tương tác như trò chơi:
 click ô nằm cạnh `0` để di chuyển trước khi chạy thuật toán.
 
+Chế độ trò chơi trong desktop app:
+
+- `Reset ván`: đưa Start board về trạng thái lúc nạp preset/shuffle.
+- `Gợi ý A*`: dùng A* + Manhattan để đề xuất nước đi tiếp theo.
+- `Đi 1 bước tối ưu`: cho AI áp dụng đúng một bước từ nghiệm A* hiện tại.
+- `Auto-solve`: tự động phát nghiệm A* từng bước để demo trực quan.
+- Bộ đếm `Số nước chơi` và trạng thái thắng giúp phân biệt người chơi tự giải với
+  đường đi do thuật toán sinh ra.
+
 Chạy kiểm thử desktop (headless smoke test cho cả package Tkinter):
 
 ```powershell

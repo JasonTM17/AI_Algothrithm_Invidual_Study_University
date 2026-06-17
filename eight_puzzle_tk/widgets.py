@@ -43,9 +43,11 @@ class MatrixEditor(ttk.Frame):
         interactive: bool = False,
         show_manual_entry: bool = True,
         on_change: Optional[Callable[[Optional[State]], None]] = None,
+        on_move: Optional[Callable[[int, State], None]] = None,
     ) -> None:
         super().__init__(parent)
         self._on_change = on_change
+        self._on_move = on_move
         self.interactive = interactive
         self._state: State = parse_state(initial)
         self._buttons: List[tk.Button] = []
@@ -121,10 +123,13 @@ class MatrixEditor(ttk.Frame):
             self.status_var.set("Choose a tile next to 0")
             return
         values = list(self._state)
+        moved_tile = values[idx]
         values[blank], values[idx] = values[idx], values[blank]
         self._state = tuple(values)  # type: ignore[assignment]
-        self.status_var.set(f"Moved tile {values[blank]}")
+        self.status_var.set(f"Moved tile {moved_tile}")
         self._render()
+        if self._on_move:
+            self._on_move(moved_tile, self._state)
         self._emit_change()
 
     def _render(self, *, update_manual: bool = True) -> None:
@@ -277,8 +282,45 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
     start_frame = ttk.LabelFrame(matrices, text=app._t("start_state"), padding=8)
     start_frame.pack(side=tk.LEFT, padx=(0, 16))
     initial_start = generate_random_state(scramble_moves=5, seed=42)
-    app.start_editor = MatrixEditor(start_frame, initial=initial_start, interactive=True)
+    app.start_editor = MatrixEditor(
+        start_frame,
+        initial=initial_start,
+        interactive=True,
+        on_change=app._on_game_state_change,
+        on_move=app._on_player_move,
+    )
     app.start_editor.pack()
+    app.game_initial_state = initial_start
+
+    game_panel = ttk.Frame(start_frame, style="Card.TFrame")
+    game_panel.pack(fill=tk.X, pady=(8, 0))
+    app.game_moves_var = tk.StringVar(value="")
+    ttk.Label(game_panel, textvariable=app.game_moves_var, style="CardSubheading.TLabel").pack(anchor=tk.W)
+    app.game_status_var = tk.StringVar(value="")
+    ttk.Label(game_panel, textvariable=app.game_status_var, style="Muted.TLabel", wraplength=310).pack(anchor=tk.W)
+    app.game_hint_var = tk.StringVar(value="")
+    ttk.Label(game_panel, textvariable=app.game_hint_var, style="Muted.TLabel", wraplength=310).pack(anchor=tk.W)
+
+    game_buttons = ttk.Frame(start_frame, style="Card.TFrame")
+    game_buttons.pack(fill=tk.X, pady=(8, 0))
+    app._i18n_labels["game_reset"] = ttk.Button(
+        game_buttons, text=app._t("game_reset"), command=app._on_game_reset,
+    )
+    app._i18n_labels["game_reset"].grid(row=0, column=0, sticky="ew", padx=2, pady=2)
+    app._i18n_labels["game_hint"] = ttk.Button(
+        game_buttons, text=app._t("game_hint"), command=app._on_game_hint,
+    )
+    app._i18n_labels["game_hint"].grid(row=0, column=1, sticky="ew", padx=2, pady=2)
+    app._i18n_labels["game_next_step"] = ttk.Button(
+        game_buttons, text=app._t("game_next_step"), command=app._on_game_next_step,
+    )
+    app._i18n_labels["game_next_step"].grid(row=1, column=0, sticky="ew", padx=2, pady=2)
+    app._i18n_labels["game_auto_solve"] = ttk.Button(
+        game_buttons, text=app._t("game_auto_solve"), command=app._on_game_auto_solve,
+    )
+    app._i18n_labels["game_auto_solve"].grid(row=1, column=1, sticky="ew", padx=2, pady=2)
+    for col in (0, 1):
+        game_buttons.columnconfigure(col, weight=1)
 
     # Goal matrix
     goal_frame = ttk.LabelFrame(matrices, text=app._t("goal_state"), padding=8)

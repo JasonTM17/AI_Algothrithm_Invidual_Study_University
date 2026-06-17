@@ -44,6 +44,8 @@ def self_test() -> int:
         for attr in ("start_editor", "goal_editor", "notebook", "_tab_indices"):
             assert hasattr(app, attr), f"main area widget missing: {attr}"
         assert len(app._tab_indices) == 6, "notebook should have 6 tabs"
+        for attr in ("game_moves_var", "game_status_var", "game_hint_var"):
+            assert hasattr(app, attr), f"game widget missing: {attr}"
 
         # Preset selection
         first_preset = next(iter(DEMO_PRESETS))
@@ -91,6 +93,17 @@ def self_test() -> int:
         app._on_preset_change()
         app.algorithm_var.set("BFS")
         assert app.start_editor.get_state() == DEMO_PRESETS["easy_2"], "easy_2 preset did not load"
+        app._on_game_hint()
+        assert "A*" in app.game_hint_var.get() or "Gợi ý" in app.game_hint_var.get(), (
+            f"game hint did not render, got {app.game_hint_var.get()!r}"
+        )
+        before_game_step = app.start_editor.get_state()
+        app._on_game_next_step()
+        assert app.start_editor.get_state() != before_game_step, "game next step did not move the board"
+        assert app.game_move_count == 1, "game move count should increment for AI step"
+        app._on_game_reset()
+        assert app.start_editor.get_state() == DEMO_PRESETS["easy_2"], "game reset did not restore preset"
+        assert app.game_move_count == 0, "game reset should clear move count"
         app._on_run()
         assert app.summary_status_var.get() == app._t("summary_found"), (
             f"expected found status, got {app.summary_status_var.get()!r}"

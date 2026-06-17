@@ -981,4 +981,35 @@ Mỗi cạnh = ràng buộc AllDifferent
 
 ---
 
+## PHẦN VII: APP DEMO VÀ TƯƠNG TÁC NHƯ TRÒ CHƠI
+
+### 7.1. Mục tiêu của app
+
+App desktop `8PuzzleSearchLab.exe` được thiết kế để giảng viên có thể mở trực tiếp và quan sát cả hai mặt của bài:
+
+1. **Người chơi tự giải:** click ô nằm cạnh `0` để di chuyển giống trò chơi 8-puzzle.
+2. **AI giải bài toán:** chọn thuật toán, heuristic, chạy solver và xem trace `Node / Frontier / Reached`.
+3. **Học thuật:** xem PEAS, certificate, heuristic breakdown, experiment và báo cáo Markdown.
+
+### 7.2. Chế độ chơi trực tiếp
+
+| Chức năng | Ý nghĩa học thuật |
+|-----------|-------------------|
+| Click ô cạnh `0` | Mô phỏng actuator: di chuyển ô trống theo hành động hợp lệ |
+| Số nước chơi | Tương ứng với `g(n)` khi mỗi bước có cost = 1 |
+| Reset ván | Khôi phục Start state ban đầu của preset/shuffle |
+| Gợi ý A* | Dùng `f(n)=g(n)+h(n)` với Manhattan để đề xuất nước đi |
+| Đi 1 bước tối ưu | Cho AI áp dụng một action từ nghiệm A* hiện tại |
+| Auto-solve | Trình diễn toàn bộ đường đi lời giải từng bước |
+
+### 7.3. Giá trị khi thuyết trình
+
+Khi demo, có thể cho giảng viên thấy cùng một trạng thái được xử lý theo ba tầng:
+
+1. **Tầng game:** người dùng tự click tile để cảm nhận state/action.
+2. **Tầng thuật toán:** bấm Run để xem thuật toán chọn node, cập nhật frontier và reached.
+3. **Tầng báo cáo:** xuất report/certificate để chứng minh lời giải hợp lệ và thuật toán có/không có bảo đảm tối ưu.
+
+---
+
 **TÀI LIỆU HOÀN CHỈNH - MÔN TRÍ TUỆ NHÂN TẠO**
