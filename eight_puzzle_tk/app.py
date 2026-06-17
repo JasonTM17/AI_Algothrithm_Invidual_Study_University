@@ -22,6 +22,7 @@ from eight_puzzle_search_app import (
 )
 
 from .i18n import DEFAULT_LANG, t
+from .theme import apply_theme
 from .widgets import build_main_area, build_sidebar
 
 
@@ -32,6 +33,7 @@ class App:
         self.root.title(self._t("app_title"))
         self.root.geometry("1280x820")
         self.root.minsize(1024, 720)
+        apply_theme(self.root)
         self._i18n_labels: Dict[str, Any] = {}
         self.last_result = None
         self.last_certificate: Optional[Dict[str, Any]] = None
@@ -43,18 +45,18 @@ class App:
         return t(key, self.lang)
 
     def _build_layout(self) -> None:
-        self.sidebar = ttk.Frame(self.root, padding=8)
+        self.sidebar = ttk.Frame(self.root, padding=12, style="Sidebar.TFrame")
         self.sidebar.pack(side=tk.LEFT, fill=tk.Y)
-        self.main_area = ttk.Frame(self.root, padding=8)
+        self.main_area = ttk.Frame(self.root, padding=14, style="TFrame")
         self.main_area.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self._build_language_toggle()
         build_sidebar(self.sidebar, self)
         build_main_area(self.main_area, self)
 
     def _build_language_toggle(self) -> None:
-        bar = ttk.Frame(self.sidebar)
+        bar = ttk.Frame(self.sidebar, style="Sidebar.TFrame")
         bar.pack(fill=tk.X, pady=(0, 8))
-        self._i18n_labels["language"] = ttk.Label(bar, text=self._t("language"))
+        self._i18n_labels["language"] = ttk.Label(bar, text=self._t("language"), style="Sidebar.TLabel")
         self._i18n_labels["language"].pack(side=tk.LEFT)
         self.lang_var = tk.StringVar(value=self.lang)
         self._i18n_labels["lang_vi"] = ttk.Radiobutton(

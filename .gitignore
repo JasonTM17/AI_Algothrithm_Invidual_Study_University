@@ -32,15 +32,19 @@ mobile-*.png
 *.trace.zip
 
 # Generated coursework exports
+build/
 dist/
 exports/
 generated_reports/
+*.spec
 *.docx
 *.pdf
 *.csv
 
 # Local agent/tooling cache
 .commandcode/
+.omc/
+app-screenshot.png
 
 # Local tooling/agent artifacts (do not commit)
 .claude/

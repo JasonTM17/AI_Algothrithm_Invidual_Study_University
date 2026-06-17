@@ -23,6 +23,18 @@ Chạy giao diện desktop (Tkinter, **không cần pip install** — chỉ Pyth
 python .\eight_puzzle_tk_app.py
 ```
 
+Build file `.exe` cho giảng viên mở trực tiếp:
+
+```powershell
+.\build_desktop_exe.ps1 -Python "C:\Users\Admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
+.\dist\8PuzzleSearchLab.exe
+```
+
+Giao diện desktop giữ cùng luồng học thuật với bản web: Start/Goal board, preset,
+nhóm thuật toán, heuristic `misplaced`/`manhattan`, trace `Node / Frontier / Reached`,
+certificate, experiment và report. Riêng Start board có thể tương tác như trò chơi:
+click ô nằm cạnh `0` để di chuyển trước khi chạy thuật toán.
+
 Chạy kiểm thử desktop (headless smoke test cho cả package Tkinter):
 
 ```powershell

@@ -78,7 +78,7 @@ def build_path_playback_section(parent: tk.Misc, app: Any) -> None:
 
 def _render_board(cells: List[ttk.Label], state: State) -> None:
     for i, value in enumerate(state):
-        cells[i].config(text=str(value) if value != 0 else " ")
+        cells[i].config(text=str(value))
 
 
 def populate_path_playback(app: Any, result: SearchResult) -> None:
