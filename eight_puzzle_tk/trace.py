@@ -28,7 +28,7 @@ _COL_WIDTHS: dict = {
 }
 _RIGHT_ALIGNED = {"Step", "Depth", "g", "h", "f"}
 
-_CELL_FONT = ("Consolas", 22, "bold")
+_CELL_FONT = ("Consolas", 28, "bold")
 
 
 # ---------------------------------------------------------------------------
@@ -66,9 +66,9 @@ def _make_board(parent: tk.Misc) -> List[tk.Label]:
         lbl.grid(row=i // 3, column=i % 3, padx=3, pady=3, sticky="nsew")
         cells.append(lbl)
     for r in range(3):
-        inner.rowconfigure(r, weight=1, uniform="trace_cell")
+        inner.rowconfigure(r, weight=1, uniform="trace_cell", minsize=60)
     for c in range(3):
-        inner.columnconfigure(c, weight=1, uniform="trace_cell")
+        inner.columnconfigure(c, weight=1, uniform="trace_cell", minsize=60)
     return cells
 
 

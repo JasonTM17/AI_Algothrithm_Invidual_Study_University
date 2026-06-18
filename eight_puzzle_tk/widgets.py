@@ -56,14 +56,14 @@ class MatrixEditor(ttk.Frame):
         board = tk.Frame(self, bg=PALETTE["border"], bd=0)
         board.pack(anchor=tk.CENTER)
         for col in range(self.SIZE):
-            board.columnconfigure(col, weight=1, uniform="cell")
+            board.columnconfigure(col, weight=1, uniform="cell", minsize=70)
         for row in range(self.SIZE):
-            board.rowconfigure(row, weight=1, uniform="cell")
+            board.rowconfigure(row, weight=1, uniform="cell", minsize=70)
         for i in range(self.SIZE * self.SIZE):
             btn = tk.Button(
                 board,
                 text="",
-                width=3,
+                width=4,
                 height=1,
                 font=CELL_FONT,
                 relief=tk.FLAT,
@@ -71,7 +71,7 @@ class MatrixEditor(ttk.Frame):
                 cursor="hand2" if interactive else "arrow",
                 command=lambda idx=i: self._on_tile_click(idx),
             )
-            btn.grid(row=i // self.SIZE, column=i % self.SIZE, padx=2, pady=2, sticky="nsew")
+            btn.grid(row=i // self.SIZE, column=i % self.SIZE, padx=3, pady=3, sticky="nsew")
             self._buttons.append(btn)
 
         self.manual_var = tk.StringVar()

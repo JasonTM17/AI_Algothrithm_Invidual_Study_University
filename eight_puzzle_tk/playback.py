@@ -19,7 +19,7 @@ from eight_puzzle_search_app import SearchResult, State
 from .theme import PALETTE
 
 
-_CELL_FONT = ("Consolas", 28, "bold")
+_CELL_FONT = ("Consolas", 36, "bold")
 
 
 def _make_board(parent: tk.Misc) -> List[tk.Label]:
@@ -39,9 +39,9 @@ def _make_board(parent: tk.Misc) -> List[tk.Label]:
         lbl.grid(row=i // 3, column=i % 3, padx=3, pady=3, sticky="nsew")
         cells.append(lbl)
     for r in range(3):
-        inner.rowconfigure(r, weight=1, uniform="cell")
+        inner.rowconfigure(r, weight=1, uniform="cell", minsize=70)
     for c in range(3):
-        inner.columnconfigure(c, weight=1, uniform="cell")
+        inner.columnconfigure(c, weight=1, uniform="cell", minsize=70)
     return cells
 
 

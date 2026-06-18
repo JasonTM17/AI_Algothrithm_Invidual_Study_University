@@ -3,6 +3,10 @@
 Children must be packed/gridded into ``self.inner``. Mouse-wheel events are
 dispatched to whichever ScrolledFrame the cursor is currently over, so multiple
 ScrolledFrames in the same window cooperate cleanly.
+
+A floating navigation overlay (▲ ▼ ▼▼) sits in the bottom-right corner so users
+who can't tell the area is scrollable always have a one-click way to reach the
+bottom of the content.
 """
 from __future__ import annotations
 
@@ -42,11 +46,48 @@ class ScrolledFrame(ttk.Frame):
             w.bind("<Button-4>", self._dispatch_wheel_up, add="+")
             w.bind("<Button-5>", self._dispatch_wheel_down, add="+")
 
+        # Floating navigation overlay (bottom-right).
+        self.nav_overlay = tk.Frame(self.canvas, bg=PALETTE["primary"], bd=0)
+        btn_specs = [
+            ("▲", self._nav_top),
+            ("▼", self._nav_bottom),
+        ]
+        for idx, (label, cmd) in enumerate(btn_specs):
+            b = tk.Button(
+                self.nav_overlay, text=label,
+                font=("Segoe UI", 11, "bold"),
+                fg=PALETTE["primary_text"], bg=PALETTE["primary"],
+                activebackground=PALETTE["primary_hover"],
+                activeforeground=PALETTE["primary_text"],
+                relief=tk.FLAT, bd=0, width=3, padx=6, pady=2,
+                command=cmd, cursor="hand2",
+            )
+            b.grid(row=0, column=idx, padx=1, pady=1)
+        self._nav_window_id = self.canvas.create_window(
+            0, 0, window=self.nav_overlay, anchor="se",
+        )
+        self.canvas.bind("<Configure>", self._place_nav_overlay, add="+")
+
+    def _place_nav_overlay(self, _event: Optional[tk.Event] = None) -> None:
+        try:
+            w = self.canvas.winfo_width()
+            h = self.canvas.winfo_height()
+            self.canvas.coords(self._nav_window_id, w - 12, h - 12)
+        except Exception:
+            pass
+
+    def _nav_top(self) -> None:
+        self.canvas.yview_moveto(0.0)
+
+    def _nav_bottom(self) -> None:
+        self.canvas.yview_moveto(1.0)
+
     def _on_inner_configure(self, _event: tk.Event) -> None:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def _on_canvas_configure(self, event: tk.Event) -> None:
         self.canvas.itemconfigure(self._win_id, width=event.width)
+        self._place_nav_overlay()
 
     def _on_enter(self, _event: tk.Event) -> None:
         pass
