@@ -339,24 +339,180 @@ def reset_trace_replay(app: Any) -> None:
 # Main tab builder + populate / reset
 # ---------------------------------------------------------------------------
 
+def build_trace_story_section(parent: tk.Misc, app: Any) -> None:
+    """Build a hidden 'Why This Node?' section that explains each trace row."""
+    app.trace_story_container = ttk.LabelFrame(
+        parent, text=app._t("trace_story_title"),
+        padding=10,
+    )
+
+    intro = ttk.Label(
+        app.trace_story_container,
+        text=app._t("trace_story_subtitle"),
+        foreground=PALETTE["muted"], wraplength=680, justify=tk.LEFT,
+    )
+    intro.pack(anchor=tk.W)
+
+    app.trace_story_text = tk.Text(
+        app.trace_story_container, height=8, wrap=tk.WORD,
+        font=("Segoe UI", 10), bg=PALETTE["card_bg"], fg=PALETTE["text"],
+        state=tk.DISABLED, relief=tk.FLAT, borderwidth=0,
+        highlightthickness=0, padx=4, pady=4,
+    )
+    app.trace_story_text.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
+
+
+def _build_story_for(algorithm: str, row: Dict[str, Any]) -> str:
+    """Generate a 'Why this node?' explanation from a single trace row + algorithm."""
+    g = row.get("g", "?")
+    h = row.get("h", "?")
+    f = row.get("f", "?")
+    depth = row.get("Depth", "?")
+    key = row.get("Selection Key", "")
+    algo = (algorithm or "").lower()
+    lines: List[str] = []
+    if "bfs" in algo:
+        lines.append(
+            f"Step {row.get('Step', '?')}: BFS picks the shallowest unexplored "
+            f"node (depth {depth}). Selection key = {key}."
+        )
+    elif "dfs" in algo:
+        lines.append(
+            f"Step {row.get('Step', '?')}: DFS dives into the deepest branch. "
+            f"Node at depth {depth} was popped from the LIFO stack."
+        )
+    elif "ucs" in algo or "uniform" in algo:
+        lines.append(
+            f"Step {row.get('Step', '?')}: UCS picks the node with the lowest "
+            f"g(n) = {g}. Selection key = {key}."
+        )
+    elif "ida" in algo:
+        lines.append(
+            f"Step {row.get('Step', '?')}: IDA* uses DFS bounded by f-cost "
+            f"threshold. f(n) = {f}, threshold = {key}."
+        )
+    elif "a*" in algo or "astar" in algo or "a star" in algo:
+        lines.append(
+            f"Step {row.get('Step', '?')}: A* picks the node with the lowest "
+            f"f(n) = g(n) + h(n) = {g} + {h} = {f}. Selection key = {key}."
+        )
+    elif "greedy" in algo:
+        lines.append(
+            f"Step {row.get('Step', '?')}: Greedy picks the node with the "
+            f"lowest h(n) = {h}. Selection key = {key}."
+        )
+    elif "hill" in algo or "climbing" in algo:
+        lines.append(
+            f"Step {row.get('Step', '?')}: Hill Climbing moves to the neighbor "
+            f"with the lowest h(n) = {h}."
+        )
+    elif "beam" in algo:
+        lines.append(
+            f"Step {row.get('Step', '?')}: Local Beam Search keeps the top-k "
+            f"states by h(n) = {h}."
+        )
+    elif "anneal" in algo:
+        lines.append(
+            f"Step {row.get('Step', '?')}: Simulated Annealing accepts a "
+            f"neighbor at temperature {key} based on h(n) = {h}."
+        )
+    else:
+        lines.append(
+            f"Step {row.get('Step', '?')}: Algorithm '{algorithm}' selects "
+            f"the next node using g = {g}, h = {h}, f = {f}."
+        )
+    note = row.get("Decision/Note", "")
+    if note:
+        lines.append(f"   Note: {note}")
+    return " ".join(lines)
+
+
+def build_search_tree_section(parent: tk.Misc, app: Any) -> None:
+    """Build a hidden search tree preview section that lists explored nodes."""
+    app.tree_preview_container = ttk.LabelFrame(
+        parent, text=app._t("trace_tree_title"),
+        padding=10,
+    )
+    app.tree_preview_intro = ttk.Label(
+        app.tree_preview_container,
+        text=app._t("trace_tree_subtitle"),
+        foreground=PALETTE["muted"], wraplength=680, justify=tk.LEFT,
+    )
+    app.tree_preview_intro.pack(anchor=tk.W)
+    app.tree_preview_grid = tk.Frame(app.tree_preview_container, bg=PALETTE["card_bg"])
+    app.tree_preview_grid.pack(fill=tk.X, expand=True, pady=(8, 0))
+    app._tree_preview_cards: List[tk.Frame] = []
+
+
+def _populate_search_tree(app: Any, rows: List[Dict[str, Any]]) -> None:
+    """Render a small grid of board cards for the first N trace rows."""
+    for card in app._tree_preview_cards:
+        card.destroy()
+    app._tree_preview_cards = []
+    if not rows:
+        return
+    max_nodes = min(len(rows), 12)
+    cols = 4
+    for idx in range(max_nodes):
+        row_data = rows[idx]
+        node_text = str(row_data.get("Node", ""))
+        state = _parse_node_to_state(node_text)
+        card = tk.Frame(
+            app.tree_preview_grid,
+            bg=PALETTE["card_bg"],
+            highlightbackground=PALETTE["primary" if idx == 0 else "border"],
+            highlightthickness=1, padx=4, pady=4,
+        )
+        card.grid(
+            row=idx // cols, column=idx % cols,
+            padx=4, pady=4, sticky="nsew",
+        )
+        app._tree_preview_cards.append(card)
+
+        # Small board
+        mini = _make_board(card)
+        if state is not None:
+            _render_board(mini, state)
+
+        # Caption
+        step = row_data.get("Step", idx)
+        g = row_data.get("g", "-")
+        h = row_data.get("h", "-")
+        tk.Label(
+            card, text=f"#{step}  g={g} h={h}",
+            font=("Segoe UI", 8), fg=PALETTE["muted"], bg=PALETTE["card_bg"],
+        ).pack(anchor=tk.W, pady=(2, 0))
+    for c in range(cols):
+        app.tree_preview_grid.columnconfigure(c, weight=1, uniform="tree_node")
+
+
 def build_trace_tab(parent: tk.Misc, app: Any) -> None:
     """Create the Trace tab widgets and store the Treeview on ``app``."""
     # Trace replay player (hidden until trace data is available)
     build_trace_replay_section(parent, app)
 
+    # Search tree preview (hidden until trace data is available)
+    build_search_tree_section(parent, app)
+
+    # Trace story / Why This Node? (hidden until trace data is available)
+    build_trace_story_section(parent, app)
+
     app._i18n_labels["trace_title"] = ttk.Label(
-        parent, text=app._t("trace_title"), font=("", 12, "bold"),
+        parent, text=app._t("trace_title"), style="CardHeading.TLabel",
     )
-    app._i18n_labels["trace_title"].pack(anchor=tk.W, pady=(0, 6))
+    app._i18n_labels["trace_title"].pack(anchor=tk.W, pady=(0, 4))
 
     app.trace_status_var = tk.StringVar(value=app._t("trace_idle"))
-    ttk.Label(parent, textvariable=app.trace_status_var).pack(anchor=tk.W)
+    tk.Label(
+        parent, textvariable=app.trace_status_var,
+        font=("Segoe UI", 10), bg=PALETTE["card_bg"], fg=PALETTE["muted"],
+    ).pack(anchor=tk.W)
 
-    tree_frame = ttk.Frame(parent)
+    tree_frame = tk.Frame(parent, bg=PALETTE["card_bg"])
     tree_frame.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
 
     tree = ttk.Treeview(
-        tree_frame, columns=TRACE_COLUMNS, show="headings", height=20,
+        tree_frame, columns=TRACE_COLUMNS, show="headings", height=12,
     )
     for col in TRACE_COLUMNS:
         tree.heading(col, text=col)
@@ -385,6 +541,8 @@ def populate_trace_tab(app: Any, result: SearchResult) -> None:
     if not result.trace_rows:
         app.trace_status_var.set(app._t("trace_empty"))
         reset_trace_replay(app)
+        reset_trace_story(app)
+        reset_search_tree(app)
         return
     for row in result.trace_rows:
         values = [str(row.get(col, "")) for col in TRACE_COLUMNS]
@@ -394,9 +552,57 @@ def populate_trace_tab(app: Any, result: SearchResult) -> None:
     # Populate the replay player
     populate_trace_replay(app, result.trace_rows)
 
+    # Populate the search tree preview
+    if not app.tree_preview_container.winfo_ismapped():
+        app.tree_preview_container.pack(fill=tk.X, pady=(0, 8))
+    _populate_search_tree(app, result.trace_rows)
+
+    # Populate the trace story
+    populate_trace_story(app, result)
+
 
 def reset_trace_tab(app: Any) -> None:
     """Return the Trace tab to its idle state (used on pre-search errors)."""
     app.trace_tree.delete(*app.trace_tree.get_children())
     app.trace_status_var.set(app._t("trace_idle"))
     reset_trace_replay(app)
+    reset_trace_story(app)
+    reset_search_tree(app)
+
+
+def populate_trace_story(app: Any, result: SearchResult) -> None:
+    """Fill the trace story Text widget with per-row 'Why this node?' explanations."""
+    algorithm = result.algorithm
+    rows = result.trace_rows
+    if not rows:
+        return
+    sample = rows[: min(15, len(rows))]
+    story_text = "\n".join(_build_story_for(algorithm, r) for r in sample)
+    if len(rows) > 15:
+        story_text += f"\n\n... and {len(rows) - 15} more rows."
+    app.trace_story_text.config(state=tk.NORMAL)
+    app.trace_story_text.delete("1.0", tk.END)
+    app.trace_story_text.insert(tk.END, story_text)
+    app.trace_story_text.config(state=tk.DISABLED)
+    if not app.trace_story_container.winfo_ismapped():
+        app.trace_story_container.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+
+
+def reset_trace_story(app: Any) -> None:
+    """Clear the trace story and hide the section."""
+    if hasattr(app, "trace_story_text"):
+        app.trace_story_text.config(state=tk.NORMAL)
+        app.trace_story_text.delete("1.0", tk.END)
+        app.trace_story_text.config(state=tk.DISABLED)
+    if hasattr(app, "trace_story_container") and app.trace_story_container.winfo_ismapped():
+        app.trace_story_container.pack_forget()
+
+
+def reset_search_tree(app: Any) -> None:
+    """Clear the search tree preview and hide the section."""
+    if hasattr(app, "_tree_preview_cards"):
+        for card in app._tree_preview_cards:
+            card.destroy()
+        app._tree_preview_cards = []
+    if hasattr(app, "tree_preview_container") and app.tree_preview_container.winfo_ismapped():
+        app.tree_preview_container.pack_forget()
