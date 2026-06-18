@@ -27,7 +27,7 @@ from .theme import PALETTE
 
 CELL_FONT = ("Consolas", 24, "bold")
 SECTION_FONT = ("Segoe UI", 10, "bold")
-ENTRY_INVALID_BG = "#fee"
+ENTRY_INVALID_BG = PALETTE["invalid_bg"]
 
 
 class MatrixEditor(ttk.Frame):
@@ -53,28 +53,32 @@ class MatrixEditor(ttk.Frame):
         self._buttons: List[tk.Button] = []
         self._manual_updating = False
 
-        board = ttk.Frame(self, style="Card.TFrame")
+        board = tk.Frame(self, bg=PALETTE["border"], bd=0)
         board.pack(anchor=tk.CENTER)
+        for col in range(self.SIZE):
+            board.columnconfigure(col, weight=1, uniform="cell")
+        for row in range(self.SIZE):
+            board.rowconfigure(row, weight=1, uniform="cell")
         for i in range(self.SIZE * self.SIZE):
             btn = tk.Button(
                 board,
                 text="",
-                width=4,
-                height=2,
+                width=3,
+                height=1,
                 font=CELL_FONT,
-                relief=tk.RAISED,
-                bd=1,
+                relief=tk.FLAT,
+                bd=0,
                 cursor="hand2" if interactive else "arrow",
                 command=lambda idx=i: self._on_tile_click(idx),
             )
-            btn.grid(row=i // self.SIZE, column=i % self.SIZE, padx=5, pady=5, sticky="nsew")
+            btn.grid(row=i // self.SIZE, column=i % self.SIZE, padx=2, pady=2, sticky="nsew")
             self._buttons.append(btn)
 
         self.manual_var = tk.StringVar()
         if show_manual_entry:
-            manual = ttk.Frame(self, style="Card.TFrame")
-            manual.pack(fill=tk.X, pady=(8, 0))
-            self.manual_entry = ttk.Entry(manual, textvariable=self.manual_var, width=24)
+            manual = tk.Frame(self, bg=PALETTE["card_bg"])
+            manual.pack(fill=tk.X, pady=(10, 0))
+            self.manual_entry = ttk.Entry(manual, textvariable=self.manual_var, width=22)
             self.manual_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
             self.manual_entry.bind("<Return>", lambda _event: self.apply_manual_state())
             self.manual_entry.bind("<FocusOut>", lambda _event: self.apply_manual_state())
@@ -84,7 +88,8 @@ class MatrixEditor(ttk.Frame):
 
         hint = "Click tile next to 0 to move" if interactive else "Goal board"
         self.status_var = tk.StringVar(value=hint)
-        ttk.Label(self, textvariable=self.status_var, style="Muted.TLabel").pack(anchor=tk.CENTER, pady=(4, 0))
+        tk.Label(self, textvariable=self.status_var, bg=PALETTE["card_bg"],
+                 fg=PALETTE["muted"], font=("Segoe UI", 9)).pack(anchor=tk.CENTER, pady=(6, 0))
         self._render()
 
     def get_state(self) -> Optional[State]:
@@ -137,8 +142,8 @@ class MatrixEditor(ttk.Frame):
             is_blank = value == 0
             self._buttons[i].configure(
                 text="0" if is_blank else str(value),
-                fg=PALETTE["primary"] if is_blank else PALETTE["text"],
-                bg="#e0f2fe" if is_blank else "#ffffff",
+                fg=PALETTE["blank_tile_fg"] if is_blank else PALETTE["text"],
+                bg=PALETTE["blank_tile_bg"] if is_blank else PALETTE["tile_bg"],
                 activebackground=PALETTE["cell_hover"],
                 activeforeground=PALETTE["text"],
             )
@@ -163,19 +168,28 @@ class MatrixEditor(ttk.Frame):
         return abs(ar - br) + abs(ac - bc) == 1
 
 
+def _sidebar_group(parent: tk.Misc, app: Any, title_key: str) -> ttk.Frame:
+    """Create a styled Labelframe group in the sidebar."""
+    frame = ttk.LabelFrame(parent, text=app._t(title_key), style="SidebarGroup.TLabelframe", padding=8)
+    frame.pack(fill=tk.X, pady=(0, 10))
+    return frame
+
+
+def _sidebar_row(parent: tk.Misc, app: Any, label_key: str) -> ttk.Frame:
+    """Create a label + control row inside a sidebar group."""
+    row = ttk.Frame(parent, style="Sidebar.TFrame")
+    row.pack(fill=tk.X, pady=(2, 2))
+    app._i18n_labels[label_key] = ttk.Label(row, text=app._t(label_key), style="Sidebar.TLabel")
+    app._i18n_labels[label_key].pack(side=tk.LEFT)
+    return row
+
+
 def build_sidebar(parent: tk.Misc, app: Any) -> None:
     """Build the sidebar: preset, scramble, algorithm selectors, limits, action buttons."""
-    # Preset section
-    app._i18n_labels["section_matrix"] = ttk.Label(
-        parent, text=app._t("section_matrix"), font=SECTION_FONT, style="SidebarHeading.TLabel",
-    )
-    app._i18n_labels["section_matrix"].pack(anchor=tk.W, pady=(8, 2))
+    # Matrix group
+    matrix_group = _sidebar_group(parent, app, "section_matrix")
 
-    # Preset combobox
-    row = ttk.Frame(parent, style="Sidebar.TFrame")
-    row.pack(fill=tk.X, pady=(0, 2))
-    app._i18n_labels["preset"] = ttk.Label(row, text=app._t("preset"), style="Sidebar.TLabel")
-    app._i18n_labels["preset"].pack(side=tk.LEFT)
+    row = _sidebar_row(matrix_group, app, "preset")
     app.preset_keys = list(DEMO_PRESETS.keys())
     app.preset_display = [app._t("preset_custom")] + app.preset_keys
     app.preset_var = tk.StringVar(value=app.preset_display[0])
@@ -185,56 +199,38 @@ def build_sidebar(parent: tk.Misc, app: Any) -> None:
     app.preset_combo.pack(side=tk.LEFT, padx=4)
     app.preset_combo.bind("<<ComboboxSelected>>", app._on_preset_change)
 
-    # Scramble moves
-    row = ttk.Frame(parent, style="Sidebar.TFrame")
-    row.pack(fill=tk.X, pady=(2, 2))
-    app._i18n_labels["scramble_moves"] = ttk.Label(row, text=app._t("scramble_moves"), style="Sidebar.TLabel")
-    app._i18n_labels["scramble_moves"].pack(side=tk.LEFT)
+    row = _sidebar_row(matrix_group, app, "scramble_moves")
     app.scramble_var = tk.StringVar(value="20")
     ttk.Spinbox(row, textvariable=app.scramble_var, from_=1, to=200, width=6).pack(side=tk.LEFT, padx=4)
 
-    # Seed
-    row = ttk.Frame(parent, style="Sidebar.TFrame")
-    row.pack(fill=tk.X, pady=(2, 4))
-    app._i18n_labels["seed"] = ttk.Label(row, text=app._t("seed"), style="Sidebar.TLabel")
-    app._i18n_labels["seed"].pack(side=tk.LEFT)
+    row = _sidebar_row(matrix_group, app, "seed")
     app.seed_var = tk.StringVar(value="")
     ttk.Entry(row, textvariable=app.seed_var, width=10).pack(side=tk.LEFT, padx=4)
 
-    # Shuffle button
     app._i18n_labels["shuffle"] = ttk.Button(
-        parent, text=app._t("shuffle"), command=app._on_shuffle, style="Danger.TButton",
+        matrix_group, text=app._t("shuffle"), command=app._on_shuffle, style="Danger.TButton",
     )
-    app._i18n_labels["shuffle"].pack(fill=tk.X, pady=(2, 8))
+    app._i18n_labels["shuffle"].pack(fill=tk.X, pady=(6, 0))
 
-    # Algorithm section
-    app._i18n_labels["section_algorithm"] = ttk.Label(
-        parent, text=app._t("section_algorithm"), font=SECTION_FONT, style="SidebarHeading.TLabel",
-    )
-    app._i18n_labels["section_algorithm"].pack(anchor=tk.W, pady=(4, 2))
+    # Algorithm group
+    algo_group = _sidebar_group(parent, app, "section_algorithm")
     app.algorithm_groups_list = algorithm_groups()
     app.group_var = tk.StringVar(value=app.algorithm_groups_list[0])
-    app.group_combo = ttk.Combobox(parent, textvariable=app.group_var, values=app.algorithm_groups_list, state="readonly")
-    app.group_combo.pack(fill=tk.X, pady=(0, 2))
+    app.group_combo = ttk.Combobox(algo_group, textvariable=app.group_var, values=app.algorithm_groups_list, state="readonly")
+    app.group_combo.pack(fill=tk.X, pady=(0, 4))
     app.group_combo.bind("<<ComboboxSelected>>", app._on_group_change)
     app.algorithm_var = tk.StringVar()
-    app.algorithm_combo = ttk.Combobox(parent, textvariable=app.algorithm_var, state="readonly")
-    app.algorithm_combo.pack(fill=tk.X, pady=(0, 4))
+    app.algorithm_combo = ttk.Combobox(algo_group, textvariable=app.algorithm_var, state="readonly")
+    app.algorithm_combo.pack(fill=tk.X, pady=(0, 2))
 
-    # Heuristic
-    app._i18n_labels["section_heuristic"] = ttk.Label(
-        parent, text=app._t("section_heuristic"), font=SECTION_FONT, style="SidebarHeading.TLabel",
-    )
-    app._i18n_labels["section_heuristic"].pack(anchor=tk.W, pady=(4, 2))
+    # Heuristic group
+    heuristic_group = _sidebar_group(parent, app, "section_heuristic")
     app.heuristic_var = tk.StringVar(value=DEFAULT_HEURISTICS[0])
-    app.heuristic_combo = ttk.Combobox(parent, textvariable=app.heuristic_var, values=DEFAULT_HEURISTICS, state="readonly")
-    app.heuristic_combo.pack(fill=tk.X, pady=(0, 4))
+    app.heuristic_combo = ttk.Combobox(heuristic_group, textvariable=app.heuristic_var, values=DEFAULT_HEURISTICS, state="readonly")
+    app.heuristic_combo.pack(fill=tk.X, pady=(0, 2))
 
-    # Limits
-    app._i18n_labels["section_limits"] = ttk.Label(
-        parent, text=app._t("section_limits"), font=SECTION_FONT, style="SidebarHeading.TLabel",
-    )
-    app._i18n_labels["section_limits"].pack(anchor=tk.W, pady=(4, 2))
+    # Limits group
+    limits_group = _sidebar_group(parent, app, "section_limits")
     cfg = TraceConfig()
     app.limit_vars: Dict[str, tk.StringVar] = {}
     for key, default in [
@@ -245,42 +241,55 @@ def build_sidebar(parent: tk.Misc, app: Any) -> None:
         ("local_max_steps", cfg.local_max_steps),
         ("random_restarts", cfg.random_restarts),
     ]:
-        row = ttk.Frame(parent, style="Sidebar.TFrame")
-        row.pack(fill=tk.X, pady=(1, 1))
-        app._i18n_labels[key] = ttk.Label(row, text=app._t(key), style="Sidebar.TLabel")
-        app._i18n_labels[key].pack(side=tk.LEFT)
+        row = _sidebar_row(limits_group, app, key)
         var = tk.StringVar(value=str(default))
         app.limit_vars[key] = var
         ttk.Spinbox(row, textvariable=var, from_=1, to=100000, width=8).pack(side=tk.LEFT, padx=4)
 
-    # Action buttons (also kept as direct attrs for self-test + future enable/disable)
+    # Action buttons
     app.run = ttk.Button(parent, text=app._t("run"), command=app._on_run, style="Run.TButton")
     app._i18n_labels["run"] = app.run
-    app.run.pack(fill=tk.X, pady=(12, 2))
+    app.run.pack(fill=tk.X, pady=(4, 4))
     app.compare_all = ttk.Button(parent, text=app._t("compare_all"), command=app._on_compare, style="Primary.TButton")
     app._i18n_labels["compare_all"] = app.compare_all
-    app.compare_all.pack(fill=tk.X, pady=(2, 2))
+    app.compare_all.pack(fill=tk.X, pady=(4, 0))
+
+    # Spacer frame: pushes everything to the top, fills remaining vertical space
+    spacer = ttk.Frame(parent, style="Sidebar.TFrame")
+    spacer.pack(fill=tk.BOTH, expand=True)
 
 
 def build_main_area(parent: tk.Misc, app: Any) -> None:
     """Build the main area: Start/Goal matrices on top, Notebook tabs below."""
     header = ttk.Frame(parent, style="TFrame")
     header.pack(fill=tk.X, pady=(0, 12))
-    ttk.Label(header, text="AI SEARCH VISUALIZER", style="SidebarHeading.TLabel").pack(anchor=tk.W)
-    ttk.Label(header, text="8-Puzzle Search Lab", style="PageTitle.TLabel").pack(anchor=tk.W)
-    ttk.Label(
+    app._i18n_labels["header_subtitle"] = ttk.Label(
+        header, text=app._t("header_subtitle"), style="SidebarHeading.TLabel",
+    )
+    app._i18n_labels["header_subtitle"].pack(anchor=tk.W)
+    app._i18n_labels["header_title"] = ttk.Label(
+        header, text=app._t("header_title"), style="PageTitle.TLabel",
+    )
+    app._i18n_labels["header_title"].pack(anchor=tk.W)
+    app._i18n_labels["header_description"] = ttk.Label(
         header,
-        text="Chơi trực tiếp trên Start board, rồi chạy thuật toán để xem Node / Frontier / Reached.",
+        text=app._t("header_description"),
         foreground=PALETTE["muted"],
         wraplength=900,
-    ).pack(anchor=tk.W, pady=(2, 0))
+    )
+    app._i18n_labels["header_description"].pack(anchor=tk.W, pady=(2, 0))
 
-    matrices = ttk.Frame(parent, style="Card.TFrame", padding=10)
-    matrices.pack(fill=tk.X, pady=(0, 8))
+    matrices = tk.Frame(parent, bg=PALETTE["border"])
+    matrices.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+    # Distribute width: start smaller, goal smaller, academic gets the most space.
+    matrices.columnconfigure(0, weight=2, uniform="mat")  # start
+    matrices.columnconfigure(1, weight=2, uniform="mat")  # goal
+    matrices.columnconfigure(2, weight=5, uniform="mat")  # academic
+    matrices.rowconfigure(0, weight=1)
 
     # Start matrix
-    start_frame = ttk.LabelFrame(matrices, text=app._t("start_state"), padding=8)
-    start_frame.pack(side=tk.LEFT, padx=(0, 16))
+    start_frame = ttk.LabelFrame(matrices, text=app._t("start_state"), padding=10)
+    start_frame.grid(row=0, column=0, padx=(0, 2), sticky="nsew")
     initial_start = generate_random_state(scramble_moves=5, seed=42)
     app.start_editor = MatrixEditor(
         start_frame,
@@ -289,7 +298,7 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
         on_change=app._on_game_state_change,
         on_move=app._on_player_move,
     )
-    app.start_editor.pack()
+    app.start_editor.pack(anchor=tk.N)
     app.game_initial_state = initial_start
 
     game_panel = ttk.Frame(start_frame, style="Card.TFrame")
@@ -297,9 +306,9 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
     app.game_moves_var = tk.StringVar(value="")
     ttk.Label(game_panel, textvariable=app.game_moves_var, style="CardSubheading.TLabel").pack(anchor=tk.W)
     app.game_status_var = tk.StringVar(value="")
-    ttk.Label(game_panel, textvariable=app.game_status_var, style="Muted.TLabel", wraplength=310).pack(anchor=tk.W)
+    ttk.Label(game_panel, textvariable=app.game_status_var, style="Muted.TLabel", wraplength=380).pack(anchor=tk.W)
     app.game_hint_var = tk.StringVar(value="")
-    ttk.Label(game_panel, textvariable=app.game_hint_var, style="Muted.TLabel", wraplength=310).pack(anchor=tk.W)
+    ttk.Label(game_panel, textvariable=app.game_hint_var, style="Muted.TLabel", wraplength=380).pack(anchor=tk.W)
 
     game_buttons = ttk.Frame(start_frame, style="Card.TFrame")
     game_buttons.pack(fill=tk.X, pady=(8, 0))
@@ -323,13 +332,14 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
         game_buttons.columnconfigure(col, weight=1)
 
     # Goal matrix
-    goal_frame = ttk.LabelFrame(matrices, text=app._t("goal_state"), padding=8)
-    goal_frame.pack(side=tk.LEFT)
+    goal_frame = ttk.LabelFrame(matrices, text=app._t("goal_state"), padding=10)
+    goal_frame.grid(row=0, column=1, padx=2, sticky="nsew")
     app.goal_editor = MatrixEditor(goal_frame, initial=GOAL_STATE, interactive=False)
-    app.goal_editor.pack()
+    app.goal_editor.pack(anchor=tk.N)
 
-    academic_frame = ttk.Frame(matrices, style="Card.TFrame", padding=(18, 0, 0, 0))
-    academic_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    academic_frame = tk.Frame(matrices, bg=PALETTE["card_bg"], padx=14, pady=10)
+    academic_frame.grid(row=0, column=2, padx=(2, 0), sticky="nsew")
+    academic_frame.columnconfigure(0, weight=1)
     build_academic_card(academic_frame, app)
 
     from .results import build_summary_tab
@@ -344,7 +354,7 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
     app.notebook = ttk.Notebook(parent)
     app.notebook.pack(fill=tk.BOTH, expand=True)
     app._tab_indices: Dict[str, int] = {}
-    app.tab_frames: Dict[str, ttk.Frame] = {}
+    app.tab_frames: Dict[str, tk.Misc] = {}
     tab_builders = {
         "tab_summary": build_summary_tab,
         "tab_trace": build_trace_tab,
@@ -366,8 +376,11 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
         "tab_vacuum",
         "tab_report",
     ]):
-        frame = ttk.Frame(app.notebook, padding=8)
-        app.notebook.add(frame, text=app._t(key))
+        from .scrollable import ScrolledFrame
+        scroll = ScrolledFrame(app.notebook, bg=PALETTE["card_bg"])
+        app.notebook.add(scroll, text=app._t(key))
+        frame = scroll.inner
+        frame.configure(padding=12)
         app._tab_indices[key] = i
         app.tab_frames[key] = frame
         builder = tab_builders.get(key)

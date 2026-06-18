@@ -31,8 +31,8 @@ class App:
         self.lang: str = DEFAULT_LANG
         self.root = root or tk.Tk()
         self.root.title(self._t("app_title"))
-        self.root.geometry("1280x820")
-        self.root.minsize(1024, 720)
+        self.root.geometry("1200x760")
+        self.root.minsize(1100, 680)
         apply_theme(self.root)
         self._i18n_labels: Dict[str, Any] = {}
         self.last_result = None
@@ -51,10 +51,11 @@ class App:
         return t(key, self.lang)
 
     def _build_layout(self) -> None:
-        self.sidebar = ttk.Frame(self.root, padding=12, style="Sidebar.TFrame")
+        self.sidebar = ttk.Frame(self.root, padding=14, style="Sidebar.TFrame")
         self.sidebar.pack(side=tk.LEFT, fill=tk.Y)
-        self.main_area = ttk.Frame(self.root, padding=14, style="TFrame")
-        self.main_area.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        ttk.Separator(self.root, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y)
+        self.main_area = ttk.Frame(self.root, padding=16, style="TFrame")
+        self.main_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self._build_language_toggle()
         build_sidebar(self.sidebar, self)
         build_main_area(self.main_area, self)

@@ -18,6 +18,7 @@ from eight_puzzle_search_app import (
     algorithms_by_group,
     run_algorithm,
 )
+from .theme import PALETTE
 
 
 _COMPARE_COLS: tuple = (
