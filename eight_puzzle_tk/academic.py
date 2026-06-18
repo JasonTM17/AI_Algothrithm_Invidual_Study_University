@@ -42,32 +42,33 @@ def _add_expandable_section(
 
     body = tk.Frame(parent, bg=PALETTE["card_bg"])
     if expanded:
-        body.pack(fill=tk.X, padx=(20, 0), pady=(4, 0))
+        body.pack(fill=tk.X, pady=(4, 0))
 
     for label_key, text_key in items:
         row = tk.Frame(body, bg=PALETTE["card_bg"])
-        row.pack(fill=tk.X, pady=3, anchor=tk.W)
+        row.pack(fill=tk.X, pady=(6, 2), anchor=tk.W)
+        # Stack label on top, text below — much more readable in a narrow column.
         bold = tk.Label(
             row, text=app._t(label_key),
             font=("Segoe UI", 10, "bold"),
             bg=PALETTE["card_bg"], fg=PALETTE["text"],
-            anchor=tk.NW, justify=tk.LEFT,
+            anchor=tk.W, justify=tk.LEFT,
         )
-        bold.pack(side=tk.LEFT, anchor=tk.NW)
+        bold.pack(fill=tk.X, anchor=tk.W)
         text = tk.Label(
             row, text=app._t(text_key),
             font=("Segoe UI", 10),
             bg=PALETTE["card_bg"], fg=PALETTE["muted"],
-            wraplength=380, anchor=tk.NW, justify=tk.LEFT,
+            wraplength=560, anchor=tk.W, justify=tk.LEFT,
         )
-        text.pack(side=tk.LEFT, anchor=tk.NW, padx=(4, 0))
+        text.pack(fill=tk.X, anchor=tk.W, pady=(1, 0))
 
     def toggle(_event: Optional[tk.Event] = None) -> None:
         if body.winfo_ismapped():
             body.pack_forget()
             arrow_var.set(">")
         else:
-            body.pack(fill=tk.X, padx=(20, 0), pady=(4, 0))
+            body.pack(fill=tk.X, pady=(4, 0))
             arrow_var.set("v")
 
     for w in (header, arrow, title_lbl):

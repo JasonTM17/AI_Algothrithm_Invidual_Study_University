@@ -281,10 +281,15 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
 
     matrices = tk.Frame(parent, bg=PALETTE["border"])
     matrices.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+    # Distribute width: start smaller, goal smaller, academic gets the most space.
+    matrices.columnconfigure(0, weight=2, uniform="mat")  # start
+    matrices.columnconfigure(1, weight=2, uniform="mat")  # goal
+    matrices.columnconfigure(2, weight=5, uniform="mat")  # academic
+    matrices.rowconfigure(0, weight=1)
 
     # Start matrix
     start_frame = ttk.LabelFrame(matrices, text=app._t("start_state"), padding=10)
-    start_frame.pack(side=tk.LEFT, padx=(0, 2), fill=tk.BOTH, expand=True)
+    start_frame.grid(row=0, column=0, padx=(0, 2), sticky="nsew")
     initial_start = generate_random_state(scramble_moves=5, seed=42)
     app.start_editor = MatrixEditor(
         start_frame,
@@ -293,7 +298,7 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
         on_change=app._on_game_state_change,
         on_move=app._on_player_move,
     )
-    app.start_editor.pack()
+    app.start_editor.pack(anchor=tk.N)
     app.game_initial_state = initial_start
 
     game_panel = ttk.Frame(start_frame, style="Card.TFrame")
@@ -301,9 +306,9 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
     app.game_moves_var = tk.StringVar(value="")
     ttk.Label(game_panel, textvariable=app.game_moves_var, style="CardSubheading.TLabel").pack(anchor=tk.W)
     app.game_status_var = tk.StringVar(value="")
-    ttk.Label(game_panel, textvariable=app.game_status_var, style="Muted.TLabel", wraplength=310).pack(anchor=tk.W)
+    ttk.Label(game_panel, textvariable=app.game_status_var, style="Muted.TLabel", wraplength=380).pack(anchor=tk.W)
     app.game_hint_var = tk.StringVar(value="")
-    ttk.Label(game_panel, textvariable=app.game_hint_var, style="Muted.TLabel", wraplength=310).pack(anchor=tk.W)
+    ttk.Label(game_panel, textvariable=app.game_hint_var, style="Muted.TLabel", wraplength=380).pack(anchor=tk.W)
 
     game_buttons = ttk.Frame(start_frame, style="Card.TFrame")
     game_buttons.pack(fill=tk.X, pady=(8, 0))
@@ -328,12 +333,12 @@ def build_main_area(parent: tk.Misc, app: Any) -> None:
 
     # Goal matrix
     goal_frame = ttk.LabelFrame(matrices, text=app._t("goal_state"), padding=10)
-    goal_frame.pack(side=tk.LEFT, padx=(2, 0), fill=tk.BOTH, expand=True)
+    goal_frame.grid(row=0, column=1, padx=2, sticky="nsew")
     app.goal_editor = MatrixEditor(goal_frame, initial=GOAL_STATE, interactive=False)
     app.goal_editor.pack(anchor=tk.N)
 
     academic_frame = tk.Frame(matrices, bg=PALETTE["card_bg"], padx=14, pady=10)
-    academic_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    academic_frame.grid(row=0, column=2, padx=(2, 0), sticky="nsew")
     academic_frame.columnconfigure(0, weight=1)
     build_academic_card(academic_frame, app)
 

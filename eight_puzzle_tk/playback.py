@@ -132,6 +132,19 @@ def populate_path_playback(app: Any, result: SearchResult) -> None:
     if not app.playback_container.winfo_ismapped():
         app.playback_container.pack(fill=tk.X, pady=(10, 0))
     _render(app, 0)
+    # Auto-scroll the ScrolledFrame to show the playback board.
+    try:
+        scrolled = app.notebook.nametowidget(
+            app.notebook.tabs()[app._tab_indices.get("tab_summary", 0)]
+        )
+        if hasattr(scrolled, "canvas"):
+            scrolled.canvas.update_idletasks()
+            bbox = scrolled.canvas.bbox("all")
+            if bbox:
+                # Scroll to the bottom so playback is visible
+                scrolled.canvas.yview_moveto(1.0)
+    except Exception:
+        pass
 
 
 def reset_path_playback(app: Any) -> None:
