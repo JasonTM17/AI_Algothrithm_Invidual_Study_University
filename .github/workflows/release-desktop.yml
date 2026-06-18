@@ -1,0 +1,59 @@
+name: Build Desktop EXE
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-exe:
+    name: Build Windows desktop executable
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install runtime and build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller
+
+      - name: Compile-check Python sources
+        run: |
+          python -m py_compile eight_puzzle_search_app.py streamlit_eight_puzzle_app.py eight_puzzle_tk_app.py stage3_search_showcase_app.py
+
+      - name: Run core self-test
+        run: python eight_puzzle_search_app.py --self-test
+
+      - name: Run desktop smoke test
+        run: python eight_puzzle_tk_app.py --self-test
+
+      - name: Build one-file EXE
+        shell: pwsh
+        run: ./build_desktop_exe.ps1 -Python python -Name 8PuzzleSearchLab
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 8PuzzleSearchLab-windows
+          path: dist/8PuzzleSearchLab.exe
+          if-no-files-found: error
+
+      - name: Publish GitHub Release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/8PuzzleSearchLab.exe
+          generate_release_notes: true
