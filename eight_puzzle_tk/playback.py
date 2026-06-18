@@ -19,24 +19,24 @@ from eight_puzzle_search_app import SearchResult, State
 from .theme import PALETTE
 
 
-_CELL_FONT = ("Consolas", 18, "bold")
+_CELL_FONT = ("Consolas", 28, "bold")
 
 
 def _make_board(parent: tk.Misc) -> List[tk.Label]:
     """Build a 3x3 grid of bordered Labels for step playback."""
     # Wrap each cell in a border frame so the grid has clean separation.
     border = tk.Frame(parent, bg=PALETTE["border"], bd=0)
-    border.pack(anchor=tk.CENTER)
+    border.pack(anchor=tk.CENTER, padx=4, pady=4)
     cells: List[tk.Label] = []
     inner = tk.Frame(border, bg=PALETTE["border"], bd=0)
-    inner.pack(padx=2, pady=2)
+    inner.pack(padx=3, pady=3)
     for i in range(9):
         lbl = tk.Label(
-            inner, text="-", width=3, height=1,
+            inner, text="-", width=4, height=1,
             font=_CELL_FONT, relief=tk.FLAT, borderwidth=0,
             bg=PALETTE["tile_bg"], fg=PALETTE["text"],
         )
-        lbl.grid(row=i // 3, column=i % 3, padx=2, pady=2, sticky="nsew")
+        lbl.grid(row=i // 3, column=i % 3, padx=3, pady=3, sticky="nsew")
         cells.append(lbl)
     for r in range(3):
         inner.rowconfigure(r, weight=1, uniform="cell")
@@ -58,10 +58,10 @@ def build_path_playback_section(parent: tk.Misc, app: Any) -> None:
     )
 
     body = ttk.Frame(app.playback_container)
-    body.pack(fill=tk.X, pady=(0, 4))
+    body.pack(fill=tk.X, pady=(0, 8))
 
-    board_frame = ttk.LabelFrame(body, text=app._t("playback_state"), padding=8)
-    board_frame.pack(side=tk.LEFT, padx=(0, 16))
+    board_frame = ttk.LabelFrame(body, text=app._t("playback_state"), padding=10)
+    board_frame.pack(side=tk.LEFT, padx=(0, 20), anchor=tk.N)
     app.playback_cells = _make_board(board_frame)
 
     controls = tk.Frame(app.playback_container, bg=PALETTE["card_bg"])

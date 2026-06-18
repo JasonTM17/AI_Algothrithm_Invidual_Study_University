@@ -34,13 +34,13 @@ def _make_metric_card(parent: tk.Misc, app: Any, label_key: str):
         highlightthickness=1, padx=10, pady=8,
     )
     app._i18n_labels[label_key] = ttk.Label(
-        card, text=app._t(label_key), font=("Segoe UI", 9),
+        card, text=app._t(label_key), font=("Segoe UI", 10),
         foreground=PALETTE["muted"], background=PALETTE["card_bg"],
     )
     app._i18n_labels[label_key].pack(anchor=tk.W)
     var = tk.StringVar(value="-")
     tk.Label(
-        card, textvariable=var, font=("Segoe UI", 12, "bold"),
+        card, textvariable=var, font=("Segoe UI", 14, "bold"),
         foreground=PALETTE["text"], bg=PALETTE["card_bg"], anchor=tk.W,
     ).pack(anchor=tk.W, pady=(2, 0))
     return var, card

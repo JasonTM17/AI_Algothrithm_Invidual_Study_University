@@ -28,7 +28,7 @@ _COL_WIDTHS: dict = {
 }
 _RIGHT_ALIGNED = {"Step", "Depth", "g", "h", "f"}
 
-_CELL_FONT = ("Consolas", 18, "bold")
+_CELL_FONT = ("Consolas", 22, "bold")
 
 
 # ---------------------------------------------------------------------------
@@ -53,17 +53,17 @@ def _parse_node_to_state(node_text: str) -> Optional[State]:
 def _make_board(parent: tk.Misc) -> List[tk.Label]:
     """Build a 3x3 grid of bordered Labels for trace replay."""
     border = tk.Frame(parent, bg=PALETTE["border"], bd=0)
-    border.pack(anchor=tk.CENTER)
+    border.pack(anchor=tk.CENTER, padx=3, pady=3)
     cells: List[tk.Label] = []
     inner = tk.Frame(border, bg=PALETTE["border"], bd=0)
     inner.pack(padx=2, pady=2)
     for i in range(9):
         lbl = tk.Label(
-            inner, text="-", width=3, height=1,
+            inner, text="-", width=4, height=1,
             font=_CELL_FONT, relief=tk.FLAT, borderwidth=0,
             bg=PALETTE["tile_bg"], fg=PALETTE["text"],
         )
-        lbl.grid(row=i // 3, column=i % 3, padx=2, pady=2, sticky="nsew")
+        lbl.grid(row=i // 3, column=i % 3, padx=3, pady=3, sticky="nsew")
         cells.append(lbl)
     for r in range(3):
         inner.rowconfigure(r, weight=1, uniform="trace_cell")
@@ -92,16 +92,16 @@ def _make_info_chip(parent: tk.Misc, label_text: str, var: tk.Variable) -> tk.Fr
     card = tk.Frame(
         parent, bg=PALETTE["card_bg"],
         highlightbackground=PALETTE["border"],
-        highlightthickness=1, padx=8, pady=6,
+        highlightthickness=1, padx=12, pady=8,
     )
     tk.Label(
-        card, text=label_text, font=("Segoe UI", 8),
+        card, text=label_text, font=("Segoe UI", 9),
         fg=PALETTE["muted"], bg=PALETTE["card_bg"],
     ).pack(anchor=tk.W)
     tk.Label(
-        card, textvariable=var, font=("Segoe UI", 14, "bold"),
+        card, textvariable=var, font=("Segoe UI", 18, "bold"),
         fg=PALETTE["text"], bg=PALETTE["card_bg"],
-    ).pack(anchor=tk.W, pady=(1, 0))
+    ).pack(anchor=tk.W, pady=(2, 0))
     return card
 
 

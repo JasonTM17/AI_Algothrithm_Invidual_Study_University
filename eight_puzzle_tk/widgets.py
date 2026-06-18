@@ -25,7 +25,7 @@ from eight_puzzle_search_app import (
 from .academic import build_academic_card
 from .theme import PALETTE
 
-CELL_FONT = ("Consolas", 24, "bold")
+CELL_FONT = ("Consolas", 28, "bold")
 SECTION_FONT = ("Segoe UI", 10, "bold")
 ENTRY_INVALID_BG = PALETTE["invalid_bg"]
 
