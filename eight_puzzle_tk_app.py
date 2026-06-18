@@ -84,12 +84,12 @@ def self_test() -> int:
 
         # Core search + Summary tab (cụm 3)
         for attr in (
-            "summary_status_var", "summary_metrics", "summary_certificate",
+            "summary_status_var", "summary_metrics", "_cert_chips",
             "summary_error_var", "summary_conclusion_var",
         ):
             assert hasattr(app, attr), f"summary widget missing: {attr}"
         assert len(app.summary_metrics) == 11, "expected 11 metric rows"
-        assert len(app.summary_certificate) == 5, "expected 5 cert rows"
+        assert len(app._cert_chips) == 5, "expected 5 cert chips"
 
         app.preset_var.set("easy_2")
         app._on_preset_change()
@@ -115,16 +115,45 @@ def self_test() -> int:
             f"expected path_cost=2 for easy_2, got {app.summary_metrics['path_cost'].get()!r}"
         )
         for key in ("path_valid", "cost_matches_actions", "terminal_matches_goal"):
-            assert app.summary_certificate[key].get() == app._t("cert_pass"), (
-                f"cert {key} not pass: {app.summary_certificate[key].get()!r}"
+            assert app._cert_chips[key].cget("text") == app._t("cert_pass"), (
+                f"cert {key} not pass: {app._cert_chips[key].cget('text')!r}"
             )
         assert app.notebook.index(app.notebook.select()) == app._tab_indices["tab_summary"], (
             "notebook did not switch to summary tab after _on_run"
         )
 
         # Trace tab (cụm 4a)
-        for attr in ("trace_status_var", "trace_tree"):
+        for attr in (
+            "trace_status_var", "trace_tree",
+            "trace_replay_container", "trace_replay_cells",
+            "trace_replay_slider",
+            "replay_step_var", "replay_gn", "replay_hn", "replay_fn",
+            "replay_priority", "replay_key",
+            "replay_generated", "replay_skipped",
+            "_trace_replay_rows",
+        ):
             assert hasattr(app, attr), f"trace widget missing: {attr}"
+        # Trace replay player should be visible after populate
+        assert app.trace_replay_container.winfo_manager() == "pack", (
+            "trace replay player should be packed after populate"
+        )
+        assert len(app._trace_replay_rows) > 0, "replay rows should be populated"
+        assert len(app.trace_replay_cells) == 9, "replay board should have 9 cells"
+        # Replay board should show numbers (not "-") for populated rows
+        assert app.trace_replay_cells[0].cget("text") != "-", (
+            "replay board not rendered after populate"
+        )
+        # Info chips should have values
+        assert app.replay_gn.get() != "-", "replay_gn should be populated"
+        assert app.replay_hn.get() != "-", "replay_hn should be populated"
+        assert app.replay_fn.get() != "-", "replay_fn should be populated"
+        # Slider should scrub through rows
+        total = len(app._trace_replay_rows) - 1
+        app.replay_step_var.set(total)
+        from eight_puzzle_tk.trace import _on_trace_replay_slider
+        _on_trace_replay_slider(app)
+        assert app.replay_step_var.get() == total, "slider did not reach last row"
+
         trace_rows = app.trace_tree.get_children()
         assert len(trace_rows) > 0, "BFS on easy_2 should produce at least one trace row"
         status_text = app.trace_status_var.get()
@@ -204,6 +233,10 @@ def self_test() -> int:
         )
         assert app.trace_tree.get_children() == (), (
             "trace tree not cleared on error"
+        )
+        assert app._trace_replay_rows == [], "trace replay rows not cleared on error"
+        assert not app.trace_replay_container.winfo_ismapped(), (
+            "trace replay player not hidden on error"
         )
         assert app.heuristics_status_var.get() == app._t("heuristics_idle"), (
             "heuristics tab not reset to idle on error"

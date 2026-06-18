@@ -10,6 +10,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Optional
 
+from .theme import PALETTE
+
 
 class ScrolledFrame(ttk.Frame):
     """A ttk.Frame containing a Canvas + vertical Scrollbar + inner ttk.Frame."""
@@ -23,7 +25,7 @@ class ScrolledFrame(ttk.Frame):
         **kwargs: object,
     ) -> None:
         super().__init__(parent, **kwargs)
-        bg = bg or "white"
+        bg = bg or PALETTE["card_bg"]
         self.canvas = tk.Canvas(self, highlightthickness=0, borderwidth=0, background=bg)
         self.vsb = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.vsb.set)
@@ -36,6 +38,9 @@ class ScrolledFrame(ttk.Frame):
         for w in (self.canvas, self.inner):
             w.bind("<Enter>", self._on_enter, add="+")
             w.bind("<Leave>", self._on_leave, add="+")
+            w.bind("<MouseWheel>", self._dispatch_wheel, add="+")
+            w.bind("<Button-4>", self._dispatch_wheel_up, add="+")
+            w.bind("<Button-5>", self._dispatch_wheel_down, add="+")
 
     def _on_inner_configure(self, _event: tk.Event) -> None:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -44,14 +49,10 @@ class ScrolledFrame(ttk.Frame):
         self.canvas.itemconfigure(self._win_id, width=event.width)
 
     def _on_enter(self, _event: tk.Event) -> None:
-        self.canvas.bind_all("<MouseWheel>", self._dispatch_wheel)
-        self.canvas.bind_all("<Button-4>", self._dispatch_wheel_up)
-        self.canvas.bind_all("<Button-5>", self._dispatch_wheel_down)
+        pass
 
     def _on_leave(self, _event: tk.Event) -> None:
-        self.canvas.unbind_all("<MouseWheel>")
-        self.canvas.unbind_all("<Button-4>")
-        self.canvas.unbind_all("<Button-5>")
+        pass
 
     @staticmethod
     def _scrolled_frame_under(widget: tk.Misc) -> Optional["ScrolledFrame"]:
@@ -64,7 +65,7 @@ class ScrolledFrame(ttk.Frame):
 
     def _dispatch_wheel(self, event: tk.Event) -> None:
         sf = self._scrolled_frame_under(event.widget)
-        if sf is not self:
+        if sf is None:
             return
         delta = getattr(event, "delta", 0)
         if delta:

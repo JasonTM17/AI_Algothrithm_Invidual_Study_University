@@ -1,4 +1,5 @@
-"""Academic content card: PEAS problem model + selected algorithm profile.
+"""Academic content card: PEAS, problem definition, evaluation criteria,
+trace glossary, and selected algorithm profile.
 
 Rendered inside the right-hand card of the main area. Each section is
 collapsible: clicking the header toggles the content visibility and the
@@ -10,6 +11,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, List, Optional, Tuple
 
+from .theme import PALETTE
+
 
 def _add_expandable_section(
     parent: tk.Misc,
@@ -19,38 +22,43 @@ def _add_expandable_section(
     *,
     expanded: bool = True,
 ) -> None:
-    """Build a collapsible section with a title and (label, text) rows.
-
-    ``items`` is a list of ``(label_i18n_key, text_i18n_key)`` pairs. The label
-    is rendered bold inline with the text, matching the reference layout.
-    """
-    header = ttk.Frame(parent, style="Card.TFrame", cursor="hand2")
-    header.pack(fill=tk.X, pady=(12, 0), anchor=tk.W)
+    """Build a collapsible section with a title and (label, text) rows."""
+    header = tk.Frame(parent, bg=PALETTE["card_bg"], cursor="hand2")
+    header.pack(fill=tk.X, pady=(10, 0), anchor=tk.W)
 
     arrow_var = tk.StringVar(value="v" if expanded else ">")
-    arrow = ttk.Label(
+    arrow = tk.Label(
         header, textvariable=arrow_var,
-        style="CardSubheading.TLabel", width=2,
+        font=("Segoe UI", 10, "bold"),
+        bg=PALETTE["card_bg"], fg=PALETTE["primary"], width=2, anchor=tk.W,
     )
     arrow.pack(side=tk.LEFT)
-    title_lbl = ttk.Label(header, text=app._t(title_key), style="CardSubheading.TLabel")
+    title_lbl = tk.Label(
+        header, text=app._t(title_key),
+        font=("Segoe UI", 11, "bold"),
+        bg=PALETTE["card_bg"], fg=PALETTE["text"],
+    )
     title_lbl.pack(side=tk.LEFT, padx=(4, 0))
 
-    body = ttk.Frame(parent, style="Card.TFrame")
+    body = tk.Frame(parent, bg=PALETTE["card_bg"])
     if expanded:
         body.pack(fill=tk.X, padx=(20, 0), pady=(4, 0))
 
     for label_key, text_key in items:
-        row = ttk.Frame(body, style="Card.TFrame")
+        row = tk.Frame(body, bg=PALETTE["card_bg"])
         row.pack(fill=tk.X, pady=3, anchor=tk.W)
-        bold = ttk.Label(
+        bold = tk.Label(
             row, text=app._t(label_key),
-            style="Card.TLabel", font=("Segoe UI", 9, "bold"),
+            font=("Segoe UI", 10, "bold"),
+            bg=PALETTE["card_bg"], fg=PALETTE["text"],
+            anchor=tk.NW, justify=tk.LEFT,
         )
         bold.pack(side=tk.LEFT, anchor=tk.NW)
-        text = ttk.Label(
+        text = tk.Label(
             row, text=app._t(text_key),
-            style="Card.TLabel", wraplength=420, justify=tk.LEFT,
+            font=("Segoe UI", 10),
+            bg=PALETTE["card_bg"], fg=PALETTE["muted"],
+            wraplength=380, anchor=tk.NW, justify=tk.LEFT,
         )
         text.pack(side=tk.LEFT, anchor=tk.NW, padx=(4, 0))
 
@@ -67,7 +75,7 @@ def _add_expandable_section(
 
 
 def build_academic_card(parent: tk.Misc, app: Any) -> None:
-    """Build the PEAS + algorithm profile content into ``parent``."""
+    """Build all academic sections into ``parent``."""
     _add_expandable_section(
         parent, app, "academic_peas_title",
         [
@@ -76,6 +84,37 @@ def build_academic_card(parent: tk.Misc, app: Any) -> None:
             ("academic_peas_actuators_label", "academic_peas_actuators_text"),
             ("academic_peas_sensors_label", "academic_peas_sensors_text"),
         ],
+    )
+    _add_expandable_section(
+        parent, app, "academic_problem_def_title",
+        [
+            ("academic_pd_objective_label", "academic_pd_objective_text"),
+            ("academic_pd_state_space_label", "academic_pd_state_space_text"),
+            ("academic_pd_transition_label", "academic_pd_transition_text"),
+            ("academic_pd_heuristic_label", "academic_pd_heuristic_text"),
+        ],
+    )
+    _add_expandable_section(
+        parent, app, "academic_evaluation_title",
+        [
+            ("academic_eval_complete_label", "academic_eval_complete_text"),
+            ("academic_eval_optimal_label", "academic_eval_optimal_text"),
+            ("academic_eval_expanded_label", "academic_eval_expanded_text"),
+            ("academic_eval_frontier_label", "academic_eval_frontier_text"),
+            ("academic_eval_runtime_label", "academic_eval_runtime_text"),
+        ],
+        expanded=False,
+    )
+    _add_expandable_section(
+        parent, app, "academic_glossary_title",
+        [
+            ("academic_glossary_node_label", "academic_glossary_node_text"),
+            ("academic_glossary_frontier_label", "academic_glossary_frontier_text"),
+            ("academic_glossary_reached_label", "academic_glossary_reached_text"),
+            ("academic_glossary_priority_label", "academic_glossary_priority_text"),
+            ("academic_glossary_key_label", "academic_glossary_key_text"),
+        ],
+        expanded=False,
     )
     _add_expandable_section(
         parent, app, "academic_algo_profile_title",
