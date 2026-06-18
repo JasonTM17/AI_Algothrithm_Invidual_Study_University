@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: eight-puzzle-search-lab
+    env: python
+    plan: free
+    buildCommand: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+    startCommand: python -m streamlit run stage3_search_showcase_app.py --server.address=0.0.0.0 --server.port=$PORT
