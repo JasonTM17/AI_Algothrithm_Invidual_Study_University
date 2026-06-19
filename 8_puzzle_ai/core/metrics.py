@@ -252,27 +252,27 @@ def get_algorithm_properties() -> Dict[str, Dict[str, Any]]:
             "group": "Local Search",
             "complete": False,
             "optimal": False,
-            "time_complexity": "O(1)",
+            "time_complexity": "O(n \u00d7 b)",
             "space_complexity": "O(1)",
             "uses_heuristic": True,
             "suitable": False,
-            "notes": "Can get stuck at local optimum."
+            "notes": "Can get stuck at local optimum. (n = steps)"
         },
         "Steepest-Ascent Hill Climbing": {
             "group": "Local Search",
             "complete": False,
             "optimal": False,
-            "time_complexity": "O(b)",
+            "time_complexity": "O(n \u00d7 b)",
             "space_complexity": "O(1)",
             "uses_heuristic": True,
             "suitable": False,
-            "notes": "Better than simple but still can get stuck."
+            "notes": "Better than simple but still can get stuck. (n = steps)"
         },
         "Stochastic Hill Climbing": {
             "group": "Local Search",
             "complete": False,
             "optimal": False,
-            "time_complexity": "O(b)",
+            "time_complexity": "O(n \u00d7 b)",
             "space_complexity": "O(1)",
             "uses_heuristic": True,
             "suitable": False,
@@ -280,19 +280,19 @@ def get_algorithm_properties() -> Dict[str, Dict[str, Any]]:
         },
         "Random-Restart Hill Climbing": {
             "group": "Local Search",
-            "complete": True,
+            "complete": False,
             "optimal": False,
             "time_complexity": "O(?)",
             "space_complexity": "O(1)",
             "uses_heuristic": True,
             "suitable": False,
-            "notes": "Complete with enough restarts. Not optimal."
+            "notes": "Probabilistically complete with truly random restarts. Not optimal."
         },
         "Local Beam Search": {
             "group": "Local Search",
             "complete": False,
             "optimal": False,
-            "time_complexity": "O(kb)",
+            "time_complexity": "O(n \u00d7 k \u00d7 b)",
             "space_complexity": "O(k)",
             "uses_heuristic": True,
             "suitable": False,
@@ -300,7 +300,7 @@ def get_algorithm_properties() -> Dict[str, Dict[str, Any]]:
         },
         "Simulated Annealing": {
             "group": "Local Search",
-            "complete": True,
+            "complete": False,
             "optimal": False,
             "time_complexity": "O(?)",
             "space_complexity": "O(1)",
@@ -311,48 +311,58 @@ def get_algorithm_properties() -> Dict[str, Dict[str, Any]]:
         # Complex Environments
         "AND-OR Search": {
             "group": "Complex Environments",
-            "complete": True,
+            "complete": False,
             "optimal": False,
             "time_complexity": "O(b^d)",
             "space_complexity": "O(bd)",
             "uses_heuristic": False,
             "suitable": False,
-            "notes": "For nondeterministic environments. Not needed for standard 8-puzzle."
+            "notes": "Bounded educational demo. For nondeterministic environments."
         },
         "No Observation": {
             "group": "Complex Environments",
-            "complete": True,
+            "complete": False,
             "optimal": False,
             "time_complexity": "O(2^N)",
             "space_complexity": "O(2^N)",
-            "uses_heuristic": False,
+            "uses_heuristic": True,
             "suitable": False,
-            "notes": "Uses belief states. Not needed for fully observable 8-puzzle."
+            "notes": "Bounded educational demo. Uses belief states."
         },
         "Partially Observable": {
             "group": "Complex Environments",
-            "complete": True,
+            "complete": False,
             "optimal": False,
             "time_complexity": "O(2^N)",
             "space_complexity": "O(2^N)",
-            "uses_heuristic": False,
+            "uses_heuristic": True,
             "suitable": False,
-            "notes": "Uses belief states with observations. Not needed for 8-puzzle."
+            "notes": "Bounded educational demo. Uses belief states with observations."
         },
         "Online Search": {
             "group": "Complex Environments",
-            "complete": True,
+            "complete": False,
             "optimal": False,
             "time_complexity": "O(?)",
             "space_complexity": "O(N)",
-            "uses_heuristic": False,
+            "uses_heuristic": True,
             "suitable": False,
-            "notes": "For unknown environments. Not needed for 8-puzzle."
+            "notes": "Bounded educational demo. For unknown environments."
         },
         # CSP
         "Backtracking CSP": {
             "group": "Constraint Satisfaction",
-            "complete": True,
+            "complete": False,
+            "optimal": False,
+            "time_complexity": "O(d^n)",
+            "space_complexity": "O(n)",
+            "uses_heuristic": False,
+            "suitable": False,
+            "notes": "8-puzzle is not a static CSP. Cannot find action sequence."
+        },
+        "CSP Backtracking": {
+            "group": "Constraint Satisfaction",
+            "complete": False,
             "optimal": False,
             "time_complexity": "O(d^n)",
             "space_complexity": "O(n)",
@@ -373,8 +383,8 @@ def get_algorithm_properties() -> Dict[str, Dict[str, Any]]:
         # Adversarial
         "Minimax": {
             "group": "Adversarial Search",
-            "complete": True,
-            "optimal": True,
+            "complete": "For bounded 2-player games",
+            "optimal": "For 2-player zero-sum games",
             "time_complexity": "O(b^m)",
             "space_complexity": "O(bm)",
             "uses_heuristic": True,
@@ -383,8 +393,8 @@ def get_algorithm_properties() -> Dict[str, Dict[str, Any]]:
         },
         "Alpha-Beta Pruning": {
             "group": "Adversarial Search",
-            "complete": True,
-            "optimal": True,
+            "complete": "For bounded 2-player games",
+            "optimal": "For 2-player zero-sum games",
             "time_complexity": "O(b^(m/2))",
             "space_complexity": "O(bm)",
             "uses_heuristic": True,

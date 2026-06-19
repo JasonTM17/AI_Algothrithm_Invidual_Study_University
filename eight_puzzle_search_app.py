@@ -262,7 +262,7 @@ ALGORITHM_INFO: Dict[str, Dict[str, str]] = {
         "group": "Constraint Satisfaction Problems",
         "optimal": "Not applicable; graph representation",
         "complete": "Not applicable; no state-space solving",
-        "suitable": "Educational constraint graph/hyperedge preview",
+        "suitable": "Educational Thu Duc graph-coloring CSP demo",
     },
     "Minimax": {
         "group": "Adversarial / Stochastic Search",
@@ -308,7 +308,7 @@ PRIORITY_RULES: Dict[str, str] = {
     "Global Constraints": "Apply AllDifferent and transition constraints across whole state snapshots.",
     "CSP Backtracking": "Depth-bounded backtracking over legal action assignments with forward checking.",
     "Min-Conflicts": "Iteratively change the conflicted variable/action that most reduces conflicts.",
-    "Constraint Graph": "Represent CSP variables as nodes and constraints as edges or hyperedges.",
+    "Constraint Graph": "Graph coloring CSP: variables are Thu Duc regions, domains are colors, edges require adjacent regions to use different colors.",
     "Minimax": "MAX chooses moves that maximize utility while MIN chooses moves that minimize it.",
     "Alpha-Beta Pruning": "Minimax with alpha/beta bounds to skip provably irrelevant branches.",
     "Expectimax": "MAX chooses the action with best expected value over stochastic chance outcomes.",
@@ -442,11 +442,18 @@ def algorithm_run_mode(algorithm: str, lang: str = "en") -> Dict[str, str]:
     elif group == "Constraint Satisfaction Problems":
         mode = "educational_csp"
         label = "Mô phỏng CSP" if lang == "vi" else "CSP demo"
-        description = (
-            "Diễn đạt 8-puzzle bằng biến, miền giá trị và ràng buộc theo planning horizon."
-            if lang == "vi"
-            else "Represents 8-puzzle with variables, domains, and constraints over a planning horizon."
-        )
+        if canonical == "Constraint Graph":
+            description = (
+                "Demo tô màu đồ thị Thủ Đức: vùng là biến, màu là miền, cạnh giáp ranh là ràng buộc khác màu."
+                if lang == "vi"
+                else "Thu Duc graph-coloring demo: regions are variables, colors are domains, adjacency edges are different-color constraints."
+            )
+        else:
+            description = (
+                "Diễn đạt 8-puzzle bằng biến, miền giá trị và ràng buộc theo planning horizon."
+                if lang == "vi"
+                else "Represents 8-puzzle with variables, domains, and constraints over a planning horizon."
+            )
     else:
         mode = "educational_adversarial"
         label = "Mô phỏng đối kháng/xác suất" if lang == "vi" else "Adversarial/stochastic demo"
@@ -559,10 +566,26 @@ def linear_conflict(state: State, goal: State = GOAL_STATE) -> int:
             goal_row, goal_col = divmod(goal_positions[tile], BOARD_SIZE)
             if goal_row == row:
                 row_tiles.append((col, goal_col))
+        conflicts = {i: [] for i in range(len(row_tiles))}
         for index, (_, goal_col) in enumerate(row_tiles):
-            for _, other_goal_col in row_tiles[index + 1 :]:
+            for j, (_, other_goal_col) in enumerate(row_tiles[index + 1 :], start=index + 1):
                 if goal_col > other_goal_col:
-                    h += 2
+                    conflicts[index].append(j)
+                    conflicts[j].append(index)
+                    
+        while True:
+            max_conflicts = 0
+            max_tile = -1
+            for k, v in conflicts.items():
+                if len(v) > max_conflicts:
+                    max_conflicts = len(v)
+                    max_tile = k
+            if max_conflicts == 0:
+                break
+            for neighbor in conflicts[max_tile]:
+                conflicts[neighbor].remove(max_tile)
+            conflicts[max_tile] = []
+            h += 2
 
     for col in range(BOARD_SIZE):
         col_tiles: List[Tuple[int, int]] = []
@@ -573,10 +596,26 @@ def linear_conflict(state: State, goal: State = GOAL_STATE) -> int:
             goal_row, goal_col = divmod(goal_positions[tile], BOARD_SIZE)
             if goal_col == col:
                 col_tiles.append((row, goal_row))
+        conflicts = {i: [] for i in range(len(col_tiles))}
         for index, (_, goal_row) in enumerate(col_tiles):
-            for _, other_goal_row in col_tiles[index + 1 :]:
+            for j, (_, other_goal_row) in enumerate(col_tiles[index + 1 :], start=index + 1):
                 if goal_row > other_goal_row:
-                    h += 2
+                    conflicts[index].append(j)
+                    conflicts[j].append(index)
+                    
+        while True:
+            max_conflicts = 0
+            max_tile = -1
+            for k, v in conflicts.items():
+                if len(v) > max_conflicts:
+                    max_conflicts = len(v)
+                    max_tile = k
+            if max_conflicts == 0:
+                break
+            for neighbor in conflicts[max_tile]:
+                conflicts[neighbor].remove(max_tile)
+            conflicts[max_tile] = []
+            h += 2
 
     return h
 
@@ -724,6 +763,12 @@ def algorithm_problem_model(
                 ("Goal/Quan sát", f"Goal đầy đủ:\n{board_string(GOAL_STATE)}"),
                 ("Cách giải", "LRTA*: cập nhật H(current), rồi chọn neighbor có 1 + H(neighbor) nhỏ nhất."),
             ],
+            "Constraint Graph": [
+                ("Dạng bài toán", "Graph coloring CSP cho bản đồ phường/khu vực Thủ Đức."),
+                ("Biến và miền", "Mỗi vùng là một biến; miền giá trị là tập màu được phép."),
+                ("Ràng buộc", "Hai vùng có cạnh giáp ranh không được dùng cùng màu."),
+                ("Cách giải", "Tô màu từng vùng sao cho không còn cạnh xung đột; đây là CSP tĩnh, không phải solver 8-puzzle."),
+            ],
         }
         default_rows = [
             ("Dạng bài toán", f"{canonical} trên 8-Puzzle chuẩn."),
@@ -759,6 +804,12 @@ def algorithm_problem_model(
             ("Goal/Observation", f"Full goal:\n{board_string(GOAL_STATE)}"),
             ("How it solves", "LRTA*: update H(current), then move to the neighbor minimizing 1 + H(neighbor)."),
         ],
+        "Constraint Graph": [
+            ("Problem type", "Graph coloring CSP over Thu Duc wards/regions."),
+            ("Variables and domains", "Each region is a variable; the domain is the available color palette."),
+            ("Constraints", "Adjacent regions connected by an edge must use different colors."),
+            ("How it solves", "Assign colors until no adjacency edge has a same-color conflict; this is a static CSP, not an 8-puzzle solver."),
+        ],
     }
     selected_en = models_en.get(
         canonical,
@@ -778,6 +829,20 @@ def peas_model(algorithm: Optional[str] = None, lang: str = "en") -> List[Dict[s
     canonical = normalize_algorithm(algorithm) if algorithm else "8-Puzzle Agent"
     info = ALGORITHM_INFO.get(canonical, {})
     group = info.get("group", "Standard 8-Puzzle")
+    if canonical == "Constraint Graph":
+        if lang == "vi":
+            return [
+                {"Algorithm": canonical, "PEAS": "Performance (Hiệu suất)", "Definition": "Tô màu hợp lệ bản đồ Thủ Đức với ít màu và không có cạnh xung đột."},
+                {"Algorithm": canonical, "PEAS": "Environment (Môi trường)", "Definition": "Đồ thị tĩnh: node là phường/khu vực Thủ Đức, edge là quan hệ giáp ranh."},
+                {"Algorithm": canonical, "PEAS": "Actuators (Bộ chấp hành)", "Definition": "Gán màu cho từng vùng theo miền màu cho phép."},
+                {"Algorithm": canonical, "PEAS": "Sensors (Cảm biến)", "Definition": "Quan sát màu đã gán, bậc của node và các cạnh còn xung đột."},
+            ]
+        return [
+            {"Algorithm": canonical, "PEAS": "Performance", "Definition": "Produce a valid Thu Duc map coloring with few colors and no conflicted adjacency edges."},
+            {"Algorithm": canonical, "PEAS": "Environment", "Definition": "A static graph: nodes are Thu Duc wards/regions, edges are adjacency relations."},
+            {"Algorithm": canonical, "PEAS": "Actuators", "Definition": "Assign one color from the allowed palette to each region."},
+            {"Algorithm": canonical, "PEAS": "Sensors", "Definition": "Observe assigned colors, node degrees, and remaining conflicted edges."},
+        ]
     if lang == "vi":
         group_environment = {
             "Uninformed Search": "Môi trường 8-Puzzle chuẩn: deterministic, fully observable, bảng 3x3, cost mỗi bước bằng 1.",
@@ -1022,44 +1087,49 @@ def _bfs(start: State, goal: State, heuristic: Callable[[State], int], config: T
     step = 0
     trace_rows: List[Dict[str, Any]] = []
 
+    if start == goal:
+        return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=root, expanded=0, generated=1, max_frontier=1, reached_count=1, trace_rows=[], started_at=started_at, message="Goal found.")
+
+
     while frontier and expanded < config.max_expansions:
         node = frontier.popleft()
         step += 1
-        is_goal = node.state == goal
         new_children: List[SearchNode] = []
         skipped = 0
-        if not is_goal:
-            for action, next_state in neighbors(node.state):
-                if next_state in reached:
-                    skipped += 1
-                    continue
-                new_children.append(SearchNode(next_state, node, action, node.g + 1, node.depth + 1, heuristic(next_state)))
-        if node.state == goal:
-            add_trace(
-                trace_rows,
-                config,
-                step,
-                algorithm,
-                node,
-                node.action,
-                node.depth,
-                node.g,
-                node.h,
-                None,
-                frontier,
-                reached_order,
-                "Pop shallowest node from FIFO frontier; goal test succeeds.",
-                selection_key=f"depth={node.depth}; fifo_pop={step}",
-                generated_children=0,
-                skipped_states=0,
-            )
-            return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=node, expanded=expanded, generated=generated, max_frontier=max_frontier, reached_count=len(reached), trace_rows=trace_rows, started_at=started_at, message="Goal found.")
-        expanded += 1
-        for child in new_children:
+        
+        for action, next_state in neighbors(node.state):
+            if next_state in reached:
+                skipped += 1
+                continue
+            child = SearchNode(next_state, node, action, node.g + 1, node.depth + 1, heuristic(next_state))
+            new_children.append(child)
             frontier.append(child)
             reached[child.state] = child.g
             reached_order.append(child.state)
             generated += 1
+            
+            if child.state == goal:
+                add_trace(
+                    trace_rows,
+                    config,
+                    step,
+                    algorithm,
+                    child,
+                    child.action,
+                    child.depth,
+                    child.g,
+                    child.h,
+                    None,
+                    frontier,
+                    reached_order,
+                    "Early goal test succeeds during expansion.",
+                    selection_key=f"depth={child.depth}; early_goal={step}",
+                    generated_children=0,
+                    skipped_states=0,
+                )
+                return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=child, expanded=expanded + 1, generated=generated, max_frontier=max(max_frontier, len(frontier)), reached_count=len(reached), trace_rows=trace_rows, started_at=started_at, message="Goal found.")
+        
+        expanded += 1
         max_frontier = max(max_frontier, len(frontier))
         add_trace(
             trace_rows,
@@ -1105,10 +1175,11 @@ def _dfs(start: State, goal: State, heuristic: Callable[[State], int], config: T
         skipped = 0
         if not is_goal and node.depth < config.dfs_depth_limit:
             for action, next_state in reversed(neighbors(node.state)):
-                if next_state in reached:
+                child_depth = node.depth + 1
+                if next_state in reached and child_depth >= reached[next_state]:
                     skipped += 1
                     continue
-                new_children.append(SearchNode(next_state, node, action, node.g + 1, node.depth + 1, heuristic(next_state)))
+                new_children.append(SearchNode(next_state, node, action, node.g + 1, child_depth, heuristic(next_state)))
         elif not is_goal:
             skipped = len(neighbors(node.state))
         if node.state == goal:
@@ -1131,7 +1202,6 @@ def _dfs(start: State, goal: State, heuristic: Callable[[State], int], config: T
                 skipped_states=0,
             )
             return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=node, expanded=expanded, generated=generated, max_frontier=max_frontier, reached_count=len(reached), trace_rows=trace_rows, started_at=started_at, message="Goal found.")
-        expanded += 1
         if node.depth >= config.dfs_depth_limit:
             add_trace(
                 trace_rows,
@@ -1152,6 +1222,7 @@ def _dfs(start: State, goal: State, heuristic: Callable[[State], int], config: T
                 skipped_states=skipped,
             )
             continue
+        expanded += 1
         for child in new_children:
             frontier.append(child)
             reached[child.state] = child.g
@@ -2294,9 +2365,10 @@ def _csp_static_demo(
             ("Transition global", "Exactly two positions change between consecutive states: blank and swapped tile."),
         ],
         "Constraint Graph": [
-            ("Nodes", "X[0][0..8], A[0], X[1][0..8]"),
-            ("Edges", "Initial fixes X[0]; LegalMove connects X[0] to A[0]; Transition connects X[0], A[0], X[1]."),
-            ("Hyperedge", "AllDifferent(X[t][0..8]) can be represented as one global hyperedge or a clique."),
+            ("Variables", "Thu Duc wards/regions are CSP variables in a graph coloring model."),
+            ("Domains", "Each region chooses one color from the available palette."),
+            ("Edges", "Adjacency edges require neighboring Thu Duc regions to use different colors."),
+            ("Goal", "Find a valid coloring with no adjacent same-color regions."),
         ],
     }[algorithm]
     for step, (label, note) in enumerate(demo_rows, start=1):
@@ -2319,6 +2391,11 @@ def _csp_static_demo(
             skipped_states=0,
         )
     found = start == goal
+    message = (
+        "Constraint Graph is a Thu Duc graph-coloring CSP demonstration; use the Streamlit CSP panel to inspect the colored map."
+        if algorithm == "Constraint Graph"
+        else f"{algorithm} is an educational CSP-planning demonstration; use CSP Backtracking for a bounded solver demo."
+    )
     return _finish_result(
         algorithm=algorithm,
         start=start,
@@ -2331,7 +2408,7 @@ def _csp_static_demo(
         reached_count=1,
         trace_rows=trace_rows,
         started_at=started_at,
-        message=f"{algorithm} is an educational CSP-planning demonstration; use CSP Backtracking for a bounded solver demo.",
+        message=message,
     )
 
 
@@ -3347,7 +3424,7 @@ def algorithm_guarantee_matrix() -> List[Dict[str, Any]]:
 
 
 def coursework_grading_checklist(lang: str = "en") -> List[Dict[str, Any]]:
-    """Return a compact checklist for lecturer-facing submission readiness."""
+    """Return a compact checklist for student submission readiness."""
 
     if lang == "vi":
         return [
@@ -3355,7 +3432,7 @@ def coursework_grading_checklist(lang: str = "en") -> List[Dict[str, Any]]:
                 "Item": "App chính",
                 "Status": "Sẵn sàng",
                 "Evidence": "Chạy `python -m streamlit run .\\streamlit_eight_puzzle_app.py`.",
-                "Why it matters": "Giảng viên mở đúng codepath chính, không nhầm package phụ.",
+                "Why it matters": "Bạn nộp đúng codepath chính, không nhầm package phụ.",
             },
             {
                 "Item": "Đủ nhóm thuật toán",

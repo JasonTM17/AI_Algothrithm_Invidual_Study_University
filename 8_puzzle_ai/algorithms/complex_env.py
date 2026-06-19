@@ -486,8 +486,8 @@ def online_search(
         if best_action is None:
             break
         
-        # Update H for current state
-        H[current] = min_cost
+        # Update H for current state (monotonic update)
+        H[current] = max(H.get(current, 0), min_cost)
         
         # Move to neighbor
         actions.append(best_action)

@@ -12,6 +12,7 @@ Algorithms:
 
 from typing import Tuple, Optional, List, Dict, Any, Set
 import random
+import math
 import sys
 
 sys.path.append('..')
@@ -619,9 +620,6 @@ def random_restart_hill_climbing(
             best_h = current_h
             best_path = path
             best_actions = actions
-        
-        total_expanded += max_steps_per_restart
-        total_generated += max_steps_per_restart * 4
     
     result = SearchResult(
         success=False,
@@ -689,6 +687,21 @@ def local_beam_search(
     
     # Beam entries: (current_state, action_path, state_path, heuristic)
     beam = [(start, [], [start], h_func(start, goal))]
+    
+    # Initialize with diversity
+    for _ in range(beam_width - 1):
+        curr_st = PuzzleState(start)
+        curr_actions = []
+        curr_path = [start]
+        for _ in range(10):  # random walk
+            neighbors = curr_st.get_neighbors()
+            if neighbors:
+                a, nxt = random.choice(neighbors)
+                curr_actions.append(a)
+                curr_path.append(nxt.state)
+                curr_st = nxt
+        beam.append((curr_st.state, curr_actions, curr_path, h_func(curr_st.state, goal)))
+
     
     for step in range(max_steps):
         if timer.elapsed > max_time_ms:
@@ -900,7 +913,7 @@ def simulated_annealing(
         delta = neighbor_h - current_h
         
         # Accept if better, or with probability exp(-delta/T)
-        if delta < 0 or random.random() < pow(2.718281828, -delta / T):
+        if delta < 0 or random.random() < math.exp(-delta / T):
             current = neighbor_state.state
             current_h = neighbor_h
             actions.append(action)

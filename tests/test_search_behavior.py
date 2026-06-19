@@ -334,6 +334,24 @@ def test_educational_algorithms_return_canonical_results() -> None:
         assert {"Node", "Frontier", "Reached", "Decision/Note"} <= set(result.trace_rows[0])
 
 
+def test_constraint_graph_models_thu_duc_graph_coloring() -> None:
+    start = (1, 2, 3, 4, 5, 6, 7, 0, 8)
+    result = puzzle.run_algorithm(start, "Constraint Graph", "manhattan", puzzle.TraceConfig(max_trace_rows=10))
+    trace_text = "\n".join(str(row) for row in result.trace_rows)
+    model_text = "\n".join(row["Definition"] for row in puzzle.algorithm_problem_model("Constraint Graph", lang="en"))
+    peas_text = "\n".join(row["Definition"] for row in puzzle.peas_model("Constraint Graph", lang="en"))
+
+    assert "Thu Duc" in trace_text
+    assert "graph-coloring" in result.message.lower() or "graph coloring" in result.message.lower()
+    assert "X[0]" not in trace_text
+    assert "A[0]" not in trace_text
+    assert "Transition connects X[0]" not in trace_text
+    assert "region" in model_text.lower()
+    assert "color" in model_text.lower()
+    assert "static graph" in peas_text.lower()
+    assert "time-indexed planning CSP" not in peas_text
+
+
 def test_peas_trace_preview_and_submission_pack_exports() -> None:
     peas = puzzle.peas_model()
     assert [row["PEAS"] for row in peas] == ["Performance", "Environment", "Actuators", "Sensors"]
@@ -416,6 +434,7 @@ def run_all_tests() -> None:
         test_experiment_suite_is_deterministic_and_exportable,
         test_six_group_registry_covers_coursework_spec,
         test_educational_algorithms_return_canonical_results,
+        test_constraint_graph_models_thu_duc_graph_coloring,
         test_peas_trace_preview_and_submission_pack_exports,
         test_complex_environment_problem_formulations_match_algorithm_names,
         test_package_app_adapter_filters_algorithm_params,

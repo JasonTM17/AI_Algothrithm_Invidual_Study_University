@@ -75,35 +75,35 @@ def minimax(
         
         # Terminal states
         if state == goal:
-            return -1000 + depth, None  # MAX wins (prefer shorter paths)
+            return 1000 - depth, None  # MAX wins (prefer shorter paths)
         
         if depth == 0:
-            return h_func(state, goal), None  # Use heuristic as utility
+            return -h_func(state, goal), None  # Use -heuristic as utility so MAX maximizes it
         
         neighbors = puzzle.get_neighbors()
         if not neighbors:
-            return 1000 if is_max else -1000, None  # No moves = loss for current player
+            return -1000 if is_max else 1000, None  # No moves = loss for current player
         
         if is_max:
-            # MAX wants to minimize h (maximize -h)
-            best_value = float('inf')
+            # MAX wants to maximize utility
+            best_value = float('-inf')
             best_action = None
             
             for action, neighbor in neighbors:
                 value, _ = minimax_recursive(neighbor.state, depth - 1, False, path + [action])
-                if value < best_value:
+                if value > best_value:
                     best_value = value
                     best_action = action
             
             return best_value, best_action
         else:
-            # MIN wants to maximize h (minimize -h)
-            best_value = float('-inf')
+            # MIN wants to minimize utility
+            best_value = float('inf')
             best_action = None
             
             for action, neighbor in neighbors:
                 value, _ = minimax_recursive(neighbor.state, depth - 1, True, path + [action])
-                if value > best_value:
+                if value < best_value:
                     best_value = value
                     best_action = action
             
@@ -217,27 +217,27 @@ def alpha_beta(
         puzzle = PuzzleState(state)
         
         if state == goal:
-            return -1000 + depth, None
+            return 1000 - depth, None
         
         if depth == 0:
-            return h_func(state, goal), None
+            return -h_func(state, goal), None
         
         neighbors = puzzle.get_neighbors()
         if not neighbors:
-            return 1000 if is_max else -1000, None
+            return -1000 if is_max else 1000, None
         
         if is_max:
-            best_value = float('inf')
+            best_value = float('-inf')
             best_action = None
             
             for action, neighbor in neighbors:
                 value, _ = alpha_beta_recursive(neighbor.state, depth - 1, alpha, beta, False)
-                if value < best_value:
+                if value > best_value:
                     best_value = value
                     best_action = action
                 
-                beta = min(beta, value)
-                if beta <= alpha:
+                alpha = max(alpha, value)
+                if value >= beta:
                     # Pruning
                     if len(trace) < trace_limit:
                         trace.append({
@@ -251,23 +251,23 @@ def alpha_beta(
                             "f": value,
                             "Frontier": 0,
                             "Reached": nodes_visited[0],
-                            "Note": f"Pruned: alpha={alpha}, beta={beta}"
+                            "Note": f"Pruned: value {value:.1f} >= beta {beta:.1f}"
                         })
                     break
             
             return best_value, best_action
         else:
-            best_value = float('-inf')
+            best_value = float('inf')
             best_action = None
             
             for action, neighbor in neighbors:
                 value, _ = alpha_beta_recursive(neighbor.state, depth - 1, alpha, beta, True)
-                if value > best_value:
+                if value < best_value:
                     best_value = value
                     best_action = action
                 
-                alpha = max(alpha, value)
-                if beta <= alpha:
+                beta = min(beta, value)
+                if value <= alpha:
                     break
             
             return best_value, best_action
@@ -364,18 +364,18 @@ def expectimax(
         puzzle = PuzzleState(state)
         
         if state == goal:
-            return -1000 + depth, None
+            return 1000 - depth, None
         
         if depth == 0:
-            return h_func(state, goal), None
+            return -h_func(state, goal), None
         
         neighbors = puzzle.get_neighbors()
         if not neighbors:
-            return 1000, None
+            return -1000, None
         
         if is_max:
             # MAX node: choose action
-            best_value = float('inf')
+            best_value = float('-inf')
             best_action = None
             
             for action, neighbor in neighbors:
@@ -391,7 +391,7 @@ def expectimax(
                     for _, other in other_neighbors:
                         expected_value += fail_prob * expectimax_recursive(other.state, depth - 1, False)[0]
                 
-                if expected_value < best_value:
+                if expected_value > best_value:
                     best_value = expected_value
                     best_action = action
             

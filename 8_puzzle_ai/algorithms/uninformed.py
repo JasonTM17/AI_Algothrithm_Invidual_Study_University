@@ -168,29 +168,7 @@ def bfs(
         
         step += 1
         
-        # Check goal
-        if node.state == goal:
-            path, actions = reconstruct_path(node)
-            result = SearchResult(
-                success=True,
-                algorithm="BFS",
-                group="Uninformed Search",
-                path=path,
-                actions=actions,
-                path_cost=node.g,
-                nodes_expanded=metrics.nodes_expanded,
-                nodes_generated=metrics.nodes_generated,
-                max_frontier_size=metrics.max_frontier_size,
-                reached_size=len(reached),
-                trace=trace,
-                message="Goal found!",
-                optimal="Yes, when every step cost is 1",
-                complete="Yes, with finite state space"
-            )
-            timer.__exit__()
-            result.runtime_ms = timer.elapsed_ms
-            return result
-        
+        # Goal check moved to generation time (Early Goal Test)
         # Expand
         neighbors = current_state.get_neighbors(action_order)
         metrics.increment_generated(len(neighbors))
@@ -205,6 +183,30 @@ def bfs(
                     g=node.g + 1,
                     depth=node.depth + 1
                 )
+                
+                # Check goal immediately upon generation (Early Goal Test)
+                if child.state == goal:
+                    path, actions = reconstruct_path(child)
+                    result = SearchResult(
+                        success=True,
+                        algorithm="BFS",
+                        group="Uninformed Search",
+                        path=path,
+                        actions=actions,
+                        path_cost=child.g,
+                        nodes_expanded=metrics.nodes_expanded,
+                        nodes_generated=metrics.nodes_generated,
+                        max_frontier_size=metrics.max_frontier_size,
+                        reached_size=len(reached),
+                        trace=trace,
+                        message="Goal found!",
+                        optimal="Yes, when every step cost is 1",
+                        complete="Yes, with finite state space"
+                    )
+                    timer.__exit__()
+                    result.runtime_ms = timer.elapsed_ms
+                    return result
+                
                 frontier.append(child)
         
         metrics.update_frontier(len(frontier))
@@ -307,7 +309,7 @@ def dfs(
     start_node = Node(state=start, g=0, depth=0)
     frontier.append(start_node)
     
-    reached: Set[Tuple[int, ...]] = {start}
+    reached: Dict[Tuple[int, ...], int] = {start: 0}
     
     step = 0
     
@@ -352,11 +354,12 @@ def dfs(
         
         # Pop from end (LIFO)
         node = frontier.pop()
-        metrics.increment_expanded()
         
         # Depth limit check
         if node.depth > max_depth:
             continue
+            
+        metrics.increment_expanded()
         
         current_state = PuzzleState(node.state)
         
@@ -403,14 +406,15 @@ def dfs(
         metrics.increment_generated(len(neighbors))
         
         for action, neighbor_state in neighbors:
-            if neighbor_state.state not in reached:
-                reached.add(neighbor_state.state)
+            child_depth = node.depth + 1
+            if neighbor_state.state not in reached or child_depth < reached[neighbor_state.state]:
+                reached[neighbor_state.state] = child_depth
                 child = Node(
                     state=neighbor_state.state,
                     parent=node,
                     action=action,
                     g=node.g + 1,
-                    depth=node.depth + 1
+                    depth=child_depth
                 )
                 frontier.append(child)
         
@@ -801,10 +805,12 @@ def _depth_limited_search(
     """
     frontier = []
     start_node = Node(state=start, g=0, depth=0)
-    frontier.append(start_node)
+    frontier.append((start_node, {start}))
     
     while frontier:
-        node = frontier.pop()
+        node, path_set = frontier.pop()
+        
+        # Increment after popping but only if we process it
         metrics.increment_expanded()
         metrics.update_frontier(len(frontier))
         
@@ -817,14 +823,17 @@ def _depth_limited_search(
             metrics.increment_generated(len(neighbors))
             
             for action, neighbor_state in neighbors:
-                child = Node(
-                    state=neighbor_state.state,
-                    parent=node,
-                    action=action,
-                    g=node.g + 1,
-                    depth=node.depth + 1
-                )
-                frontier.append(child)
+                if neighbor_state.state not in path_set:
+                    child = Node(
+                        state=neighbor_state.state,
+                        parent=node,
+                        action=action,
+                        g=node.g + 1,
+                        depth=node.depth + 1
+                    )
+                    child_path_set = set(path_set)
+                    child_path_set.add(neighbor_state.state)
+                    frontier.append((child, child_path_set))
                 metrics.update_frontier(len(frontier))
     
     return {"found": False, "node": None}

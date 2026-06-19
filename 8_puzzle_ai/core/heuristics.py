@@ -80,6 +80,10 @@ def linear_conflict(state: Tuple[int, ...], goal: Tuple[int, ...] = None) -> int
     - Admissible: Never overestimates
     - More informed than Manhattan distance
     
+    Note: Counting all pairwise conflicts could theoretically overcount 
+    in rare edge cases (e.g. 3+ tiles in conflict). A strictly optimal
+    implementation would use the maximum independent set of conflicts.
+    
     Args:
         state: Current puzzle state
         goal: Goal state (default: standard goal)
@@ -110,6 +114,7 @@ def linear_conflict(state: Tuple[int, ...], goal: Tuple[int, ...] = None) -> int
                     tiles_in_row.append((col, goal_col, tile))
         
         # Check for conflicts
+        conflicts = {i: [] for i in range(len(tiles_in_row))}
         for i in range(len(tiles_in_row)):
             for j in range(i + 1, len(tiles_in_row)):
                 curr_col_i, goal_col_i, _ = tiles_in_row[i]
@@ -118,7 +123,25 @@ def linear_conflict(state: Tuple[int, ...], goal: Tuple[int, ...] = None) -> int
                 # Conflict: tile i is to the left of tile j,
                 # but tile i's goal is to the right of tile j's goal
                 if curr_col_i < curr_col_j and goal_col_i > goal_col_j:
-                    h += 2
+                    conflicts[i].append(j)
+                    conflicts[j].append(i)
+                    
+        # Resolve conflicts by removing the tile with max conflicts
+        while True:
+            max_conflicts = 0
+            max_tile = -1
+            for k, v in conflicts.items():
+                if len(v) > max_conflicts:
+                    max_conflicts = len(v)
+                    max_tile = k
+            
+            if max_conflicts == 0:
+                break
+                
+            for neighbor in conflicts[max_tile]:
+                conflicts[neighbor].remove(max_tile)
+            conflicts[max_tile] = []
+            h += 2
     
     # Count linear conflicts in columns
     for col in range(3):
@@ -132,23 +155,46 @@ def linear_conflict(state: Tuple[int, ...], goal: Tuple[int, ...] = None) -> int
                     tiles_in_col.append((row, goal_row, tile))
         
         # Check for conflicts
+        conflicts = {i: [] for i in range(len(tiles_in_col))}
         for i in range(len(tiles_in_col)):
             for j in range(i + 1, len(tiles_in_col)):
                 curr_row_i, goal_row_i, _ = tiles_in_col[i]
                 curr_row_j, goal_row_j, _ = tiles_in_col[j]
                 
                 if curr_row_i < curr_row_j and goal_row_i > goal_row_j:
-                    h += 2
+                    conflicts[i].append(j)
+                    conflicts[j].append(i)
+                    
+        # Resolve conflicts by removing the tile with max conflicts
+        while True:
+            max_conflicts = 0
+            max_tile = -1
+            for k, v in conflicts.items():
+                if len(v) > max_conflicts:
+                    max_conflicts = len(v)
+                    max_tile = k
+            
+            if max_conflicts == 0:
+                break
+                
+            for neighbor in conflicts[max_tile]:
+                conflicts[neighbor].remove(max_tile)
+            conflicts[max_tile] = []
+            h += 2
     
     return h
 
 
 def euclidean_distance(state: Tuple[int, ...], goal: Tuple[int, ...] = None) -> float:
     """
-    Sum of Euclidean distances (not admissible for 8-puzzle).
+    Sum of Euclidean distances.
     
-    This is provided for comparison but is NOT admissible
-    because Euclidean distance can underestimate the actual cost.
+    This heuristic is:
+    - Admissible: Never overestimates (straight line is shortest)
+    - Consistent: h(n) <= cost(n,n') + h(n')
+    
+    Note: While admissible, it is less informed than Manhattan distance 
+    because diagonal movement is not allowed in the 8-puzzle.
     
     Args:
         state: Current puzzle state
@@ -231,9 +277,9 @@ def heuristic_info() -> Dict[str, dict]:
         },
         "Euclidean Distance": {
             "description": "Sum of straight-line distances",
-            "admissible": False,
-            "consistent": False,
+            "admissible": True,
+            "consistent": True,
             "complexity": "O(1)",
-            "notes": "NOT admissible. Provided for comparison only."
+            "notes": "Admissible but less informed than Manhattan distance."
         }
     }

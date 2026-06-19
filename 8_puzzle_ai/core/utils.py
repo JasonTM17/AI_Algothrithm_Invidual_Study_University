@@ -238,7 +238,7 @@ def get_algorithm_theory(algorithm: str) -> Dict[str, str]:
             "description": "Hill climbing with probability of accepting worse states.",
             "idea": "Accept worse moves with probability exp(-Δ/T). Temperature decreases.",
             "data_structure": "Current state only",
-            "complete": "Yes, with slow cooling",
+            "complete": "No (theoretically yes with infinitely slow cooling, impractical)",
             "optimal": "No, but can find good solutions",
             "time_complexity": "Depends on cooling schedule",
             "space_complexity": "O(1)",

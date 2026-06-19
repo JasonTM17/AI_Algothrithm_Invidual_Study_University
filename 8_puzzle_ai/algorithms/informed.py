@@ -610,16 +610,17 @@ def _ida_star_search(
     
     h_start = h_func(start, goal)
     start_node = Node(state=start, g=0, depth=0, h=h_start)
-    stack.append(start_node)
+    stack.append((start_node, {start}))
     
     while stack:
-        node = stack.pop()
-        metrics.increment_expanded()
-        metrics.update_frontier(len(stack))
+        node, path_set = stack.pop()
         
         if node.f > threshold:
             min_exceeded = min(min_exceeded, node.f)
             continue
+            
+        metrics.increment_expanded()
+        metrics.update_frontier(len(stack))
         
         if node.state == goal:
             return {"found": True, "node": node, "min_exceeded": min_exceeded}
@@ -629,16 +630,19 @@ def _ida_star_search(
         metrics.increment_generated(len(neighbors))
         
         for action, neighbor_state in neighbors:
-            h = h_func(neighbor_state.state, goal)
-            child = Node(
-                state=neighbor_state.state,
-                parent=node,
-                action=action,
-                g=node.g + 1,
-                depth=node.depth + 1,
-                h=h
-            )
-            stack.append(child)
-            metrics.update_frontier(len(stack))
+            if neighbor_state.state not in path_set:
+                h = h_func(neighbor_state.state, goal)
+                child = Node(
+                    state=neighbor_state.state,
+                    parent=node,
+                    action=action,
+                    g=node.g + 1,
+                    depth=node.depth + 1,
+                    h=h
+                )
+                child_path_set = set(path_set)
+                child_path_set.add(neighbor_state.state)
+                stack.append((child, child_path_set))
+                metrics.update_frontier(len(stack))
     
     return {"found": False, "node": None, "min_exceeded": min_exceeded}
