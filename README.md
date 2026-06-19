@@ -1,6 +1,6 @@
 # Dự án trực quan hóa thuật toán tìm kiếm cho trò chơi 8-Puzzle
 
-## 0. Chạy nhanh cho giảng viên
+## 0. Chạy nhanh cho sinh viên
 
 App chính của bài nộp là:
 
@@ -23,7 +23,7 @@ Chạy giao diện desktop (Tkinter, **không cần pip install** — chỉ Pyth
 python .\eight_puzzle_tk_app.py
 ```
 
-Build file `.exe` cho giảng viên mở trực tiếp:
+Build file `.exe` để nộp kèm hoặc mở demo trực tiếp:
 
 ```powershell
 .\build_desktop_exe.ps1 -Python "C:\Users\Admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
@@ -52,7 +52,7 @@ Tab `Máy hút bụi / Vacuum Game` dùng để demo thuật toán không tự n
 - Có `Tô màu / Color Plan`: mô hình graph coloring như CSP, trong đó phòng là
   node, cạnh là quan hệ kề nhau, màu là batch/lượt dọn. Đây là nơi phù hợp hơn
   cho thuật toán tô màu thay vì ép vào 8-puzzle.
-- Có `Auto clean` để máy hút bụi tự dọn toàn bộ phòng, giúp giáo viên chơi thử
+- Có `Auto clean` để máy hút bụi tự dọn toàn bộ phòng, giúp bạn demo rõ
   và thấy rõ agent/action/sensor/performance.
 
 Chạy kiểm thử desktop (headless smoke test cho cả package Tkinter):
@@ -107,11 +107,11 @@ Kịch bản demo chi tiết nằm ở `docs/demo_script.md`.
 | Vai trò | Thông tin |
 |---|---|
 | Người làm báo cáo/dự án | `[Điền tên sinh viên hoặc nhóm tại đây]` |
-| Lớp / môn học | `[Điền lớp, học phần hoặc giảng viên tại đây]` |
+| Lớp / môn học | `[Điền lớp và học phần tại đây]` |
 | Hỗ trợ xây dựng mã nguồn và tài liệu | Codex, theo yêu cầu của người dùng |
 | Môi trường phát triển | `D:\Trí tuệ nhân tạo` |
 
-> Ghi chú: phần tên sinh viên, lớp và giảng viên nên được thay bằng thông tin thật trước khi nộp báo cáo.
+> Ghi chú: phần tên sinh viên, lớp và học phần nên được thay bằng thông tin thật trước khi nộp báo cáo.
 
 ## 2. Mục tiêu của dự án
 

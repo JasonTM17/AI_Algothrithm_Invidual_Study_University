@@ -58,7 +58,7 @@ hoặc bấm `Random Goal một phần`.
 Điểm cần nói:
 - Đây là dạng partial knowledge, không phải solver chuẩn fully observable.
 - Agent dùng thông tin quan sát một phần để đánh giá state.
-- Giáo viên có thể nhập pattern bất kỳ gồm số `0..8` và `?`.
+- Bạn có thể nhập pattern bất kỳ gồm số `0..8` và `?` để demo phần quan sát một phần.
 
 ## 6. Demo CSP
 

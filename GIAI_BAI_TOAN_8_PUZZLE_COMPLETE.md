@@ -985,7 +985,7 @@ Mỗi cạnh = ràng buộc AllDifferent
 
 ### 7.1. Mục tiêu của app
 
-App desktop `8PuzzleSearchLab.exe` được thiết kế để giảng viên có thể mở trực tiếp và quan sát cả hai mặt của bài:
+App desktop `8PuzzleSearchLab.exe` được thiết kế để bạn có thể mở trực tiếp, demo và kiểm tra cả hai mặt của bài:
 
 1. **Người chơi tự giải:** click ô nằm cạnh `0` để di chuyển giống trò chơi 8-puzzle.
 2. **AI giải bài toán:** chọn thuật toán, heuristic, chạy solver và xem trace `Node / Frontier / Reached`.
@@ -1035,7 +1035,7 @@ Nhờ vậy khi thuyết trình có thể nói rõ:
 
 ### 7.4. Giá trị khi thuyết trình
 
-Khi demo, có thể cho giảng viên thấy cùng một trạng thái được xử lý theo ba tầng:
+Khi demo hoặc tự kiểm tra trước khi nộp, bạn có thể cho thấy cùng một trạng thái được xử lý theo ba tầng:
 
 1. **Tầng game:** người dùng tự click tile để cảm nhận state/action.
 2. **Tầng thuật toán:** bấm Run để xem thuật toán chọn node, cập nhật frontier và reached.
