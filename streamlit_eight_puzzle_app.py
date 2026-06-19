@@ -1023,17 +1023,24 @@ def apply_theme() -> None:
     st.markdown(
         """
         <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
           :root {
-            --surface: #f3efe6;
-            --surface-2: #e7dfcf;
-            --panel: rgba(255, 252, 243, 0.94);
-            --panel-soft: #efe7d6;
-            --ink: #1e241b;
+            /* Map base colors directly to Streamlit's active theme */
+            --surface: var(--background-color, #f3efe6);
+            --surface-2: var(--secondary-background-color, #e7dfcf);
+            --panel: var(--secondary-background-color, rgba(255, 252, 243, 0.94));
+            --panel-soft: var(--background-color, #efe7d6);
+            --ink: var(--text-color, #1e241b);
+            
+            /* Fallbacks */
             --muted: rgba(30, 36, 27, 0.68);
             --line: rgba(68, 55, 30, 0.16);
-            --accent: #0b6b5e;
-            --accent-strong: #064d44;
+            
+            --accent: var(--primary-color, #0b6b5e);
+            --accent-strong: var(--primary-color, #064d44);
             --accent-soft: rgba(11, 107, 94, 0.11);
+            
             --amber: #a85f12;
             --amber-soft: rgba(168, 95, 18, 0.13);
             --danger: #b42318;
@@ -1041,30 +1048,55 @@ def apply_theme() -> None:
             --graphite: #273028;
             --tile-shadow: inset 0 -4px 0 rgba(69, 53, 27, 0.08), 0 14px 30px rgba(54, 43, 24, 0.12);
           }
+
+          /* Override with dynamic color-mix for browsers supporting it */
+          @supports (color: color-mix(in srgb, red, blue)) {
+            :root {
+              --muted: color-mix(in srgb, var(--ink) 70%, transparent);
+              --line: color-mix(in srgb, var(--ink) 14%, transparent);
+              --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+            }
+          }
+
           @media (prefers-color-scheme: dark) {
             :root {
-              --surface: #0e1117;
-              --panel: #171b22;
-              --panel-soft: #111820;
-              --ink: #f4fbf8;
-              --muted: rgba(244, 251, 248, 0.8);
-              --line: rgba(244, 251, 248, 0.16);
-              --accent: #2dd4bf;
-              --accent-strong: #5eead4;
-              --accent-soft: rgba(45, 212, 191, 0.14);
-              --amber: #f8c36a;
-              --amber-soft: rgba(248, 195, 106, 0.14);
-              --danger: #ff8a7a;
-              --danger-soft: rgba(255, 138, 122, 0.13);
               --tile-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.32);
             }
           }
+
+          /* Force anti-aliasing and prevent pixelated/jagged font rendering */
+          html, body, .stApp {
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            text-rendering: optimizeLegibility !important;
+          }
+
+          /* Custom typography */
+          .stApp, .stApp *, [data-testid="stWidgetLabel"] p, .stMarkdown p, .stMarkdown span, .stButton button {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          }
+          
+          .app-hero h1, .app-hero h1 *, .panel-heading h2, .panel-heading h2 * {
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
+          }
+
           .stApp {
             background:
-              radial-gradient(circle at 10% 0%, rgba(11, 107, 94, 0.13), transparent 28rem),
-              radial-gradient(circle at 95% 10%, rgba(168, 95, 18, 0.12), transparent 26rem),
+              radial-gradient(circle at 10% 0%, rgba(11, 107, 94, 0.12), transparent 28rem),
+              radial-gradient(circle at 95% 10%, rgba(168, 95, 18, 0.11), transparent 26rem),
               linear-gradient(135deg, var(--surface), var(--surface-2));
           }
+          
+          /* Style Streamlit's native bordered containers like our workbench-shell card */
+          div[data-testid="stVerticalBlockBorderWrapper"] {
+            border: 1px solid var(--line) !important;
+            border-radius: 24px !important;
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft)) !important;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.12) !important;
+            padding: 1.25rem 1.35rem !important;
+            margin-bottom: 1rem !important;
+          }
+
           .block-container {
             padding-top: 1.35rem;
             padding-bottom: 4rem;
@@ -1122,14 +1154,14 @@ def apply_theme() -> None:
           .app-hero {
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(68, 55, 30, 0.14);
+            border: 1px solid var(--line);
             border-radius: 28px;
             margin-bottom: 1.2rem;
             padding: 1.55rem 1.6rem 1.35rem;
             background:
-              linear-gradient(120deg, rgba(255, 252, 243, 0.94), rgba(239, 231, 214, 0.76)),
+              linear-gradient(120deg, var(--panel), var(--panel-soft)),
               repeating-linear-gradient(90deg, rgba(30, 36, 27, 0.045) 0 1px, transparent 1px 18px);
-            box-shadow: 0 22px 55px rgba(54, 43, 24, 0.13);
+            box-shadow: 0 22px 55px rgba(0,0,0,0.12);
           }
           .app-hero::after {
             content: "";
@@ -1143,15 +1175,15 @@ def apply_theme() -> None:
             background: radial-gradient(circle, rgba(11, 107, 94, 0.12), transparent 62%);
           }
           .app-kicker {
-            color: var(--accent-strong);
+            color: var(--accent-strong) !important;
             font-size: 0.78rem;
             font-weight: 700;
             letter-spacing: normal;
             text-transform: none;
           }
           .app-hero h1 {
-            color: var(--ink);
-            font-family: 'Source Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--ink) !important;
+            font-family: 'Outfit', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
             font-size: clamp(2.35rem, 5vw, 4.65rem);
             font-weight: 760;
             line-height: 0.95;
@@ -1160,18 +1192,18 @@ def apply_theme() -> None:
             max-width: 780px;
           }
           .app-hero p {
-            color: var(--muted);
-            opacity: 1;
+            color: var(--muted) !important;
+            opacity: 1 !important;
             font-size: 1.05rem;
             line-height: 1.65;
             max-width: 720px;
             margin: 0;
           }
           .workbench-shell {
-            border: 1px solid rgba(68, 55, 30, 0.16);
+            border: 1px solid var(--line);
             border-radius: 24px;
-            background: rgba(255, 252, 243, 0.72);
-            box-shadow: 0 18px 45px rgba(54, 43, 24, 0.1);
+            background: var(--panel);
+            box-shadow: 0 18px 45px rgba(0,0,0,0.12);
             padding: 1rem;
             margin-bottom: 1rem;
           }
@@ -1183,31 +1215,31 @@ def apply_theme() -> None:
             margin: 0 0 0.9rem;
           }
           .panel-heading h2 {
-            color: var(--ink);
-            font-family: 'Source Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--ink) !important;
+            font-family: 'Outfit', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
             font-size: clamp(1.35rem, 2.4vw, 2rem);
             line-height: 1;
             letter-spacing: -0.01em;
             margin: 0;
           }
           .panel-heading span {
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            color: var(--accent-strong);
-            background: var(--accent-soft);
+            border: 1px solid var(--line) !important;
+            border-radius: 999px !important;
+            color: var(--accent-strong) !important;
+            background: var(--accent-soft) !important;
             padding: 0.35rem 0.62rem;
             font-size: 0.72rem;
             font-weight: 760;
           }
           .workbench-panel {
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            background: linear-gradient(180deg, var(--panel), var(--panel-soft));
+            border: 1px solid var(--line) !important;
+            border-radius: 8px !important;
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft)) !important;
             padding: 1rem;
             margin-bottom: 1rem;
           }
           .workbench-title {
-            color: var(--ink);
+            color: var(--ink) !important;
             font-size: 1rem;
             font-weight: 760;
             margin: 0 0 0.55rem;
@@ -1219,37 +1251,37 @@ def apply_theme() -> None:
             margin: 0.65rem 0 0.9rem;
           }
           .readiness-chip {
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            background: rgba(255, 252, 243, 0.78);
+            border: 1px solid var(--line) !important;
+            border-radius: 18px !important;
+            background: var(--panel) !important;
             padding: 0.75rem 0.82rem;
             min-height: 68px;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+            box-shadow: inset 0 1px 0 var(--panel);
           }
           .readiness-chip span {
             display: block;
-            color: var(--muted);
+            color: var(--muted) !important;
             font-size: 0.74rem;
             line-height: 1.2;
           }
           .readiness-chip strong {
             display: block;
-            color: var(--ink);
+            color: var(--ink) !important;
             font-size: 0.94rem;
             line-height: 1.25;
             margin-top: 0.18rem;
           }
           .readiness-chip.ok {
-            border-color: rgba(15, 118, 110, 0.42);
-            background: var(--accent-soft);
+            border-color: rgba(15, 118, 110, 0.42) !important;
+            background: var(--accent-soft) !important;
           }
           .readiness-chip.warn {
-            border-color: rgba(183, 121, 31, 0.42);
-            background: var(--amber-soft);
+            border-color: rgba(183, 121, 31, 0.42) !important;
+            background: var(--amber-soft) !important;
           }
           .readiness-chip.fail {
-            border-color: rgba(180, 35, 24, 0.42);
-            background: var(--danger-soft);
+            border-color: rgba(180, 35, 24, 0.42) !important;
+            background: var(--danger-soft) !important;
           }
           div[data-testid="stVerticalBlock"] > div:has(> .metric-grid) {
             width: 100%;
@@ -1261,35 +1293,35 @@ def apply_theme() -> None:
             margin: 0.6rem 0 1.1rem;
           }
           .metric-card {
-            border: 1px solid var(--line);
-            border-radius: 20px;
-            background: linear-gradient(180deg, rgba(255,252,243,0.96), rgba(239,231,214,0.72));
+            border: 1px solid var(--line) !important;
+            border-radius: 20px !important;
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft)) !important;
             padding: 0.95rem 1rem;
             min-height: 88px;
-            box-shadow: 0 14px 32px rgba(54,43,24,0.1);
+            box-shadow: 0 14px 32px rgba(0,0,0,0.12) !important;
           }
           .metric-card span {
             display: block;
-            color: var(--ink);
-            opacity: 0.7;
+            color: var(--ink) !important;
+            opacity: 0.74 !important;
             font-size: 0.78rem;
             line-height: 1.2;
           }
           .metric-card strong {
             display: block;
-            color: var(--ink);
+            color: var(--ink) !important;
             font-size: 1.45rem;
             line-height: 1.25;
             margin-top: 0.25rem;
             font-variant-numeric: tabular-nums;
           }
           .lab-panel {
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            background: rgba(255, 252, 243, 0.78);
+            border: 1px solid var(--line) !important;
+            border-radius: 18px !important;
+            background: var(--panel) !important;
             padding: 0.95rem 1rem;
             margin: 0.65rem 0 1rem;
-            box-shadow: 0 12px 28px rgba(54, 43, 24, 0.08);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.12) !important;
           }
           .status-grid {
             display: grid;
@@ -1298,23 +1330,24 @@ def apply_theme() -> None:
             margin: 0.45rem 0 0.85rem;
           }
           .status-chip {
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            background: rgba(255, 252, 243, 0.8);
-            padding: 0.72rem 0.8rem;
-            min-height: 62px;
+            border: 1px solid var(--line) !important;
+            border-radius: 18px !important;
+            background: var(--panel) !important;
+            padding: 0.72rem 0.8rem !important;
+            min-height: 62px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06) !important;
           }
           .status-chip span {
             display: block;
-            color: var(--ink);
-            opacity: 0.7;
+            color: var(--ink) !important;
+            opacity: 0.74 !important;
             font-size: 0.75rem;
             line-height: 1.2;
           }
           .status-chip strong {
             display: block;
             margin-top: 0.18rem;
-            color: var(--ink);
+            color: var(--ink) !important;
             font-size: 0.95rem;
           }
           .status-chip.pass {
@@ -1347,10 +1380,10 @@ def apply_theme() -> None:
           .trace-detail {
             border: 1px solid var(--line);
             border-radius: 18px;
-            background: rgba(255, 252, 243, 0.82);
+            background: var(--panel);
             padding: 0.95rem 1rem;
             min-height: 86px;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+            box-shadow: inset 0 1px 0 var(--panel);
           }
           .trace-detail span {
             display: block;
@@ -1375,9 +1408,9 @@ def apply_theme() -> None:
           .trace-state-panel {
             border: 1px solid var(--line);
             border-radius: 22px;
-            background: rgba(255, 252, 243, 0.84);
+            background: var(--panel);
             padding: 0.88rem;
-            box-shadow: 0 14px 32px rgba(54,43,24,0.09);
+            box-shadow: 0 14px 32px rgba(0,0,0,0.2);
           }
           .trace-state-panel h4 {
             color: var(--ink);
@@ -1397,9 +1430,9 @@ def apply_theme() -> None:
             gap: 0.55rem;
           }
           .state-card {
-            border: 1px solid rgba(68,55,30,0.13);
+            border: 1px solid var(--line);
             border-radius: 16px;
-            background: linear-gradient(180deg, rgba(255,250,240,0.96), rgba(239,231,214,0.78));
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft));
             padding: 0.55rem;
           }
           .state-card-title {
@@ -1420,7 +1453,7 @@ def apply_theme() -> None:
             justify-content: center;
             border-radius: 9px;
             background: #fff8ea;
-            border: 1px solid rgba(68,55,30,0.13);
+            border: 1px solid var(--line);
             color: var(--ink);
             font-size: 0.88rem;
             font-weight: 760;
@@ -1439,10 +1472,10 @@ def apply_theme() -> None:
           .tree-card {
             border: 1px solid var(--line);
             border-radius: 18px;
-            background: linear-gradient(180deg, rgba(255,252,243,0.95), rgba(239,231,214,0.72));
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft));
             padding: 0.75rem 0.8rem;
             min-height: 126px;
-            box-shadow: 0 12px 28px rgba(54,43,24,0.08);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.2);
           }
           .tree-card strong {
             color: var(--ink);
@@ -1466,7 +1499,7 @@ def apply_theme() -> None:
             max-width: 100%;
             margin: 0.65rem auto 1.35rem;
             padding: 0.85rem;
-            border: 1px solid rgba(68,55,30,0.12);
+            border: 1px solid var(--line);
             border-radius: 24px;
             background: rgba(30, 36, 27, 0.045);
           }
@@ -1515,9 +1548,9 @@ def apply_theme() -> None:
             background-image: var(--puzzle-image);
             background-size: 300% 300%;
             background-repeat: no-repeat;
-            color: rgba(255,255,255,0.96);
+            color: var(--panel);
             text-shadow: 0 1px 6px rgba(0,0,0,0.5);
-            border-color: rgba(255,255,255,0.35);
+            border-color: var(--panel);
           }
           .image-puzzle-board .tile::after {
             content: attr(data-tile);
@@ -1552,10 +1585,10 @@ def apply_theme() -> None:
           .game-panel {
             border: 1px solid var(--line);
             border-radius: 22px;
-            background: rgba(255, 252, 243, 0.72);
+            background: var(--panel);
             padding: 0.9rem;
             margin: 0.45rem 0 1.1rem;
-            box-shadow: 0 12px 28px rgba(54,43,24,0.08);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.2);
           }
           .game-panel h3 {
             margin: 0 0 0.2rem;
@@ -1590,7 +1623,7 @@ def apply_theme() -> None:
             gap: 10px;
             width: fit-content;
             padding: 0.85rem;
-            border: 1px solid rgba(68,55,30,0.12);
+            border: 1px solid var(--line);
             border-radius: 24px;
             background: rgba(30, 36, 27, 0.045);
           }
@@ -1632,9 +1665,9 @@ def apply_theme() -> None:
           }
           .play-tile.image-tile {
             background-size: 300% 300%;
-            color: rgba(255,255,255,0.96);
+            color: var(--panel);
             text-shadow: 0 1px 6px rgba(0,0,0,0.5);
-            border-color: rgba(255,255,255,0.35);
+            border-color: var(--panel);
           }
           .play-tile.image-tile span {
             display: inline-flex;
@@ -1679,8 +1712,8 @@ def apply_theme() -> None:
             border-radius: 999px;
             min-height: 2.9rem;
             font-weight: 760;
-            border: 1px solid rgba(68,55,30,0.18);
-            box-shadow: 0 10px 22px rgba(54,43,24,0.08);
+            border: 1px solid var(--line);
+            box-shadow: 0 10px 22px rgba(0,0,0,0.2);
           }
           div[data-testid="stTabs"] button {
             border-radius: 999px !important;
@@ -1690,7 +1723,7 @@ def apply_theme() -> None:
             border: 1px solid var(--line);
             border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 12px 28px rgba(54,43,24,0.07);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.2);
           }
           @media (max-width: 760px) {
             .block-container {
@@ -1863,7 +1896,6 @@ def playable_tile_grid(state: puzzle.State, lang: str) -> None:
         state[next_state.index(0)]
         for _action, next_state in puzzle.neighbors(state)
     }
-    st.markdown('<div class="play-board-shell">', unsafe_allow_html=True)
     for row_start in range(0, 9, 3):
         cols = st.columns(3, gap="small")
         for offset, col in enumerate(cols):
@@ -1881,7 +1913,7 @@ def playable_tile_grid(state: puzzle.State, lang: str) -> None:
                     move_tile_in_game(tile)
                     st.rerun()
     note = "Bấm trực tiếp ô hợp lệ cạnh ô trống để di chuyển." if lang == "vi" else "Click a legal tile next to the blank to move it."
-    st.markdown(f'<p class="dpad-note">{escape(note)}</p></div>', unsafe_allow_html=True)
+    st.info(note)
 
 
 def thu_duc_map_svg(result: thu_duc.ColoringResult) -> str:
@@ -1965,44 +1997,43 @@ def show_image_puzzle_page(lang: str) -> None:
         """,
         unsafe_allow_html=True,
     )
-    st.markdown(
-        f"""
-        <div class="workbench-shell">
-          <div class="panel-heading">
-            <h2>{escape(text(lang, "image_controls"))}</h2>
-            <span>{escape(text(lang, "game_title"))}</span>
-          </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    uploaded_image = st.file_uploader(
-        text(lang, "image_upload"),
-        type=["png", "jpg", "jpeg", "webp"],
-        key="game_image_page_uploader",
-    )
-    if uploaded_image is not None and persist_game_image(uploaded_image):
-        st.rerun()
-    mode_text = text(lang, "image_mode_on") if st.session_state.game_image_url else text(lang, "image_mode_off")
-    st.caption(mode_text)
-    if st.session_state.game_image_url:
-        st.success(text(lang, "image_ready"))
-        if st.button(text(lang, "clear_image"), key="game_clear_image_page", width="stretch"):
-            st.session_state.game_image_url = ""
-            st.session_state.game_image_name = ""
-            st.session_state.game_image_signature = ""
+    with st.container(border=True):
+        st.markdown(
+            f"""
+            <div class="panel-heading">
+              <h2>{escape(text(lang, "image_controls"))}</h2>
+              <span>{escape(text(lang, "game_title"))}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        uploaded_image = st.file_uploader(
+            text(lang, "image_upload"),
+            type=["png", "jpg", "jpeg", "webp"],
+            key="game_image_page_uploader",
+        )
+        if uploaded_image is not None and persist_game_image(uploaded_image):
             st.rerun()
-    else:
-        st.info(text(lang, "image_game_note"))
-        
-    st.divider()
-    try:
-        import sidebar_game
-        st.components.v1.html(sidebar_game.get_sidebar_game_html("sidebar_puzzle.png"), height=800)
-    except Exception as e:
-        st.error(f"Cannot load interactive image game: {e}")
-        
-    show_goal_panel(lang)
-    st.markdown("</div>", unsafe_allow_html=True)
+        mode_text = text(lang, "image_mode_on") if st.session_state.game_image_url else text(lang, "image_mode_off")
+        st.caption(mode_text)
+        if st.session_state.game_image_url:
+            st.success(text(lang, "image_ready"))
+            if st.button(text(lang, "clear_image"), key="game_clear_image_page", width="stretch"):
+                st.session_state.game_image_url = ""
+                st.session_state.game_image_name = ""
+                st.session_state.game_image_signature = ""
+                st.rerun()
+        else:
+            st.info(text(lang, "image_game_note"))
+            
+        st.divider()
+        try:
+            import sidebar_game
+            st.components.v1.html(sidebar_game.get_sidebar_game_html("sidebar_puzzle.png"), height=800)
+        except Exception as e:
+            st.error(f"Cannot load interactive image game: {e}")
+            
+        show_goal_panel(lang)
 
 
 def mini_board_html(state: puzzle.State) -> str:
@@ -3096,94 +3127,92 @@ def main() -> None:
 
     col_left, col_right = st.columns([1, 1.45], gap="large")
     with col_left:
-        st.markdown(
-            f"""
-            <div class="workbench-shell">
-              <div class="panel-heading">
-                <h2>{escape(text(lang, "board_panel"))}</h2>
-                <span>{escape(text(lang, "state_lab"))}</span>
-              </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        preset_col, load_col = st.columns([1.25, 0.75])
-        with preset_col:
-            preset_name = st.selectbox(text(lang, "demo_preset"), list(puzzle.DEMO_PRESETS.keys()), key="main_preset_name")
-        with load_col:
-            st.write("")
-            if st.button(text(lang, "load_preset"), width="stretch", key="main_load_preset"):
-                load_demo_preset(preset_name)
-                st.rerun()
-        scramble = st.slider(text(lang, "scramble_moves"), min_value=0, max_value=80, value=20, key="scramble_moves", help=help_text(lang, "scramble_moves"))
-        if st.button(text(lang, "shuffle"), type="primary", width="stretch", key="main_shuffle", help=help_text(lang, "shuffle")):
-            shuffle_start_state(scramble)
-        st.caption(current_shuffle_note(lang))
-
-        show_board(text(lang, "start_state"), st.session_state.start_state, lang, "start_board")
-        show_goal_panel(lang)
-        manual_label = "Nhập Start thủ công" if lang == "vi" else "Manual Start input"
-        with st.expander(manual_label, expanded=False):
-            state_text = st.text_input(
-                text(lang, "custom_start"),
-                value=" ".join(str(x) for x in st.session_state.start_state),
-                help=help_text(lang, "custom_start"),
+        with st.container(border=True):
+            st.markdown(
+                f"""
+                <div class="panel-heading">
+                  <h2>{escape(text(lang, "board_panel"))}</h2>
+                  <span>{escape(text(lang, "state_lab"))}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
-            if st.button(text(lang, "use_custom"), help=help_text(lang, "use_custom")):
-                try:
-                    st.session_state.start_state = puzzle.parse_state(state_text)
-                    reset_game_state(st.session_state.start_state)
-                    clear_solver_outputs()
-                    st.session_state.last_preset_name = ""
+            preset_col, load_col = st.columns([1.25, 0.75])
+            with preset_col:
+                preset_name = st.selectbox(text(lang, "demo_preset"), list(puzzle.DEMO_PRESETS.keys()), key="main_preset_name")
+            with load_col:
+                st.write("")
+                if st.button(text(lang, "load_preset"), width="stretch", key="main_load_preset"):
+                    load_demo_preset(preset_name)
                     st.rerun()
-                except Exception as exc:
-                    st.error(str(exc))
-        st.markdown("</div>", unsafe_allow_html=True)
+            scramble = st.slider(text(lang, "scramble_moves"), min_value=0, max_value=80, value=20, key="scramble_moves", help=help_text(lang, "scramble_moves"))
+            if st.button(text(lang, "shuffle"), type="primary", width="stretch", key="main_shuffle", help=help_text(lang, "shuffle")):
+                shuffle_start_state(scramble)
+            st.caption(current_shuffle_note(lang))
+
+            show_board(text(lang, "start_state"), st.session_state.start_state, lang, "start_board")
+            show_goal_panel(lang)
+            manual_label = "Nhập Start thủ công" if lang == "vi" else "Manual Start input"
+            with st.expander(manual_label, expanded=False):
+                state_text = st.text_input(
+                    text(lang, "custom_start"),
+                    value=" ".join(str(x) for x in st.session_state.start_state),
+                    help=help_text(lang, "custom_start"),
+                )
+                if st.button(text(lang, "use_custom"), help=help_text(lang, "use_custom")):
+                    try:
+                        st.session_state.start_state = puzzle.parse_state(state_text)
+                        reset_game_state(st.session_state.start_state)
+                        clear_solver_outputs()
+                        st.session_state.last_preset_name = ""
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(str(exc))
 
     with col_right:
-        st.markdown(
-            f"""
-            <div class="workbench-shell">
-              <div class="panel-heading">
-                <h2>{escape(text(lang, "run"))}</h2>
-                <span>{escape(text(lang, "algorithm_cockpit"))}</span>
-              </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        algorithm_group = st.selectbox(
-            text(lang, "algorithm_group"),
-            groups,
-            index=groups.index(default_group) if default_group in groups else 0,
-            format_func=lambda group: localize_algorithm_group(group, lang),
-            help=help_text(lang, "algorithm"),
-        )
-        group_algorithms = grouped_algorithms[algorithm_group]
-        algorithm = st.selectbox(
-            text(lang, "algorithm"),
-            group_algorithms,
-            index=group_algorithms.index("A*") if "A*" in group_algorithms else 0,
-            help=help_text(lang, "algorithm"),
-        )
-        heuristic = st.selectbox(
-            text(lang, "heuristic"),
-            puzzle.DEFAULT_HEURISTICS,
-            index=puzzle.DEFAULT_HEURISTICS.index("manhattan"),
-            help=help_text(lang, "heuristic"),
-        )
-        st.markdown(demo_readiness_html(lang, algorithm, heuristic), unsafe_allow_html=True)
-        st.caption(f"{text(lang, 'heuristic_usage')}: {localize_trace_text(heuristic_usage_note(lang, algorithm), lang)}")
-        partial_goal_controls(lang, algorithm)
-        if algorithm_group == "Constraint Satisfaction Problems" and algorithm == "Constraint Graph":
-            st.info(text(lang, "thu_duc_csp_hint"))
-            show_thu_duc_graph_coloring_page(lang)
-        st.caption(f"{text(lang, 'algorithm')}: {algorithm} | {text(lang, 'heuristic')}: {heuristic}")
-        action_cols = st.columns(2)
-        with action_cols[0]:
-            run_clicked = st.button(text(lang, "run_selected"), type="primary", width="stretch", help=help_text(lang, "run_selected"))
-        with action_cols[1]:
-            compare_clicked = st.button(text(lang, "compare_all"), width="stretch", help=help_text(lang, "compare_all"))
-        st.caption(localize_trace_text(text(lang, "notes"), lang))
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(
+                f"""
+                <div class="panel-heading">
+                  <h2>{escape(text(lang, "run"))}</h2>
+                  <span>{escape(text(lang, "algorithm_cockpit"))}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            algorithm_group = st.selectbox(
+                text(lang, "algorithm_group"),
+                groups,
+                index=groups.index(default_group) if default_group in groups else 0,
+                format_func=lambda group: localize_algorithm_group(group, lang),
+                help=help_text(lang, "algorithm"),
+            )
+            group_algorithms = grouped_algorithms[algorithm_group]
+            algorithm = st.selectbox(
+                text(lang, "algorithm"),
+                group_algorithms,
+                index=group_algorithms.index("A*") if "A*" in group_algorithms else 0,
+                help=help_text(lang, "algorithm"),
+            )
+            heuristic = st.selectbox(
+                text(lang, "heuristic"),
+                puzzle.DEFAULT_HEURISTICS,
+                index=puzzle.DEFAULT_HEURISTICS.index("manhattan"),
+                help=help_text(lang, "heuristic"),
+            )
+            st.markdown(demo_readiness_html(lang, algorithm, heuristic), unsafe_allow_html=True)
+            st.caption(f"{text(lang, 'heuristic_usage')}: {localize_trace_text(heuristic_usage_note(lang, algorithm), lang)}")
+            partial_goal_controls(lang, algorithm)
+            if algorithm_group == "Constraint Satisfaction Problems" and algorithm == "Constraint Graph":
+                st.info(text(lang, "thu_duc_csp_hint"))
+                show_thu_duc_graph_coloring_page(lang)
+            st.caption(f"{text(lang, 'algorithm')}: {algorithm} | {text(lang, 'heuristic')}: {heuristic}")
+            action_cols = st.columns(2)
+            with action_cols[0]:
+                run_clicked = st.button(text(lang, "run_selected"), type="primary", width="stretch", help=help_text(lang, "run_selected"))
+            with action_cols[1]:
+                compare_clicked = st.button(text(lang, "compare_all"), width="stretch", help=help_text(lang, "compare_all"))
+            st.caption(localize_trace_text(text(lang, "notes"), lang))
 
         config = build_config()
         if run_clicked:
