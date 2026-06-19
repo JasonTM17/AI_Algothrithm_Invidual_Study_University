@@ -2,31 +2,33 @@
 
 from __future__ import annotations
 
+import base64
 from html import escape
 from typing import Any, Dict
 
 import streamlit as st
 
 import eight_puzzle_search_app as puzzle
+import thu_duc_graph_coloring as thu_duc
 
 
 TEXT: Dict[str, Dict[str, str]] = {
     "vi": {
-        "page_title": "8-Puzzle Search Lab",
+        "page_title": "Phòng thí nghiệm tìm kiếm 8-Puzzle",
         "page_subtitle": "Trực quan hóa BFS, UCS, A*, IDA* và các thuật toán tìm kiếm cục bộ trên cùng một ma trận.",
         "advanced_settings": "Thiết lập nâng cao",
         "result_details": "Bảng kết quả chi tiết",
-        "summary_tab": "Summary",
-        "academic_trace_tab": "Trace",
-        "heuristics_tab": "Heuristics",
-        "experiment_tab": "Experiment",
-        "path_player_tab": "Path Player",
-        "report_tab": "Report",
+        "summary_tab": "Tổng quan",
+        "academic_trace_tab": "Trace học thuật",
+        "heuristics_tab": "Phân tích heuristic",
+        "experiment_tab": "Thử nghiệm",
+        "path_player_tab": "Phát lại đường đi",
+        "report_tab": "Báo cáo",
         "controls": "Điều khiển",
         "language": "Ngôn ngữ / Language",
         "algorithm": "Thuật toán",
         "algorithm_group": "Nhóm thuật toán",
-        "heuristic": "Heuristic",
+        "heuristic": "Hàm heuristic",
         "seed": "Seed",
         "scramble_moves": "Số bước tự trộn",
         "shuffle": "Tự trộn ma trận",
@@ -40,15 +42,15 @@ TEXT: Dict[str, Dict[str, str]] = {
         "random_restarts": "Số lần random restart",
         "beam_width": "Độ rộng beam",
         "board_panel": "Ma trận 8-puzzle",
-        "initial_shuffle": "Trạng thái bắt đầu hiện tại được tự trộn 20 bước từ Goal.",
-        "shuffle_note": "Đã tự trộn ma trận {moves} bước từ Goal (seed={seed}, lần {count}).",
-        "demo_preset": "Preset demo",
-        "load_preset": "Dùng preset",
-        "preset_note": "Đang dùng preset demo: {name}.",
+        "initial_shuffle": "Trạng thái bắt đầu hiện tại được tự trộn 20 bước từ đích.",
+        "shuffle_note": "Đã tự trộn ma trận {moves} bước từ đích (seed={seed}, lần {count}).",
+        "demo_preset": "Mẫu có sẵn",
+        "load_preset": "Dùng mẫu",
+        "preset_note": "Đang dùng mẫu demo: {name}.",
         "start_state": "Trạng thái bắt đầu",
         "goal_state": "Trạng thái đích",
         "goal_caption": "Đích cố định: đưa ô trống 0 về góc dưới bên phải.",
-        "goal_and_input": "Goal và nhập tay",
+        "goal_and_input": "Đích và nhập tay",
         "custom_start": "Nhập ma trận bắt đầu",
         "custom_help": "Nhập 9 số từ 0 đến 8, ví dụ: 1 2 3 4 5 6 0 7 8",
         "use_custom": "Dùng ma trận này",
@@ -57,9 +59,9 @@ TEXT: Dict[str, Dict[str, str]] = {
         "compare_all": "So sánh nhóm đang chọn",
         "notes": (
             "UCS dùng chi phí mỗi bước bằng 1 nên thường cho độ dài nghiệm giống BFS. "
-            "A* với Manhattan tối ưu vì Manhattan admissible cho 8-puzzle. "
-            "Greedy có thể nhanh nhưng không đảm bảo tối ưu. "
-            "Leo đồi và Local Beam Search có thể kẹt ở cực trị cục bộ hoặc plateau."
+            "A* với Manhattan tối ưu vì Manhattan là heuristic chấp nhận được cho 8-puzzle. "
+            "Tham lam có thể nhanh nhưng không đảm bảo tối ưu. "
+            "Leo đồi và tìm kiếm chùm cục bộ có thể kẹt ở cực trị cục bộ hoặc vùng bằng phẳng."
         ),
         "choose_action": "Chọn một thao tác trong vùng chạy thuật toán.",
         "run_summary": "Bảng tổng kết",
@@ -68,26 +70,26 @@ TEXT: Dict[str, Dict[str, str]] = {
         "solution_path": "Các bước lời giải",
         "step": "Bước",
         "start": "Bắt đầu",
-        "trace": "Bảng Node / Frontier / Reached",
-        "algorithm_certificate": "Algorithm Certificate",
+        "trace": "Bảng Node / Frontier / Reached đầy đủ",
+        "algorithm_certificate": "Chứng nhận thuật toán",
         "certificate_status": "Trạng thái kiểm chứng",
-        "certificate_pass": "PASS",
-        "certificate_fail": "FAIL",
-        "heuristic_inspector": "Heuristic Inspector",
+        "certificate_pass": "Đạt",
+        "certificate_fail": "Lỗi",
+        "heuristic_inspector": "Bộ phân tích heuristic",
         "heuristic_totals": "Tổng hợp heuristic",
         "tile_contributions": "Đóng góp từng ô",
         "linear_conflicts": "Các cặp Linear Conflict",
         "no_linear_conflicts": "Không có cặp Linear Conflict trong trạng thái này.",
-        "trace_story": "Why This Node?",
-        "experiment_lab": "Experiment Lab",
-        "run_experiment": "Chạy Experiment Lab",
-        "download_experiment": "Tải báo cáo experiment",
-        "path_playback": "Path playback",
-        "coursework_report": "Coursework report",
+        "trace_story": "Vì sao chọn node này?",
+        "experiment_lab": "Phòng thử nghiệm",
+        "run_experiment": "Chạy phòng thử nghiệm",
+        "download_experiment": "Tải báo cáo thử nghiệm",
+        "path_playback": "Phát lại đường đi",
+        "coursework_report": "Báo cáo bài làm",
         "download_report": "Tải báo cáo Markdown",
         "report_preview": "Nội dung báo cáo",
-        "benchmark": "Benchmark demo nhỏ",
-        "run_benchmark": "Chạy benchmark preset",
+        "benchmark": "Đo hiệu năng demo nhỏ",
+        "run_benchmark": "Chạy đo hiệu năng mẫu",
         "benchmark_caption": "Benchmark dùng preset cố định và tắt trace để đo nhanh, phù hợp đưa vào báo cáo.",
         "comparison": "Bảng so sánh thuật toán",
         "academic_panel": "Cơ sở học thuật",
@@ -95,17 +97,17 @@ TEXT: Dict[str, Dict[str, str]] = {
         "heuristic_usage": "Cách dùng h(n)",
         "demo_readiness": "Trạng thái demo",
         "run_mode": "Kiểu chạy",
-        "solvable": "Solvable",
-        "unsolvable": "Unsolvable",
-        "current_preset": "Preset hiện tại",
-        "selected_heuristic": "h(n)",
-        "trace_player": "Trace Player học thuật",
+        "solvable": "Có lời giải",
+        "unsolvable": "Không có lời giải",
+        "current_preset": "Mẫu hiện tại",
+        "selected_heuristic": "Hàm h(n)",
+        "trace_player": "Trình phát trace học thuật",
         "trace_replay_row": "Dòng trace cần xem",
         "selected_node": "Node đang xét",
         "frontier_after": "Frontier sau mở rộng",
         "reached_after": "Reached sau mở rộng",
-        "generated_skipped": "Generated / Skipped",
-        "search_tree_preview": "Search Tree Preview",
+        "generated_skipped": "Đã sinh / Bỏ qua",
+        "search_tree_preview": "Xem trước cây tìm kiếm",
         "peas_model": "PEAS",
         "problem_variant": "Dạng bài toán theo thuật toán",
         "problem_definition": "Mô hình bài toán",
@@ -140,6 +142,65 @@ TEXT: Dict[str, Dict[str, str]] = {
         "sa_cooling_rate": "Tỷ lệ làm nguội",
         "sa_min_temp": "Nhiệt độ tối thiểu",
         "sa_max_steps": "Số bước SA tối đa",
+        "app_kicker": "Trình trực quan hóa tìm kiếm AI",
+        "state_lab": "phòng trạng thái",
+        "algorithm_cockpit": "bảng điều khiển thuật toán",
+        "random_manual": "Ngẫu nhiên/nhập tay",
+        "path_length": "Độ dài đường đi",
+        "expanded_metric": "Đã mở rộng",
+        "generated_metric": "Đã sinh",
+        "runtime_metric": "Thời gian chạy",
+        "memory_metric": "Bộ nhớ",
+        "node_expansion_subtitle": "Node đang được thuật toán chọn để mở rộng",
+        "frontier_subtitle": "Các trạng thái ứng viên đang chờ trong Frontier",
+        "reached_subtitle": "Các trạng thái đã phát hiện, giới hạn để dễ nhìn",
+        "selection_key": "Khóa chọn",
+        "game_title": "Chơi trực quan",
+        "game_note": "Bấm trực tiếp vào ô cạnh ô trống để di chuyển. Ô bị mờ là ô chưa đi được.",
+        "game_moves": "số bước",
+        "game_solved": "Đã về đích",
+        "game_progress": "Đang chơi",
+        "slide_tile": "Vuốt {tile}",
+        "cannot_move": "Không thể đi {action}",
+        "not_adjacent": "Ô này không nằm cạnh ô trống.",
+        "reset_game": "Đặt lại ván chơi",
+        "use_as_start": "Dùng làm trạng thái bắt đầu",
+        "move_up": "Lên",
+        "move_down": "Xuống",
+        "move_left": "Trái",
+        "move_right": "Phải",
+        "undo": "Hoàn tác",
+        "tree_start": "BẮT ĐẦU",
+        "tree_goal": "ĐÍCH",
+        "tree_depth": "độ sâu {depth}",
+        "tree_parent": "cha",
+        "tree_action": "hành động",
+        "choose_action_hint": "Chọn thuật toán, bấm Chạy thuật toán đã chọn, rồi mở tab Trace học thuật để xem Node / Frontier / Reached.",
+        "trace_run_title": "Cách chạy Node / Frontier / Reached",
+        "trace_run_steps": "1. Chọn nhóm thuật toán và thuật toán cần kiểm tra. 2. Bấm Chạy thuật toán đã chọn. 3. Mở tab Trace học thuật. 4. Xem Node đang xét, Frontier sau mở rộng và Reached sau mở rộng trong bảng trace.",
+        "trace_result_hint": "Kết quả đã tạo xong. Mở tab Trace học thuật bên dưới để xem Node / Frontier / Reached theo từng bước mở rộng.",
+        "image_game_title": "Trò chơi từ ảnh",
+        "image_game_note": "Tải một ảnh lên để biến thành bộ xếp hình 8-puzzle. App dùng ảnh làm nền cho 8 ô, ô 0 là ô trống.",
+        "image_upload": "Tải ảnh làm đề trò chơi",
+        "image_mode_on": "Đang dùng ảnh làm puzzle",
+        "image_mode_off": "Đang dùng số thường",
+        "clear_image": "Bỏ ảnh",
+        "image_ready": "Ảnh đã sẵn sàng. Hãy bấm các ô cạnh ô trống để chơi.",
+        "feature_mode": "Tính năng",
+        "feature_puzzle": "8-Puzzle Search",
+        "feature_image_puzzle": "Trò chơi xếp hình từ ảnh",
+        "feature_thu_duc": "Tô màu đồ thị Thủ Đức",
+        "image_controls": "Ảnh trò chơi",
+        "click_tile_hint": "Bấm trực tiếp vào ô cạnh ô trống để di chuyển. Không cần dùng nút điều hướng riêng.",
+        "thu_duc_title": "Tô màu đồ thị Thủ Đức",
+        "thu_duc_subtitle": "Demo CSP graph coloring: mỗi phường là một biến, miền là màu, cạnh giáp ranh là ràng buộc khác màu.",
+        "thu_duc_palette": "Số màu tối đa",
+        "thu_duc_stats": "Thống kê graph coloring",
+        "thu_duc_assignments": "Bảng tô màu từng phường",
+        "thu_duc_steps": "Các bước greedy coloring",
+        "thu_duc_valid": "Hợp lệ",
+        "thu_duc_invalid": "Có xung đột",
+        "thu_duc_csp_hint": "Chọn nhóm Constraint Satisfaction Problems và thuật toán Constraint Graph để mở demo tô màu đồ thị Thủ Đức.",
     },
     "en": {
         "page_title": "8-Puzzle Search Lab",
@@ -265,6 +326,65 @@ TEXT: Dict[str, Dict[str, str]] = {
         "sa_cooling_rate": "SA cooling rate",
         "sa_min_temp": "SA minimum temperature",
         "sa_max_steps": "SA max steps",
+        "app_kicker": "AI Search Visualizer",
+        "state_lab": "state lab",
+        "algorithm_cockpit": "algorithm cockpit",
+        "random_manual": "Random/manual",
+        "path_length": "Path length",
+        "expanded_metric": "Expanded",
+        "generated_metric": "Generated",
+        "runtime_metric": "Runtime",
+        "memory_metric": "Memory",
+        "node_expansion_subtitle": "Node currently selected for expansion",
+        "frontier_subtitle": "Next candidate states waiting in the frontier",
+        "reached_subtitle": "States discovered so far, capped for readability",
+        "selection_key": "Selection Key",
+        "game_title": "Interactive play",
+        "game_note": "Click a tile next to the blank to move it. Disabled tiles are not legal moves.",
+        "game_moves": "moves",
+        "game_solved": "Goal reached",
+        "game_progress": "In progress",
+        "slide_tile": "Slide {tile}",
+        "cannot_move": "Cannot move {action}",
+        "not_adjacent": "That tile is not next to the blank.",
+        "reset_game": "Reset game",
+        "use_as_start": "Use as Start",
+        "move_up": "Up",
+        "move_down": "Down",
+        "move_left": "Left",
+        "move_right": "Right",
+        "undo": "Undo",
+        "tree_start": "START",
+        "tree_goal": "GOAL",
+        "tree_depth": "depth {depth}",
+        "tree_parent": "parent",
+        "tree_action": "action",
+        "choose_action_hint": "Choose an algorithm, press Run selected algorithm, then open the Trace tab to inspect Node / Frontier / Reached.",
+        "trace_run_title": "How to run Node / Frontier / Reached",
+        "trace_run_steps": "1. Choose the algorithm group and algorithm. 2. Press Run selected algorithm. 3. Open the Trace tab. 4. Inspect current Node, Frontier after expansion, and Reached after expansion in the trace table.",
+        "trace_result_hint": "The run is ready. Open the Trace tab below to inspect Node / Frontier / Reached for each expansion step.",
+        "image_game_title": "Image puzzle game",
+        "image_game_note": "Upload an image to turn it into an 8-puzzle. The app uses the image as the tile texture and keeps tile 0 blank.",
+        "image_upload": "Upload puzzle image",
+        "image_mode_on": "Image puzzle enabled",
+        "image_mode_off": "Number puzzle enabled",
+        "clear_image": "Clear image",
+        "image_ready": "Image is ready. Click tiles next to the blank to play.",
+        "feature_mode": "Feature",
+        "feature_puzzle": "8-Puzzle Search",
+        "feature_image_puzzle": "Image puzzle game",
+        "feature_thu_duc": "Thu Duc Graph Coloring",
+        "image_controls": "Puzzle image",
+        "click_tile_hint": "Click a tile next to the blank to move it. No separate D-pad is needed.",
+        "thu_duc_title": "Thu Duc graph coloring",
+        "thu_duc_subtitle": "CSP graph coloring demo: each ward is a variable, colors are domains, adjacency edges require different colors.",
+        "thu_duc_palette": "Maximum colors",
+        "thu_duc_stats": "Graph coloring statistics",
+        "thu_duc_assignments": "Ward color assignments",
+        "thu_duc_steps": "Greedy coloring steps",
+        "thu_duc_valid": "Valid",
+        "thu_duc_invalid": "Conflicts found",
+        "thu_duc_csp_hint": "Choose Constraint Satisfaction Problems and Constraint Graph to open the Thu Duc graph coloring demo.",
     },
 }
 
@@ -426,7 +546,7 @@ ALGORITHM_PROFILES: Dict[str, Dict[str, Dict[str, str]]] = {
         "BFS": {
             "Family": "Tìm kiếm mù / không dùng heuristic",
             "Selection rule": "Luôn mở node nông nhất trong hàng đợi FIFO.",
-            "Evaluation function": "f(n) = depth(n)",
+            "Evaluation function": "Không có (Thứ tự FIFO)",
             "Guarantee": "Đầy đủ và tối ưu khi mọi bước có chi phí bằng nhau.",
             "Main limitation": "Tốn bộ nhớ vì phải giữ toàn bộ frontier theo từng tầng.",
             "pseudo": "frontier <- FIFO(start)\nwhile frontier not empty:\n    node <- pop_front(frontier)\n    if node is goal: return solution\n    expand node and append unseen children",
@@ -434,7 +554,7 @@ ALGORITHM_PROFILES: Dict[str, Dict[str, Dict[str, str]]] = {
         "DFS": {
             "Family": "Tìm kiếm mù / không dùng heuristic",
             "Selection rule": "Luôn mở node sâu nhất trong stack LIFO.",
-            "Evaluation function": "f(n) = depth-first order",
+            "Evaluation function": "Không có (Thứ tự LIFO stack)",
             "Guarantee": "Không tối ưu; trong app được chặn bởi giới hạn độ sâu/mở rộng.",
             "Main limitation": "Có thể đi sâu vào nhánh kém và bỏ lỡ nghiệm nông.",
             "pseudo": "frontier <- Stack(start)\nwhile frontier not empty:\n    node <- pop(frontier)\n    if node is goal: return solution\n    if depth limit not reached: push children",
@@ -450,7 +570,7 @@ ALGORITHM_PROFILES: Dict[str, Dict[str, Dict[str, str]]] = {
         "IDS": {
             "Family": "Tìm kiếm lặp sâu dần",
             "Selection rule": "Chạy Depth-Limited Search với giới hạn 0,1,2,...",
-            "Evaluation function": "f(n) = depth limit iteration",
+            "Evaluation function": "Không có (Lặp lại DFS giới hạn độ sâu)",
             "Guarantee": "Tối ưu theo số bước nếu giới hạn đủ lớn và chi phí bước bằng nhau.",
             "Main limitation": "Lặp lại việc mở node ở các tầng nông.",
             "pseudo": "for limit in 0..L:\n    result <- depth_limited_search(start, limit)\n    if result found: return result",
@@ -535,7 +655,7 @@ ALGORITHM_PROFILES["en"] = {
     "BFS": {
         "Family": "Uninformed search",
         "Selection rule": "Always expands the shallowest node from a FIFO queue.",
-        "Evaluation function": "f(n) = depth(n)",
+        "Evaluation function": "None (FIFO order)",
         "Guarantee": "Complete and optimal when every step has equal cost.",
         "Main limitation": "High memory use because it stores the frontier layer by layer.",
         "pseudo": "frontier <- FIFO(start)\nwhile frontier not empty:\n    node <- pop_front(frontier)\n    if node is goal: return solution\n    expand node and append unseen children",
@@ -543,7 +663,7 @@ ALGORITHM_PROFILES["en"] = {
     "DFS": {
         "Family": "Uninformed search",
         "Selection rule": "Always expands the deepest node from a LIFO stack.",
-        "Evaluation function": "f(n) = depth-first order",
+        "Evaluation function": "None (LIFO stack order)",
         "Guarantee": "Not optimal; bounded here by depth and expansion limits.",
         "Main limitation": "Can follow poor deep branches before shallow solutions.",
         "pseudo": "frontier <- Stack(start)\nwhile frontier not empty:\n    node <- pop(frontier)\n    if node is goal: return solution\n    if depth limit not reached: push children",
@@ -559,7 +679,7 @@ ALGORITHM_PROFILES["en"] = {
     "IDS": {
         "Family": "Iterative deepening search",
         "Selection rule": "Runs depth-limited search with limits 0,1,2,...",
-        "Evaluation function": "f(n) = depth limit iteration",
+        "Evaluation function": "None (depth-limited DFS iterations)",
         "Guarantee": "Optimal in number of moves when the limit is sufficient and step costs are equal.",
         "Main limitation": "Re-expands shallow nodes across iterations.",
         "pseudo": "for limit in 0..L:\n    result <- depth_limited_search(start, limit)\n    if result found: return result",
@@ -846,6 +966,48 @@ def localize_action(action: str, lang: str) -> str:
     return action
 
 
+def localize_algorithm_group(group: str, lang: str) -> str:
+    if lang == "en":
+        return group
+    return {
+        "Uninformed Search": "Tìm kiếm không dùng heuristic",
+        "Informed Search": "Tìm kiếm có heuristic",
+        "Local Search": "Tìm kiếm cục bộ",
+        "Complex Environments": "Môi trường phức tạp",
+        "Complex Environment": "Môi trường phức tạp",
+        "Constraint Satisfaction Problems": "Bài toán thỏa mãn ràng buộc",
+        "Constraint Satisfaction": "Bài toán thỏa mãn ràng buộc",
+        "Adversarial Search": "Tìm kiếm đối kháng",
+        "Adversarial / Stochastic Search": "Tìm kiếm đối kháng / xác suất",
+    }.get(group, group)
+
+
+def localize_trace_text(value: Any, lang: str) -> str:
+    text_value = str(value or "")
+    if lang == "en":
+        return text_value
+    replacements = {
+        "Pop best priority node for A*, expand it, then push improved children.": "Lấy node ưu tiên tốt nhất của A*, mở rộng node đó, rồi đưa các node con tốt hơn vào frontier.",
+        "children": "node con",
+        "Solver chuẩn": "Bộ giải chuẩn",
+        "local search": "tìm kiếm cục bộ",
+        "complete/optimal": "đầy đủ/tối ưu",
+        "child": "node con",
+        "Priority queue ordered by minimum f(n)=g(n)+h(n); ties keep insertion order after h(n).": "Hàng đợi ưu tiên chọn f(n)=g(n)+h(n) nhỏ nhất; nếu hòa thì giữ thứ tự sinh node.",
+        "A* selected the node with minimum f(n)=g(n)+h(n); insertion order breaks ties.": "A* chọn node có f(n)=g(n)+h(n) nhỏ nhất; nếu hòa thì dùng thứ tự sinh node.",
+        "Selection key": "Khóa chọn",
+        "Decision": "Quyết định",
+        "Start": "Bắt đầu",
+        "Up": "Lên",
+        "Down": "Xuống",
+        "Left": "Trái",
+        "Right": "Phải",
+    }
+    for english, vietnamese in replacements.items():
+        text_value = text_value.replace(english, vietnamese)
+    return text_value
+
+
 def localize_table(table: Any, lang: str) -> Any:
     mapping = TABLE_COLUMNS.get(lang, {})
     if not mapping:
@@ -862,20 +1024,22 @@ def apply_theme() -> None:
         """
         <style>
           :root {
-            --surface: #f6f8f7;
-            --panel: #ffffff;
-            --panel-soft: #eef4f2;
-            --ink: #17211b;
-            --muted: rgba(23, 33, 27, 0.78);
-            --line: rgba(23, 33, 27, 0.14);
-            --accent: #0f766e;
-            --accent-strong: #0f766e;
-            --accent-soft: rgba(15, 118, 110, 0.1);
-            --amber: #9a5b13;
-            --amber-soft: rgba(183, 121, 31, 0.14);
+            --surface: #f3efe6;
+            --surface-2: #e7dfcf;
+            --panel: rgba(255, 252, 243, 0.94);
+            --panel-soft: #efe7d6;
+            --ink: #1e241b;
+            --muted: rgba(30, 36, 27, 0.68);
+            --line: rgba(68, 55, 30, 0.16);
+            --accent: #0b6b5e;
+            --accent-strong: #064d44;
+            --accent-soft: rgba(11, 107, 94, 0.11);
+            --amber: #a85f12;
+            --amber-soft: rgba(168, 95, 18, 0.13);
             --danger: #b42318;
             --danger-soft: rgba(180, 35, 24, 0.1);
-            --tile-shadow: inset 0 -2px 0 rgba(128, 128, 128, 0.1), 0 6px 18px rgba(15, 23, 42, 0.08);
+            --graphite: #273028;
+            --tile-shadow: inset 0 -4px 0 rgba(69, 53, 27, 0.08), 0 14px 30px rgba(54, 43, 24, 0.12);
           }
           @media (prefers-color-scheme: dark) {
             :root {
@@ -896,40 +1060,144 @@ def apply_theme() -> None:
             }
           }
           .stApp {
-            background: var(--surface);
+            background:
+              radial-gradient(circle at 10% 0%, rgba(11, 107, 94, 0.13), transparent 28rem),
+              radial-gradient(circle at 95% 10%, rgba(168, 95, 18, 0.12), transparent 26rem),
+              linear-gradient(135deg, var(--surface), var(--surface-2));
           }
           .block-container {
-            padding-top: 2rem;
-            padding-bottom: 3rem;
-            max-width: 1220px;
+            padding-top: 1.35rem;
+            padding-bottom: 4rem;
+            max-width: 1280px;
+          }
+          [data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #1e2a24 0%, #12201c 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+          }
+          [data-testid="stSidebar"] label,
+          [data-testid="stSidebar"] h1,
+          [data-testid="stSidebar"] h2,
+          [data-testid="stSidebar"] h3,
+          [data-testid="stSidebar"] p,
+          [data-testid="stSidebar"] small {
+            color: rgba(250, 246, 236, 0.92) !important;
+            letter-spacing: normal !important;
+            text-transform: none !important;
+          }
+          [data-testid="stSidebar"] input,
+          [data-testid="stSidebar"] textarea,
+          [data-testid="stSidebar"] [data-baseweb="select"] *,
+          [data-testid="stSidebar"] [role="combobox"] * {
+            color: #111827 !important;
+          }
+          [data-testid="stSidebar"] .stNumberInput,
+          [data-testid="stSidebar"] .stSelectbox {
+            background: rgba(255, 255, 255, 0.035);
+            border-radius: 16px;
+            padding: 0.15rem 0.2rem 0.35rem;
+          }
+          #MainMenu,
+          footer,
+          header,
+          [data-testid="stToolbar"],
+          [data-testid="stDecoration"],
+          [data-testid="stStatusWidget"],
+          [data-testid="stDeployButton"],
+          .stDeployButton {
+            visibility: hidden !important;
+            height: 0 !important;
+            min-height: 0 !important;
+          }
+          [data-testid="stIconMaterial"] {
+            visibility: hidden !important;
+            width: 0 !important;
+            min-width: 0 !important;
+          }
+          [data-testid="stFileUploaderDropzoneInstructions"] {
+            display: none !important;
+          }
+          [data-testid="stFileUploaderDropzone"] small {
+            display: none !important;
           }
           .app-hero {
-            border-bottom: 1px solid var(--line);
-            margin-bottom: 1rem;
-            padding-bottom: 0.85rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(68, 55, 30, 0.14);
+            border-radius: 28px;
+            margin-bottom: 1.2rem;
+            padding: 1.55rem 1.6rem 1.35rem;
+            background:
+              linear-gradient(120deg, rgba(255, 252, 243, 0.94), rgba(239, 231, 214, 0.76)),
+              repeating-linear-gradient(90deg, rgba(30, 36, 27, 0.045) 0 1px, transparent 1px 18px);
+            box-shadow: 0 22px 55px rgba(54, 43, 24, 0.13);
+          }
+          .app-hero::after {
+            content: "";
+            position: absolute;
+            right: -5rem;
+            top: -6rem;
+            width: 18rem;
+            height: 18rem;
+            border-radius: 999px;
+            border: 1px solid rgba(11, 107, 94, 0.18);
+            background: radial-gradient(circle, rgba(11, 107, 94, 0.12), transparent 62%);
           }
           .app-kicker {
             color: var(--accent-strong);
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             font-weight: 700;
-            letter-spacing: 0;
-            text-transform: uppercase;
+            letter-spacing: normal;
+            text-transform: none;
           }
           .app-hero h1 {
             color: var(--ink);
-            font-size: clamp(1.95rem, 3.5vw, 2.7rem);
-            font-weight: 780;
-            line-height: 1.05;
-            letter-spacing: 0;
-            margin: 0.25rem 0 0.45rem;
+            font-family: 'Source Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: clamp(2.35rem, 5vw, 4.65rem);
+            font-weight: 760;
+            line-height: 0.95;
+            letter-spacing: -0.01em;
+            margin: 0.38rem 0 0.65rem;
+            max-width: 780px;
           }
           .app-hero p {
             color: var(--muted);
             opacity: 1;
-            font-size: 0.98rem;
-            line-height: 1.55;
-            max-width: 760px;
+            font-size: 1.05rem;
+            line-height: 1.65;
+            max-width: 720px;
             margin: 0;
+          }
+          .workbench-shell {
+            border: 1px solid rgba(68, 55, 30, 0.16);
+            border-radius: 24px;
+            background: rgba(255, 252, 243, 0.72);
+            box-shadow: 0 18px 45px rgba(54, 43, 24, 0.1);
+            padding: 1rem;
+            margin-bottom: 1rem;
+          }
+          .panel-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin: 0 0 0.9rem;
+          }
+          .panel-heading h2 {
+            color: var(--ink);
+            font-family: 'Source Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: clamp(1.35rem, 2.4vw, 2rem);
+            line-height: 1;
+            letter-spacing: -0.01em;
+            margin: 0;
+          }
+          .panel-heading span {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--accent-strong);
+            background: var(--accent-soft);
+            padding: 0.35rem 0.62rem;
+            font-size: 0.72rem;
+            font-weight: 760;
           }
           .workbench-panel {
             border: 1px solid var(--line);
@@ -947,15 +1215,16 @@ def apply_theme() -> None:
           .readiness-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 0.55rem;
+            gap: 0.7rem;
             margin: 0.65rem 0 0.9rem;
           }
           .readiness-chip {
             border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--panel);
-            padding: 0.6rem 0.7rem;
-            min-height: 58px;
+            border-radius: 18px;
+            background: rgba(255, 252, 243, 0.78);
+            padding: 0.75rem 0.82rem;
+            min-height: 68px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
           }
           .readiness-chip span {
             display: block;
@@ -987,17 +1256,17 @@ def apply_theme() -> None:
           }
           .metric-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
-            gap: 0.7rem;
-            margin: 0.45rem 0 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.8rem;
+            margin: 0.6rem 0 1.1rem;
           }
           .metric-card {
             border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--panel);
-            padding: 0.8rem 0.9rem;
-            min-height: 74px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-radius: 20px;
+            background: linear-gradient(180deg, rgba(255,252,243,0.96), rgba(239,231,214,0.72));
+            padding: 0.95rem 1rem;
+            min-height: 88px;
+            box-shadow: 0 14px 32px rgba(54,43,24,0.1);
           }
           .metric-card span {
             display: block;
@@ -1009,17 +1278,18 @@ def apply_theme() -> None:
           .metric-card strong {
             display: block;
             color: var(--ink);
-            font-size: 1.28rem;
+            font-size: 1.45rem;
             line-height: 1.25;
             margin-top: 0.25rem;
             font-variant-numeric: tabular-nums;
           }
           .lab-panel {
             border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--panel);
+            border-radius: 18px;
+            background: rgba(255, 252, 243, 0.78);
             padding: 0.95rem 1rem;
             margin: 0.65rem 0 1rem;
+            box-shadow: 0 12px 28px rgba(54, 43, 24, 0.08);
           }
           .status-grid {
             display: grid;
@@ -1029,10 +1299,10 @@ def apply_theme() -> None:
           }
           .status-chip {
             border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--panel);
-            padding: 0.55rem 0.65rem;
-            min-height: 52px;
+            border-radius: 18px;
+            background: rgba(255, 252, 243, 0.8);
+            padding: 0.72rem 0.8rem;
+            min-height: 62px;
           }
           .status-chip span {
             display: block;
@@ -1070,16 +1340,17 @@ def apply_theme() -> None:
           .trace-player-grid {
             display: grid;
             grid-template-columns: minmax(210px, 0.85fr) minmax(260px, 1.15fr);
-            gap: 0.85rem;
+            gap: 1rem;
             align-items: start;
             margin: 0.6rem 0 1rem;
           }
           .trace-detail {
             border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--panel);
-            padding: 0.85rem 0.95rem;
-            min-height: 72px;
+            border-radius: 18px;
+            background: rgba(255, 252, 243, 0.82);
+            padding: 0.95rem 1rem;
+            min-height: 86px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
           }
           .trace-detail span {
             display: block;
@@ -1094,18 +1365,84 @@ def apply_theme() -> None:
             font: inherit;
             line-height: 1.42;
           }
+          .trace-triptych {
+            display: grid;
+            grid-template-columns: minmax(220px, 0.9fr) minmax(260px, 1.1fr) minmax(260px, 1.1fr);
+            gap: 0.9rem;
+            align-items: stretch;
+            margin: 0.75rem 0 1rem;
+          }
+          .trace-state-panel {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: rgba(255, 252, 243, 0.84);
+            padding: 0.88rem;
+            box-shadow: 0 14px 32px rgba(54,43,24,0.09);
+          }
+          .trace-state-panel h4 {
+            color: var(--ink);
+            margin: 0 0 0.2rem;
+            font-size: 0.95rem;
+            letter-spacing: -0.01em;
+          }
+          .trace-state-panel p {
+            color: var(--muted);
+            margin: 0 0 0.65rem;
+            font-size: 0.78rem;
+            line-height: 1.35;
+          }
+          .state-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+            gap: 0.55rem;
+          }
+          .state-card {
+            border: 1px solid rgba(68,55,30,0.13);
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255,250,240,0.96), rgba(239,231,214,0.78));
+            padding: 0.55rem;
+          }
+          .state-card-title {
+            color: var(--accent-strong);
+            font-size: 0.72rem;
+            font-weight: 780;
+            margin-bottom: 0.35rem;
+          }
+          .mini-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+          }
+          .mini-board .mini-tile {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9px;
+            background: #fff8ea;
+            border: 1px solid rgba(68,55,30,0.13);
+            color: var(--ink);
+            font-size: 0.88rem;
+            font-weight: 760;
+          }
+          .mini-board .mini-blank {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            border-style: dashed;
+          }
           .tree-card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-            gap: 0.55rem;
+            grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+            gap: 0.7rem;
             margin: 0.55rem 0 1rem;
           }
           .tree-card {
             border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--panel);
-            padding: 0.62rem 0.68rem;
-            min-height: 104px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255,252,243,0.95), rgba(239,231,214,0.72));
+            padding: 0.75rem 0.8rem;
+            min-height: 126px;
+            box-shadow: 0 12px 28px rgba(54,43,24,0.08);
           }
           .tree-card strong {
             color: var(--ink);
@@ -1123,11 +1460,15 @@ def apply_theme() -> None:
           }
           .puzzle-board {
             display: grid;
-            grid-template-columns: repeat(3, clamp(48px, 7vw, 72px));
-            gap: 8px;
+            grid-template-columns: repeat(3, clamp(58px, 7vw, 82px));
+            gap: 10px;
             width: fit-content;
             max-width: 100%;
-            margin: 0.45rem auto 1.25rem;
+            margin: 0.65rem auto 1.35rem;
+            padding: 0.85rem;
+            border: 1px solid rgba(68,55,30,0.12);
+            border-radius: 24px;
+            background: rgba(30, 36, 27, 0.045);
           }
           .puzzle-board .tile {
             aspect-ratio: 1 / 1;
@@ -1135,16 +1476,16 @@ def apply_theme() -> None:
             align-items: center;
             justify-content: center;
             border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--panel);
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fffaf0, #ece1ca);
             color: var(--ink);
-            font-size: clamp(1.18rem, 3vw, 1.55rem);
+            font-size: clamp(1.35rem, 3vw, 1.85rem);
             font-weight: 750;
             line-height: 1;
             box-shadow: var(--tile-shadow);
           }
           .puzzle-board .blank {
-            background: var(--accent-soft);
+            background: repeating-linear-gradient(135deg, rgba(11,107,94,0.13) 0 8px, rgba(11,107,94,0.06) 8px 16px);
             color: var(--accent-strong);
             opacity: 1;
             border: 1px dashed var(--accent-strong);
@@ -1152,9 +1493,204 @@ def apply_theme() -> None:
             text-decoration: underline;
             text-underline-offset: 0.14em;
           }
+          .coloring-board .coloring-tile {
+            flex-direction: column;
+            gap: 0.18rem;
+            border-color: color-mix(in srgb, var(--tile-color), transparent 35%);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--tile-color), white 78%), #fffaf0);
+          }
+          .coloring-board .coloring-tile strong {
+            color: var(--ink);
+            font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+          }
+          .coloring-board .coloring-tile span,
+          .coloring-board .coloring-tile small {
+            color: var(--ink);
+            opacity: 0.74;
+            font-size: 0.65rem;
+            line-height: 1.1;
+            text-align: center;
+          }
+          .image-puzzle-board .tile {
+            background-image: var(--puzzle-image);
+            background-size: 300% 300%;
+            background-repeat: no-repeat;
+            color: rgba(255,255,255,0.96);
+            text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+            border-color: rgba(255,255,255,0.35);
+          }
+          .image-puzzle-board .tile::after {
+            content: attr(data-tile);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.65rem;
+            height: 1.65rem;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.35);
+            font-size: 0.8rem;
+          }
+          .image-puzzle-board .blank {
+            background-image: none;
+            background: repeating-linear-gradient(135deg, rgba(11,107,94,0.18) 0 8px, rgba(11,107,94,0.06) 8px 16px);
+            color: transparent;
+            text-shadow: none;
+          }
+          .image-puzzle-board .blank::after {
+            content: "0";
+            color: var(--accent-strong);
+            background: transparent;
+          }
+          .image-puzzle-board .tile-1 { background-position: 0% 0%; }
+          .image-puzzle-board .tile-2 { background-position: 50% 0%; }
+          .image-puzzle-board .tile-3 { background-position: 100% 0%; }
+          .image-puzzle-board .tile-4 { background-position: 0% 50%; }
+          .image-puzzle-board .tile-5 { background-position: 50% 50%; }
+          .image-puzzle-board .tile-6 { background-position: 100% 50%; }
+          .image-puzzle-board .tile-7 { background-position: 0% 100%; }
+          .image-puzzle-board .tile-8 { background-position: 50% 100%; }
+          .game-panel {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: rgba(255, 252, 243, 0.72);
+            padding: 0.9rem;
+            margin: 0.45rem 0 1.1rem;
+            box-shadow: 0 12px 28px rgba(54,43,24,0.08);
+          }
+          .game-panel h3 {
+            margin: 0 0 0.2rem;
+            color: var(--ink);
+            font-family: 'Source Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            letter-spacing: -0.01em;
+          }
+          .game-panel .game-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin: 0.55rem 0 0.85rem;
+          }
+          .game-pill {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--accent-strong);
+            background: var(--accent-soft);
+            padding: 0.28rem 0.55rem;
+            font-size: 0.75rem;
+            font-weight: 760;
+            letter-spacing: normal;
+          }
+          .play-board-shell {
+            display: grid;
+            place-items: center;
+            margin: 0.65rem auto 0.85rem;
+          }
+          .play-board {
+            display: grid;
+            grid-template-columns: repeat(3, clamp(58px, 7vw, 82px));
+            gap: 10px;
+            width: fit-content;
+            padding: 0.85rem;
+            border: 1px solid rgba(68,55,30,0.12);
+            border-radius: 24px;
+            background: rgba(30, 36, 27, 0.045);
+          }
+          .play-tile {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-width: 0;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fffaf0, #ece1ca);
+            color: var(--ink);
+            font-size: clamp(1.35rem, 3vw, 1.85rem);
+            font-weight: 800;
+            line-height: 1;
+            text-decoration: none !important;
+            box-shadow: var(--tile-shadow);
+            transition: transform .16s ease, opacity .16s ease, box-shadow .16s ease;
+          }
+          .play-tile.movable {
+            cursor: grab;
+          }
+          .play-tile.movable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 28px rgba(11,107,94,.2);
+          }
+          .play-tile.locked {
+            cursor: not-allowed;
+            opacity: 0.42;
+          }
+          .play-tile.blank {
+            cursor: default;
+            color: var(--accent-strong);
+            border: 1px dashed var(--accent-strong);
+            background: repeating-linear-gradient(135deg, rgba(11,107,94,0.13) 0 8px, rgba(11,107,94,0.06) 8px 16px);
+            box-shadow: none;
+          }
+          .play-tile.image-tile {
+            background-size: 300% 300%;
+            color: rgba(255,255,255,0.96);
+            text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+            border-color: rgba(255,255,255,0.35);
+          }
+          .play-tile.image-tile span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.65rem;
+            height: 1.65rem;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.35);
+            font-size: 0.8rem;
+          }
+          div[class*="st-key-play_tile_"] div.stButton > button {
+            aspect-ratio: 1 / 1;
+            min-height: 0;
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fffaf0, #ece1ca);
+            color: var(--ink);
+            font-size: clamp(1.35rem, 3vw, 1.85rem);
+            font-weight: 800;
+            line-height: 1;
+            box-shadow: var(--tile-shadow);
+            transition: transform .16s ease, opacity .16s ease, box-shadow .16s ease;
+          }
+          div[class*="st-key-play_tile_"] div.stButton > button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 28px rgba(11,107,94,.2);
+          }
+          div[class*="st-key-play_tile_"] div.stButton > button:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+            color: var(--ink);
+          }
+          .dpad-note {
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.45;
+            margin: 0.2rem 0 0.65rem;
+          }
           div.stButton > button {
-            border-radius: 8px;
-            min-height: 2.5rem;
+            border-radius: 999px;
+            min-height: 2.9rem;
+            font-weight: 760;
+            border: 1px solid rgba(68,55,30,0.18);
+            box-shadow: 0 10px 22px rgba(54,43,24,0.08);
+          }
+          div[data-testid="stTabs"] button {
+            border-radius: 999px !important;
+            font-weight: 720;
+          }
+          div[data-testid="stDataFrame"] {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 12px 28px rgba(54,43,24,0.07);
           }
           @media (max-width: 760px) {
             .block-container {
@@ -1180,6 +1716,10 @@ def apply_theme() -> None:
               grid-template-columns: repeat(3, minmax(52px, 17vw));
               gap: 7px;
             }
+            .play-board {
+              grid-template-columns: repeat(3, minmax(52px, 17vw));
+              gap: 7px;
+            }
             .status-grid {
               grid-template-columns: repeat(2, minmax(0, 1fr));
             }
@@ -1187,6 +1727,9 @@ def apply_theme() -> None:
               grid-template-columns: repeat(2, minmax(0, 1fr));
             }
             .trace-player-grid {
+              grid-template-columns: 1fr;
+            }
+            .trace-triptych {
               grid-template-columns: 1fr;
             }
             .tree-card-grid {
@@ -1203,7 +1746,7 @@ def show_page_header(lang: str) -> None:
     st.markdown(
         f"""
         <div class="app-hero">
-          <span class="app-kicker">AI Search Visualizer</span>
+          <span class="app-kicker">{escape(text(lang, "app_kicker"))}</span>
           <h1>{escape(text(lang, "page_title"))}</h1>
           <p>{escape(text(lang, "page_subtitle"))}</p>
         </div>
@@ -1213,10 +1756,13 @@ def show_page_header(lang: str) -> None:
 
 
 def metric_cards_html(result: puzzle.SearchResult, lang: str) -> str:
-    labels = {
-        "vi": ["Độ dài đường đi", "Expanded", "Generated", "Runtime", "Memory"],
-        "en": ["Path length", "Expanded", "Generated", "Runtime", "Memory"],
-    }[lang]
+    labels = [
+        text(lang, "path_length"),
+        text(lang, "expanded_metric"),
+        text(lang, "generated_metric"),
+        text(lang, "runtime_metric"),
+        text(lang, "memory_metric"),
+    ]
     values = [
         result.path_cost if result.path_cost is not None else "N/A",
         result.expanded,
@@ -1239,16 +1785,25 @@ def readiness_chip(label: str, value: str, css_class: str = "") -> str:
 def demo_readiness_html(lang: str, algorithm: str, heuristic: str) -> str:
     run_mode = puzzle.algorithm_run_mode(algorithm, lang=lang)
     solvable = puzzle.is_solvable(st.session_state.start_state)
-    preset = st.session_state.get("last_preset_name") or ("Random/manual" if lang == "en" else "Random/nhập tay")
+    preset = st.session_state.get("last_preset_name") or text(lang, "random_manual")
     mode_class = "ok" if run_mode["mode"] == "standard_solver" else "warn"
     chips = [
-        readiness_chip(text(lang, "run_mode"), run_mode["label"], mode_class),
+        readiness_chip(text(lang, "run_mode"), localize_trace_text(run_mode["label"], lang), mode_class),
         readiness_chip(text(lang, "solvable"), text(lang, "solvable") if solvable else text(lang, "unsolvable"), "ok" if solvable else "fail"),
         readiness_chip(text(lang, "current_preset"), preset, ""),
         readiness_chip(text(lang, "selected_heuristic"), heuristic, "ok"),
     ]
-    description = escape(run_mode["description"])
+    description = escape(localize_trace_text(run_mode["description"], lang))
     return f'<div class="readiness-grid">{"".join(chips)}</div><p class="section-note">{description}</p>'
+
+
+def trace_run_guide_html(lang: str) -> str:
+    return (
+        '<div class="lab-panel">'
+        f'<strong>{escape(text(lang, "trace_run_title"))}</strong>'
+        f'<p class="section-note">{escape(text(lang, "trace_run_steps"))}</p>'
+        '</div>'
+    )
 
 
 def board_matrix_html(state: puzzle.State, lang: str) -> str:
@@ -1265,6 +1820,232 @@ def board_matrix_html(state: puzzle.State, lang: str) -> str:
         classes = "tile blank" if value == 0 else "tile"
         cells.append(f'<div class="{classes}" title="{escape(tooltip)}">{value}</div>')
     return f"""<div class="puzzle-board" role="grid">{''.join(cells)}</div>"""
+
+
+def image_data_url(data: bytes, mime_type: str) -> str:
+    encoded = base64.b64encode(data).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
+
+
+def persist_game_image(uploaded_image: Any) -> bool:
+    if uploaded_image is None or not hasattr(uploaded_image, "getvalue"):
+        return False
+    data = uploaded_image.getvalue()
+    signature = f"{getattr(uploaded_image, 'name', 'image')}:{len(data)}"
+    if st.session_state.get("game_image_signature") == signature and st.session_state.get("game_image_url"):
+        return False
+    st.session_state.game_image_url = image_data_url(data, getattr(uploaded_image, "type", "image/png") or "image/png")
+    st.session_state.game_image_name = getattr(uploaded_image, "name", "image")
+    st.session_state.game_image_signature = signature
+    return True
+
+
+def image_board_html(state: puzzle.State, image_url: str, lang: str) -> str:
+    cells = []
+    for index, value in enumerate(state):
+        row, col = divmod(index, 3)
+        if value == 0:
+            label = "Ô trống 0" if lang == "vi" else "Blank tile 0"
+            cells.append(f'<div class="tile blank" aria-label="{escape(label)}">0</div>')
+        else:
+            label = f"Ô ảnh {value}" if lang == "vi" else f"Image tile {value}"
+            cells.append(
+                f'<div class="tile tile-{value}" data-tile="{value}" aria-label="{escape(label)}"></div>'
+            )
+    return (
+        f'<div class="puzzle-board image-puzzle-board" role="grid" '
+        f'style="--puzzle-image: url({escape(image_url)});">{"".join(cells)}</div>'
+    )
+
+
+def playable_tile_grid(state: puzzle.State, lang: str) -> None:
+    legal_tiles = {
+        state[next_state.index(0)]
+        for _action, next_state in puzzle.neighbors(state)
+    }
+    st.markdown('<div class="play-board-shell">', unsafe_allow_html=True)
+    for row_start in range(0, 9, 3):
+        cols = st.columns(3, gap="small")
+        for offset, col in enumerate(cols):
+            index = row_start + offset
+            tile = state[index]
+            movable = tile != 0 and tile in legal_tiles
+            label = "0" if tile == 0 else str(tile)
+            help_label = (
+                ("Bấm để di chuyển" if lang == "vi" else "Click to move")
+                if movable
+                else ("Ô này chưa đi được" if lang == "vi" else "This tile is not movable")
+            )
+            with col:
+                if st.button(label, key=f"play_tile_{index}_{tile}_{st.session_state.game_moves}", disabled=not movable, help=help_label, width="stretch"):
+                    move_tile_in_game(tile)
+                    st.rerun()
+    note = "Bấm trực tiếp ô hợp lệ cạnh ô trống để di chuyển." if lang == "vi" else "Click a legal tile next to the blank to move it."
+    st.markdown(f'<p class="dpad-note">{escape(note)}</p></div>', unsafe_allow_html=True)
+
+
+def thu_duc_map_svg(result: thu_duc.ColoringResult) -> str:
+    color_hex = {
+        "Xanh ngoc": "#0f766e",
+        "Vang dat": "#b7791f",
+        "Do gach": "#b42318",
+        "Tim than": "#4c1d95",
+        "Xanh troi": "#0369a1",
+        "Hong sen": "#be185d",
+    }
+    edges = []
+    for left, right in thu_duc.EDGES:
+        x1, y1 = thu_duc.WARD_POSITIONS[left]
+        x2, y2 = thu_duc.WARD_POSITIONS[right]
+        edges.append(
+            f'<line x1="{x1 * 100:.1f}" y1="{y1 * 100:.1f}" x2="{x2 * 100:.1f}" y2="{y2 * 100:.1f}" />'
+        )
+    nodes = []
+    for ward, (x, y) in thu_duc.WARD_POSITIONS.items():
+        color = color_hex.get(result.assignments.get(ward, ""), "#94a3b8")
+        nodes.append(
+            f'<g><circle cx="{x * 100:.1f}" cy="{y * 100:.1f}" r="4.4" fill="{color}" />'
+            f'<text x="{x * 100:.1f}" y="{y * 100 + 8:.1f}">{escape(ward)}</text></g>'
+        )
+    return (
+        '<div class="lab-panel">'
+        '<svg viewBox="0 0 100 108" role="img" aria-label="Thu Duc graph coloring map" '
+        'style="width:100%;max-height:620px;">'
+        '<style>line{stroke:rgba(68,55,30,.24);stroke-width:.7} circle{stroke:#fff;stroke-width:.7}'
+        'text{font-size:2.35px;fill:var(--ink);text-anchor:middle;font-weight:700}</style>'
+        f'{"".join(edges)}{"".join(nodes)}</svg></div>'
+    )
+
+
+def show_thu_duc_graph_coloring_page(lang: str) -> None:
+    st.markdown(
+        f"""
+        <div class="lab-panel">
+          <strong>{escape(text(lang, "thu_duc_title"))}</strong>
+          <p class="section-note">{escape(text(lang, "thu_duc_subtitle"))}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    max_colors = st.slider(text(lang, "thu_duc_palette"), 3, len(thu_duc.PALETTE), 4, key="thu_duc_max_colors")
+    result = thu_duc.color_graph(max_colors=max_colors)
+    status = text(lang, "thu_duc_valid") if result.valid else text(lang, "thu_duc_invalid")
+    cards = "".join(
+        f'<div class="metric-card"><span>{escape(label)}</span><strong>{value}</strong></div>'
+        for label, value in [
+            ("Regions" if lang == "en" else "Số vùng", len(thu_duc.REGIONS)),
+            ("Edges" if lang == "en" else "Số cạnh", len(thu_duc.EDGES)),
+            ("Colors used" if lang == "en" else "Số màu dùng", len(result.colors_used)),
+            ("Status" if lang == "en" else "Trạng thái", status),
+        ]
+    )
+    st.markdown(f'<h3>{escape(text(lang, "thu_duc_stats"))}</h3><div class="metric-grid">{cards}</div>', unsafe_allow_html=True)
+    left, right = st.columns([1.1, 1], gap="large")
+    with left:
+        st.markdown(thu_duc_map_svg(result), unsafe_allow_html=True)
+    with right:
+        if result.conflicts:
+            st.error("; ".join(f"{left} - {right}" for left, right in result.conflicts))
+        else:
+            st.success("No adjacent regions share a color." if lang == "en" else "Không có hai vùng giáp ranh nào trùng màu.")
+        st.subheader(text(lang, "thu_duc_assignments"))
+        st.dataframe(thu_duc.coloring_rows(result), width="stretch", hide_index=True)
+    st.subheader(text(lang, "thu_duc_steps"))
+    st.dataframe(result.steps, width="stretch", hide_index=True)
+
+
+def show_image_puzzle_page(lang: str) -> None:
+    st.markdown(
+        f"""
+        <div class="app-hero">
+          <span class="app-kicker">8-Puzzle / Image Game</span>
+          <h1>{escape(text(lang, "image_game_title"))}</h1>
+          <p>{escape(text(lang, "image_game_note"))}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"""
+        <div class="workbench-shell">
+          <div class="panel-heading">
+            <h2>{escape(text(lang, "image_controls"))}</h2>
+            <span>{escape(text(lang, "game_title"))}</span>
+          </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    uploaded_image = st.file_uploader(
+        text(lang, "image_upload"),
+        type=["png", "jpg", "jpeg", "webp"],
+        key="game_image_page_uploader",
+    )
+    if uploaded_image is not None and persist_game_image(uploaded_image):
+        st.rerun()
+    mode_text = text(lang, "image_mode_on") if st.session_state.game_image_url else text(lang, "image_mode_off")
+    st.caption(mode_text)
+    if st.session_state.game_image_url:
+        st.success(text(lang, "image_ready"))
+        if st.button(text(lang, "clear_image"), key="game_clear_image_page", width="stretch"):
+            st.session_state.game_image_url = ""
+            st.session_state.game_image_name = ""
+            st.session_state.game_image_signature = ""
+            st.rerun()
+    else:
+        st.info(text(lang, "image_game_note"))
+        
+    st.divider()
+    try:
+        import sidebar_game
+        st.components.v1.html(sidebar_game.get_sidebar_game_html("sidebar_puzzle.png"), height=800)
+    except Exception as e:
+        st.error(f"Cannot load interactive image game: {e}")
+        
+    show_goal_panel(lang)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def mini_board_html(state: puzzle.State) -> str:
+    cells = []
+    for value in state:
+        classes = "mini-tile mini-blank" if value == 0 else "mini-tile"
+        cells.append(f'<div class="{classes}">{value}</div>')
+    return f'<div class="mini-board">{"".join(cells)}</div>'
+
+
+def trace_states_from_text(value: Any, limit: int = 4) -> list[puzzle.State]:
+    text_value = str(value or "").strip()
+    if not text_value:
+        return []
+    states: list[puzzle.State] = []
+    for chunk in text_value.split("---"):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        try:
+            states.append(puzzle.parse_state(chunk))
+        except Exception:
+            continue
+        if len(states) >= limit:
+            break
+    return states
+
+
+def trace_state_panel_html(title: str, subtitle: str, states: list[puzzle.State], fallback: Any) -> str:
+    if states:
+        cards = "".join(
+            f'<div class="state-card"><div class="state-card-title">#{idx + 1}</div>{mini_board_html(state)}</div>'
+            for idx, state in enumerate(states)
+        )
+    else:
+        cards = f'<div class="trace-detail"><pre>{escape(str(fallback) if fallback not in (None, "") else "-")}</pre></div>'
+    return (
+        '<div class="trace-state-panel">'
+        f'<h4>{escape(title)}</h4>'
+        f'<p>{escape(subtitle)}</p>'
+        f'<div class="state-card-grid">{cards}</div>'
+        '</div>'
+    )
 
 
 def show_board(title: str, state: puzzle.State, lang: str, help_key: str | None = None) -> None:
@@ -1789,7 +2570,7 @@ def show_trace_story(result: puzzle.SearchResult, lang: str, heuristic: str) -> 
     st.subheader(text(lang, "trace_story"))
     story_rows = puzzle.build_trace_story(result, heuristic)
     if not story_rows:
-        st.info("Trace story is empty because trace capture is disabled." if lang == "en" else "Trace story đang trống vì trace đang bị tắt.")
+        st.info("Trace story is empty because trace capture is disabled." if lang == "en" else "Phần giải thích trace đang trống vì trace đang bị tắt.")
         return
     st.dataframe(localize_table(puzzle._to_table(story_rows[:20]), lang), width="stretch", hide_index=True)
 
@@ -1822,7 +2603,7 @@ def show_trace_replay_player(result: puzzle.SearchResult, lang: str, heuristic: 
     st.markdown(
         f"""
         <div class="readiness-grid">
-          {readiness_chip("Step", str(row.get("Step", "")), "")}
+          {readiness_chip(text(lang, "step"), str(row.get("Step", "")), "")}
           {readiness_chip("g(n)", str(row.get("g", "")), "")}
           {readiness_chip("h(n)", str(row.get("h", "")), "")}
           {readiness_chip("f(n)", str(row.get("f", "")), "")}
@@ -1831,53 +2612,71 @@ def show_trace_replay_player(result: puzzle.SearchResult, lang: str, heuristic: 
         unsafe_allow_html=True,
     )
 
-    node_col, detail_col = st.columns([0.9, 1.1], gap="large")
-    with node_col:
-        st.markdown(f"**{text(lang, 'selected_node')}**")
-        try:
-            show_board("", puzzle.parse_state(str(row.get("Node", ""))), lang)
-        except Exception:
-            st.code(str(row.get("Node", "")), language="text")
-    with detail_col:
-        detail_html = "".join(
-            [
-                trace_detail_card(text(lang, "priority_rule"), row.get("Priority Rule", "")),
-                trace_detail_card("Selection Key", row.get("Selection Key", "")),
-                trace_detail_card(text(lang, "generated_skipped"), f"{row.get('Generated Children', '')} / {row.get('Skipped States', '')}"),
-                trace_detail_card("Why This Node?", story.get("Why This Node", row.get("Decision/Note", ""))),
-            ]
-        )
-        st.markdown(f'<div class="trace-player-grid">{detail_html}</div>', unsafe_allow_html=True)
+    try:
+        node_states = [puzzle.parse_state(str(row.get("Node", "")))]
+    except Exception:
+        node_states = []
+    frontier_states = trace_states_from_text(row.get("Frontier After Expansion", ""), limit=4)
+    reached_states = trace_states_from_text(row.get("Reached After Expansion", ""), limit=4)
+    trace_html = "".join(
+        [
+            trace_state_panel_html(
+                text(lang, "selected_node"),
+                text(lang, "node_expansion_subtitle"),
+                node_states,
+                row.get("Node", ""),
+            ),
+            trace_state_panel_html(
+                text(lang, "frontier_after"),
+                text(lang, "frontier_subtitle"),
+                frontier_states,
+                row.get("Frontier After Expansion", ""),
+            ),
+            trace_state_panel_html(
+                text(lang, "reached_after"),
+                text(lang, "reached_subtitle"),
+                reached_states,
+                row.get("Reached After Expansion", ""),
+            ),
+        ]
+    )
+    st.markdown(f'<div class="trace-triptych">{trace_html}</div>', unsafe_allow_html=True)
 
-    preview_left, preview_right = st.columns(2)
-    with preview_left:
-        st.markdown(trace_detail_card(text(lang, "frontier_after"), row.get("Frontier After Expansion", "")), unsafe_allow_html=True)
-    with preview_right:
-        st.markdown(trace_detail_card(text(lang, "reached_after"), row.get("Reached After Expansion", "")), unsafe_allow_html=True)
+    detail_html = "".join(
+        [
+            trace_detail_card(text(lang, "priority_rule"), localize_trace_text(row.get("Priority Rule", ""), lang)),
+            trace_detail_card(text(lang, "selection_key"), localize_trace_text(row.get("Selection Key", ""), lang)),
+            trace_detail_card(text(lang, "generated_skipped"), f"{row.get('Generated Children', '')} / {row.get('Skipped States', '')}"),
+            trace_detail_card(text(lang, "trace_story"), localize_trace_text(story.get("Why This Node", row.get("Decision/Note", "")), lang)),
+        ]
+    )
+    st.markdown(f'<div class="trace-player-grid">{detail_html}</div>', unsafe_allow_html=True)
 
 
-def search_tree_cards_html(tree: Dict[str, Any]) -> str:
+def search_tree_cards_html(tree: Dict[str, Any], lang: str) -> str:
     cards = []
     for row in tree.get("nodes", [])[:18]:
         badges = []
         if row.get("is_start"):
-            badges.append("START")
+            badges.append(text(lang, "tree_start"))
         if row.get("is_goal"):
-            badges.append("GOAL")
-        badge_text = " · ".join(badges) if badges else f"depth {row.get('depth', '')}"
+            badges.append(text(lang, "tree_goal"))
+        badge_text = " · ".join(badges) if badges else text(lang, "tree_depth", depth=row.get("depth", ""))
         cards.append(
-            """
-            <div class="tree-card">
-              <strong>#{id} {badge}</strong>
-              <code>{state}</code>
-              <span>parent={parent} · action={action}<br>g={g} · h={h} · f={f}</span>
-            </div>
-            """.format(
+            (
+                '<div class="tree-card">'
+                '<strong>#{id} {badge}</strong>'
+                '<code>{state}</code>'
+                '<span>{parent_label}={parent} · {action_label}={action}<br>g={g} · h={h} · f={f}</span>'
+                '</div>'
+            ).format(
                 id=escape(str(row.get("id", ""))),
                 badge=escape(badge_text),
                 state=escape(str(row.get("state", ""))),
+                parent_label=escape(text(lang, "tree_parent")),
                 parent=escape(str(row.get("parent", "-") or "-")),
-                action=escape(str(row.get("action", ""))),
+                action_label=escape(text(lang, "tree_action")),
+                action=escape(localize_action(str(row.get("action", "")), lang)),
                 g=escape(str(row.get("g", ""))),
                 h=escape(str(row.get("h", ""))),
                 f=escape(str(row.get("f", ""))),
@@ -1917,7 +2716,7 @@ def show_experiment_lab(lang: str, heuristic: str) -> None:
     if experiment is not None and experiment.get("heuristic") != heuristic:
         experiment = None
     if experiment is None:
-        st.info("Run the experiment to produce a deterministic comparison table." if lang == "en" else "Chạy experiment để tạo bảng so sánh deterministic.")
+        st.info("Run the experiment to produce a deterministic comparison table." if lang == "en" else "Chạy thử nghiệm để tạo bảng so sánh cố định.")
         return
 
     st.caption(f"{text(lang, 'heuristic')}: {experiment['heuristic']}")
@@ -1930,7 +2729,7 @@ def show_experiment_lab(lang: str, heuristic: str) -> None:
         mime="text/markdown",
         width="stretch",
     )
-    st.markdown("**Heuristic dominance: misplaced vs manhattan**")
+    st.markdown("**Heuristic dominance: misplaced vs manhattan**" if lang == "en" else "**So sánh độ mạnh heuristic: sai vị trí và Manhattan**")
     dominance = puzzle.run_heuristic_dominance_demo(st.session_state.start_state)
     st.dataframe(localize_table(puzzle._to_table(dominance["rows"]), lang), width="stretch", hide_index=True)
     st.caption(dominance["conclusion"])
@@ -1970,6 +2769,7 @@ def shuffle_start_state(scramble_moves: int) -> None:
     st.session_state.shuffle_count += 1
     effective_seed = st.session_state.seed + st.session_state.shuffle_count
     st.session_state.start_state = puzzle.generate_random_state(scramble_moves, effective_seed)
+    reset_game_state(st.session_state.start_state)
     st.session_state.last_shuffle_moves = scramble_moves
     st.session_state.last_shuffle_seed = effective_seed
     st.session_state.last_result = None
@@ -1981,11 +2781,101 @@ def shuffle_start_state(scramble_moves: int) -> None:
 
 def load_demo_preset(preset_name: str) -> None:
     st.session_state.start_state = puzzle.DEMO_PRESETS[preset_name]
+    reset_game_state(st.session_state.start_state)
     st.session_state.last_preset_name = preset_name
     st.session_state.last_result = None
     st.session_state.last_comparison = None
     st.session_state.last_benchmark = None
     st.session_state.playback_step = 0
+
+
+def reset_game_state(state: puzzle.State | None = None) -> None:
+    st.session_state.game_state = state or st.session_state.start_state
+    st.session_state.game_moves = 0
+    st.session_state.game_history = []
+    st.session_state.game_message = ""
+
+
+def clear_solver_outputs() -> None:
+    st.session_state.last_result = None
+    st.session_state.last_comparison = None
+    st.session_state.last_benchmark = None
+    st.session_state.playback_step = 0
+
+
+def move_game(action: str) -> None:
+    legal = dict(puzzle.neighbors(st.session_state.game_state))
+    if action not in legal:
+        lang = "vi" if st.session_state.get("language_choice") == "Tiếng Việt" else "en"
+        st.session_state.game_message = text(lang, "cannot_move", action=localize_action(action, lang))
+        return
+    previous = st.session_state.game_state
+    st.session_state.game_history.append((previous, action))
+    st.session_state.game_state = legal[action]
+    st.session_state.game_moves += 1
+    st.session_state.game_message = ""
+
+
+def move_tile_in_game(tile: int) -> None:
+    for action, next_state in puzzle.neighbors(st.session_state.game_state):
+        if next_state.index(0) == st.session_state.game_state.index(tile):
+            move_game(action)
+            return
+    lang = "vi" if st.session_state.get("language_choice") == "Tiếng Việt" else "en"
+    st.session_state.game_message = text(lang, "not_adjacent")
+
+
+def undo_game_move() -> None:
+    if not st.session_state.game_history:
+        return
+    previous, _action = st.session_state.game_history.pop()
+    st.session_state.game_state = previous
+    st.session_state.game_moves = max(0, st.session_state.game_moves - 1)
+    st.session_state.game_message = ""
+
+
+def show_interactive_game_panel(lang: str) -> None:
+    solved = st.session_state.game_state == puzzle.GOAL_STATE
+    h_value = puzzle.manhattan_distance(st.session_state.game_state)
+    title = text(lang, "game_title")
+    subtitle = text(lang, "game_note")
+    solved_text = text(lang, "game_solved")
+    progress_text = text(lang, "game_progress")
+    st.markdown(
+        f"""
+        <div class="game-panel">
+          <h3>{escape(title)}</h3>
+          <p class="dpad-note">{escape(subtitle)}</p>
+          <div class="game-meta">
+            <span class="game-pill">{escape(text(lang, "game_moves"))}: {st.session_state.game_moves}</span>
+            <span class="game-pill">h(n): {h_value}</span>
+            <span class="game-pill">{escape(solved_text if solved else progress_text)}</span>
+          </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.session_state.game_image_url:
+        st.markdown(image_board_html(st.session_state.game_state, st.session_state.game_image_url, lang), unsafe_allow_html=True)
+        st.caption(text(lang, "click_tile_hint"))
+    playable_tile_grid(st.session_state.game_state, lang)
+
+    action_cols = st.columns(2)
+    with action_cols[0]:
+        if st.button(text(lang, "undo"), key="game_undo", disabled=not st.session_state.game_history, width="stretch"):
+            undo_game_move()
+            st.rerun()
+    with action_cols[1]:
+        if st.button(text(lang, "reset_game"), key="game_reset", width="stretch"):
+            reset_game_state()
+            st.rerun()
+    if st.button(text(lang, "use_as_start"), key="game_use_start", width="stretch"):
+        st.session_state.start_state = st.session_state.game_state
+        clear_solver_outputs()
+        st.session_state.last_preset_name = ""
+        st.rerun()
+    if st.session_state.game_message:
+        st.caption(st.session_state.game_message)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def show_result(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
@@ -2032,8 +2922,12 @@ def show_result(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
         show_trace_replay_player(result, lang, heuristic)
         st.subheader(text(lang, "search_tree_preview"))
         tree = puzzle.build_search_tree_preview(result.start, heuristic, max_depth=2, max_nodes=25)
-        st.markdown(search_tree_cards_html(tree), unsafe_allow_html=True)
-        st.dataframe(localize_table(puzzle._to_table(tree["nodes"]), lang), width="stretch", hide_index=True)
+        st.markdown(search_tree_cards_html(tree, lang), unsafe_allow_html=True)
+        tree_rows = [
+            {**row, "parent": "-" if row.get("parent", "") == "" else str(row.get("parent", ""))}
+            for row in tree["nodes"]
+        ]
+        st.dataframe(localize_table(puzzle._to_table(tree_rows), lang), width="stretch", hide_index=True)
         st.subheader(text(lang, "trace"))
         st.dataframe(localize_table(puzzle.render_trace_table(result), lang), width="stretch")
         with st.expander(text(lang, "trace_glossary"), expanded=False):
@@ -2063,15 +2957,15 @@ def show_result(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
             width="stretch",
         )
         pack_key = f"{result.algorithm}|{heuristic}|{result.start}|{result.path_cost}"
-        if st.button("Generate Submission Pack", width="stretch", key="generate_submission_pack"):
+        if st.button("Tạo gói nộp bài" if lang == "vi" else "Generate Submission Pack", width="stretch", key="generate_submission_pack"):
             st.session_state.last_submission_pack = puzzle.build_submission_pack(result, heuristic, validation, experiment)
             st.session_state.last_submission_pack_key = pack_key
         pack = st.session_state.get("last_submission_pack")
         if pack is not None and st.session_state.get("last_submission_pack_key") == pack_key:
-            st.download_button("Download DOCX", data=pack["docx"], file_name="8_puzzle_coursework_report.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", width="stretch")
-            st.download_button("Download PDF", data=pack["pdf"], file_name="8_puzzle_coursework_report.pdf", mime="application/pdf", width="stretch")
-            st.download_button("Download HTML", data=pack["html"], file_name="8_puzzle_coursework_report.html", mime="text/html", width="stretch")
-            st.download_button("Download Benchmark CSV", data=pack["benchmark_csv"], file_name="8_puzzle_benchmark.csv", mime="text/csv", width="stretch")
+            st.download_button("Tải DOCX" if lang == "vi" else "Download DOCX", data=pack["docx"], file_name="8_puzzle_coursework_report.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", width="stretch")
+            st.download_button("Tải PDF" if lang == "vi" else "Download PDF", data=pack["pdf"], file_name="8_puzzle_coursework_report.pdf", mime="application/pdf", width="stretch")
+            st.download_button("Tải HTML" if lang == "vi" else "Download HTML", data=pack["html"], file_name="8_puzzle_coursework_report.html", mime="text/html", width="stretch")
+            st.download_button("Tải Benchmark CSV" if lang == "vi" else "Download Benchmark CSV", data=pack["benchmark_csv"], file_name="8_puzzle_benchmark.csv", mime="text/csv", width="stretch")
         with st.expander(text(lang, "grading_checklist"), expanded=False):
             show_grading_checklist(lang)
         st.text_area(text(lang, "report_preview"), value=report_markdown, height=420)
@@ -2127,10 +3021,27 @@ def initialize_state() -> None:
         st.session_state.last_submission_pack_key = ""
     if "partial_goal_pattern_text" not in st.session_state:
         st.session_state.partial_goal_pattern_text = "1 2 ? ? ? ? ? ? ?"
-
-
+    if "game_state" not in st.session_state:
+        st.session_state.game_state = st.session_state.start_state
+    if "game_moves" not in st.session_state:
+        st.session_state.game_moves = 0
+    if "game_history" not in st.session_state:
+        st.session_state.game_history = []
+    if "game_message" not in st.session_state:
+        st.session_state.game_message = ""
+    if "game_image_url" not in st.session_state:
+        st.session_state.game_image_url = ""
+    if "game_image_name" not in st.session_state:
+        st.session_state.game_image_name = ""
+    if "game_image_signature" not in st.session_state:
+        st.session_state.game_image_signature = ""
 def main() -> None:
-    st.set_page_config(page_title="8-Puzzle Search", layout="wide")
+    st.set_page_config(
+        page_title="8-Puzzle Search",
+        page_icon="🧩",
+        layout="wide",
+        menu_items={"Get Help": None, "Report a bug": None, "About": None},
+    )
     apply_theme()
     initialize_state()
 
@@ -2143,24 +3054,40 @@ def main() -> None:
             help=HELP["vi"]["language"],
         )
         lang = "vi" if language_choice == "Tiếng Việt" else "en"
-        st.header(text(lang, "controls"))
-        st.number_input(text(lang, "max_expansions"), min_value=1, max_value=200000, value=5000, key="max_expansions", help=help_text(lang, "max_expansions"))
-        with st.expander(text(lang, "advanced_settings"), expanded=False):
-            st.number_input(text(lang, "seed"), min_value=0, max_value=1_000_000, value=1, key="seed", help=help_text(lang, "seed"))
-            st.number_input(text(lang, "max_trace_rows"), min_value=0, max_value=5000, value=300, key="max_trace_rows", help=help_text(lang, "max_trace_rows"))
-            st.number_input(text(lang, "frontier_preview"), min_value=1, max_value=30, value=5, key="frontier_preview", help=help_text(lang, "frontier_preview"))
-            st.number_input(text(lang, "reached_preview"), min_value=1, max_value=30, value=5, key="reached_preview", help=help_text(lang, "reached_preview"))
-            st.number_input(text(lang, "ids_depth"), min_value=1, max_value=80, value=30, key="ids_depth", help=help_text(lang, "ids_depth"))
-            st.number_input(text(lang, "ida_iterations"), min_value=1, max_value=200, value=80, key="ida_iterations", help=help_text(lang, "ida_iterations"))
-            st.number_input(text(lang, "local_steps"), min_value=1, max_value=5000, value=200, key="local_steps", help=help_text(lang, "local_steps"))
-            st.number_input(text(lang, "random_restarts"), min_value=0, max_value=200, value=20, key="random_restarts", help=help_text(lang, "random_restarts"))
-            st.number_input(text(lang, "beam_width"), min_value=1, max_value=50, value=4, key="beam_width", help=help_text(lang, "beam_width"))
-            st.divider()
-            st.number_input(text(lang, "sa_initial_temp"), min_value=1.0, max_value=1000.0, value=100.0, key="sa_initial_temp", help=help_text(lang, "sa_initial_temp"))
-            st.number_input(text(lang, "sa_cooling_rate"), min_value=0.9, max_value=0.9999, value=0.995, step=0.001, key="sa_cooling_rate", help=help_text(lang, "sa_cooling_rate"))
-            st.number_input(text(lang, "sa_min_temp"), min_value=0.001, max_value=1.0, value=0.01, key="sa_min_temp", help=help_text(lang, "sa_min_temp"))
-            st.number_input(text(lang, "sa_max_steps"), min_value=100, max_value=50000, value=5000, key="sa_max_steps", help=help_text(lang, "sa_max_steps"))
+        feature_options = [
+            text(lang, "feature_puzzle"),
+            text(lang, "feature_image_puzzle"),
+            text(lang, "feature_thu_duc"),
+        ]
+        feature_mode = st.radio(text(lang, "feature_mode"), feature_options, key="feature_mode")
 
+        if feature_mode == text(lang, "feature_puzzle"):
+            st.header(text(lang, "controls"))
+            st.number_input(text(lang, "max_expansions"), min_value=1, max_value=200000, value=5000, key="max_expansions", help=help_text(lang, "max_expansions"))
+            with st.expander(text(lang, "advanced_settings"), expanded=False):
+                st.number_input(text(lang, "seed"), min_value=0, max_value=1_000_000, value=1, key="seed", help=help_text(lang, "seed"))
+                st.number_input(text(lang, "max_trace_rows"), min_value=0, max_value=5000, value=300, key="max_trace_rows", help=help_text(lang, "max_trace_rows"))
+                st.number_input(text(lang, "frontier_preview"), min_value=1, max_value=30, value=5, key="frontier_preview", help=help_text(lang, "frontier_preview"))
+                st.number_input(text(lang, "reached_preview"), min_value=1, max_value=30, value=5, key="reached_preview", help=help_text(lang, "reached_preview"))
+                st.number_input(text(lang, "ids_depth"), min_value=1, max_value=80, value=30, key="ids_depth", help=help_text(lang, "ids_depth"))
+                st.number_input(text(lang, "ida_iterations"), min_value=1, max_value=200, value=80, key="ida_iterations", help=help_text(lang, "ida_iterations"))
+                st.number_input(text(lang, "local_steps"), min_value=1, max_value=5000, value=200, key="local_steps", help=help_text(lang, "local_steps"))
+                st.number_input(text(lang, "random_restarts"), min_value=0, max_value=200, value=20, key="random_restarts", help=help_text(lang, "random_restarts"))
+                st.number_input(text(lang, "beam_width"), min_value=1, max_value=50, value=4, key="beam_width", help=help_text(lang, "beam_width"))
+                st.divider()
+                st.number_input(text(lang, "sa_initial_temp"), min_value=1.0, max_value=1000.0, value=100.0, key="sa_initial_temp", help=help_text(lang, "sa_initial_temp"))
+                st.number_input(text(lang, "sa_cooling_rate"), min_value=0.9, max_value=0.9999, value=0.995, step=0.001, key="sa_cooling_rate", help=help_text(lang, "sa_cooling_rate"))
+                st.number_input(text(lang, "sa_min_temp"), min_value=0.001, max_value=1.0, value=0.01, key="sa_min_temp", help=help_text(lang, "sa_min_temp"))
+                st.number_input(text(lang, "sa_max_steps"), min_value=100, max_value=50000, value=5000, key="sa_max_steps", help=help_text(lang, "sa_max_steps"))
+
+    if feature_mode == text(lang, "feature_image_puzzle"):
+        show_image_puzzle_page(lang)
+        return
+        
+    if feature_mode == text(lang, "feature_thu_duc"):
+        show_thu_duc_graph_coloring_page(lang)
+        return
+        
     show_page_header(lang)
 
     grouped_algorithms = puzzle.algorithms_by_group()
@@ -2169,7 +3096,16 @@ def main() -> None:
 
     col_left, col_right = st.columns([1, 1.45], gap="large")
     with col_left:
-        st.subheader(text(lang, "board_panel"))
+        st.markdown(
+            f"""
+            <div class="workbench-shell">
+              <div class="panel-heading">
+                <h2>{escape(text(lang, "board_panel"))}</h2>
+                <span>{escape(text(lang, "state_lab"))}</span>
+              </div>
+            """,
+            unsafe_allow_html=True,
+        )
         preset_col, load_col = st.columns([1.25, 0.75])
         with preset_col:
             preset_name = st.selectbox(text(lang, "demo_preset"), list(puzzle.DEMO_PRESETS.keys()), key="main_preset_name")
@@ -2195,21 +3131,30 @@ def main() -> None:
             if st.button(text(lang, "use_custom"), help=help_text(lang, "use_custom")):
                 try:
                     st.session_state.start_state = puzzle.parse_state(state_text)
-                    st.session_state.last_result = None
-                    st.session_state.last_comparison = None
-                    st.session_state.last_benchmark = None
+                    reset_game_state(st.session_state.start_state)
+                    clear_solver_outputs()
                     st.session_state.last_preset_name = ""
-                    st.session_state.playback_step = 0
                     st.rerun()
                 except Exception as exc:
                     st.error(str(exc))
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col_right:
-        st.subheader(text(lang, "run"))
+        st.markdown(
+            f"""
+            <div class="workbench-shell">
+              <div class="panel-heading">
+                <h2>{escape(text(lang, "run"))}</h2>
+                <span>{escape(text(lang, "algorithm_cockpit"))}</span>
+              </div>
+            """,
+            unsafe_allow_html=True,
+        )
         algorithm_group = st.selectbox(
             text(lang, "algorithm_group"),
             groups,
             index=groups.index(default_group) if default_group in groups else 0,
+            format_func=lambda group: localize_algorithm_group(group, lang),
             help=help_text(lang, "algorithm"),
         )
         group_algorithms = grouped_algorithms[algorithm_group]
@@ -2226,15 +3171,19 @@ def main() -> None:
             help=help_text(lang, "heuristic"),
         )
         st.markdown(demo_readiness_html(lang, algorithm, heuristic), unsafe_allow_html=True)
-        st.caption(f"{text(lang, 'heuristic_usage')}: {heuristic_usage_note(lang, algorithm)}")
+        st.caption(f"{text(lang, 'heuristic_usage')}: {localize_trace_text(heuristic_usage_note(lang, algorithm), lang)}")
         partial_goal_controls(lang, algorithm)
+        if algorithm_group == "Constraint Satisfaction Problems" and algorithm == "Constraint Graph":
+            st.info(text(lang, "thu_duc_csp_hint"))
+            show_thu_duc_graph_coloring_page(lang)
         st.caption(f"{text(lang, 'algorithm')}: {algorithm} | {text(lang, 'heuristic')}: {heuristic}")
         action_cols = st.columns(2)
         with action_cols[0]:
             run_clicked = st.button(text(lang, "run_selected"), type="primary", width="stretch", help=help_text(lang, "run_selected"))
         with action_cols[1]:
             compare_clicked = st.button(text(lang, "compare_all"), width="stretch", help=help_text(lang, "compare_all"))
-        st.caption(text(lang, "notes"))
+        st.caption(localize_trace_text(text(lang, "notes"), lang))
+        st.markdown("</div>", unsafe_allow_html=True)
 
         config = build_config()
         if run_clicked:
@@ -2253,12 +3202,22 @@ def main() -> None:
             st.session_state.playback_step = 0
 
         if st.session_state.last_result is not None:
+            st.info(text(lang, "trace_result_hint"))
             show_result(st.session_state.last_result, lang, st.session_state.last_result_heuristic)
         elif st.session_state.last_comparison is not None:
             st.subheader(text(lang, "comparison"))
             st.dataframe(localize_table(st.session_state.last_comparison, lang), width="stretch")
         else:
-            st.info(text(lang, "choose_action"))
+            st.markdown(
+                f"""
+                <div class="lab-panel">
+                  <strong>{escape(text(lang, "choose_action"))}</strong>
+                  <p class="section-note">{escape(text(lang, "choose_action_hint"))}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.markdown(trace_run_guide_html(lang), unsafe_allow_html=True)
 
         st.divider()
         show_academic_context(lang, algorithm, heuristic)
