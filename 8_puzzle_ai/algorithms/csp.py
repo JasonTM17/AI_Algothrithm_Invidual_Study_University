@@ -10,13 +10,17 @@ We model 8-puzzle as a temporal CSP where:
 """
 
 from typing import Tuple, Optional, List, Dict, Any, Set
-import sys
 
-sys.path.append('..')
-from core.puzzle import PuzzleState
-from core.node import SearchResult
-from core.heuristics import misplaced_tiles
-from core.utils import Timer
+try:
+    from ..core.puzzle import PuzzleState
+    from ..core.node import SearchResult
+    from ..core.heuristics import misplaced_tiles
+    from ..core.utils import Timer
+except ImportError:
+    from core.puzzle import PuzzleState
+    from core.node import SearchResult
+    from core.heuristics import misplaced_tiles
+    from core.utils import Timer
 
 
 def csp_backtracking(

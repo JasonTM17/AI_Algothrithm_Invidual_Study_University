@@ -4,10 +4,17 @@ Tests for 8-puzzle core functionality.
 
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.puzzle import PuzzleState, validate_state, parse_state, scramble_state
-from core.heuristics import misplaced_tiles, manhattan_distance, linear_conflict
+try:
+    from ..core.puzzle import PuzzleState, validate_state, parse_state, scramble_state
+    from ..core.heuristics import misplaced_tiles, manhattan_distance, linear_conflict
+    from ..algorithms import get_algorithm
+except ImportError:
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+    from core.puzzle import PuzzleState, validate_state, parse_state, scramble_state
+    from core.heuristics import misplaced_tiles, manhattan_distance, linear_conflict
+    from algorithms import get_algorithm
 
 
 def test_is_solvable():
@@ -104,6 +111,25 @@ def test_scramble():
     print("[PASS] test_scramble passed")
 
 
+def test_adversarial_algorithms_use_caro_demo():
+    """Adversarial algorithms should run on Caro, not simulated 8-puzzle."""
+    start = (1, 2, 3, 5, 0, 6, 4, 7, 8)
+    for algorithm in ["Minimax", "Alpha-Beta Pruning", "Expectimax"]:
+        result = get_algorithm(algorithm)(
+            start=start,
+            max_depth=3,
+            trace_limit=5,
+            seed=7,
+        )
+        trace_text = "\n".join(str(row) for row in result.trace)
+        assert result.success is True, f"{algorithm} should complete the Caro demo"
+        assert "Caro" in result.message, f"{algorithm} message should mention Caro"
+        assert "Caro board" in trace_text, f"{algorithm} trace should render a Caro board"
+        assert result.actions and result.actions[0].startswith("X@"), f"{algorithm} should choose a MAX move"
+
+    print("[PASS] test_adversarial_algorithms_use_caro_demo passed")
+
+
 def run_all_tests():
     """Run all tests."""
     print("Running tests...\n")
@@ -114,6 +140,7 @@ def run_all_tests():
     test_validate_state()
     test_parse_state()
     test_scramble()
+    test_adversarial_algorithms_use_caro_demo()
     
     print("\n[SUCCESS] All tests passed!")
 

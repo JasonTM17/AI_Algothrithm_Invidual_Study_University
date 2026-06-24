@@ -13,13 +13,17 @@ These are educational implementations to demonstrate the concepts.
 
 from typing import Tuple, Optional, List, Dict, Any, Set
 import random
-import sys
 
-sys.path.append('..')
-from core.puzzle import PuzzleState
-from core.node import SearchResult
-from core.heuristics import get_heuristic
-from core.utils import Timer
+try:
+    from ..core.puzzle import PuzzleState
+    from ..core.node import SearchResult
+    from ..core.heuristics import get_heuristic
+    from ..core.utils import Timer
+except ImportError:
+    from core.puzzle import PuzzleState
+    from core.node import SearchResult
+    from core.heuristics import get_heuristic
+    from core.utils import Timer
 
 
 def and_or_search(

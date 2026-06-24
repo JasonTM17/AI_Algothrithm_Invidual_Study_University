@@ -9,14 +9,19 @@ Algorithms:
 
 from typing import Tuple, Optional, List, Dict, Any, Set
 import heapq
-import sys
 
-sys.path.append('..')
-from core.puzzle import PuzzleState, reconstruct_path
-from core.node import Node, SearchResult
-from core.heuristics import get_heuristic
-from core.metrics import SearchMetrics
-from core.utils import Timer, create_trace_row
+try:
+    from ..core.puzzle import PuzzleState, reconstruct_path
+    from ..core.node import Node, SearchResult
+    from ..core.heuristics import get_heuristic
+    from ..core.metrics import SearchMetrics
+    from ..core.utils import Timer, create_trace_row
+except ImportError:
+    from core.puzzle import PuzzleState, reconstruct_path
+    from core.node import Node, SearchResult
+    from core.heuristics import get_heuristic
+    from core.metrics import SearchMetrics
+    from core.utils import Timer, create_trace_row
 
 
 def greedy(

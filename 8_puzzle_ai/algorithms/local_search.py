@@ -13,14 +13,19 @@ Algorithms:
 from typing import Tuple, Optional, List, Dict, Any, Set
 import random
 import math
-import sys
 
-sys.path.append('..')
-from core.puzzle import PuzzleState, reconstruct_path, scramble_state
-from core.node import Node, SearchResult
-from core.heuristics import get_heuristic
-from core.metrics import SearchMetrics
-from core.utils import Timer, create_trace_row
+try:
+    from ..core.puzzle import PuzzleState, reconstruct_path, scramble_state
+    from ..core.node import Node, SearchResult
+    from ..core.heuristics import get_heuristic
+    from ..core.metrics import SearchMetrics
+    from ..core.utils import Timer, create_trace_row
+except ImportError:
+    from core.puzzle import PuzzleState, reconstruct_path, scramble_state
+    from core.node import Node, SearchResult
+    from core.heuristics import get_heuristic
+    from core.metrics import SearchMetrics
+    from core.utils import Timer, create_trace_row
 
 
 def simple_hill_climbing(

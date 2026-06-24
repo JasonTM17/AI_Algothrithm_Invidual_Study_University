@@ -11,14 +11,22 @@ import pandas as pd
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(PACKAGE_DIR)
-sys.path.insert(0, PACKAGE_DIR)
-sys.path.insert(0, PROJECT_DIR)
 
-from core.puzzle import PuzzleState, scramble_state, parse_state, validate_state
-from core.heuristics import misplaced_tiles, manhattan_distance, linear_conflict, heuristic_info
-from core.metrics import get_algorithm_properties, generate_comparison_report
-from core.utils import format_state_box, get_algorithm_theory
-from algorithms import ALGORITHMS, get_algorithm, get_algorithm_group, list_algorithms
+try:
+    from .core.puzzle import PuzzleState, scramble_state, parse_state, validate_state
+    from .core.heuristics import misplaced_tiles, manhattan_distance, linear_conflict, heuristic_info
+    from .core.metrics import get_algorithm_properties, generate_comparison_report
+    from .core.utils import format_state_box, get_algorithm_theory
+    from .algorithms import ALGORITHMS, get_algorithm, get_algorithm_group, list_algorithms
+except ImportError:
+    sys.path.insert(0, PACKAGE_DIR)
+    sys.path.insert(0, PROJECT_DIR)
+
+    from core.puzzle import PuzzleState, scramble_state, parse_state, validate_state
+    from core.heuristics import misplaced_tiles, manhattan_distance, linear_conflict, heuristic_info
+    from core.metrics import get_algorithm_properties, generate_comparison_report
+    from core.utils import format_state_box, get_algorithm_theory
+    from algorithms import ALGORITHMS, get_algorithm, get_algorithm_group, list_algorithms
 
 def configure_page():
     """Configure Streamlit only when the app is executed, not when imported by tests."""
@@ -29,44 +37,13 @@ def configure_page():
         initial_sidebar_state="expanded"
     )
 
-    st.markdown("""
-    <style>
-        .puzzle-cell {
-            font-size: 24px;
-            text-align: center;
-            padding: 10px;
-            border: 2px solid #333;
-            background-color: #f0f0f0;
-            color: #1a1a1a;
-        }
-        .puzzle-cell.blank {
-            background-color: #fff;
-            color: #1a1a1a;
-        }
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 8px;
-        }
-        .stTabs [data-baseweb="tab"] {
-            padding: 10px 20px;
-            font-size: 16px;
-        }
-        .metric-card {
-            background-color: var(--secondary-background-color, #f8f9fa);
-            color: var(--text-color, #1a1a1a);
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(128, 128, 128, 0.2);
-        }
-        .success-message {
-            color: #2ecc71;
-            font-weight: bold;
-        }
-        .error-message {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+    # Inject shared design tokens from the main app's CSS file
+    css_path = os.path.join(PROJECT_DIR, "web", "ui-theme.css")
+    try:
+        with open(css_path, "r", encoding="utf-8") as _f:
+            st.markdown(f"<style>\n{_f.read()}\n</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        pass  # Fall back to Streamlit default theme
 
 
 def render_puzzle_board(state, title=""):
@@ -75,16 +52,16 @@ def render_puzzle_board(state, title=""):
         st.markdown(f"**{title}**")
     
     # Create HTML table
-    html = '<table style="border-collapse: collapse; margin: 10px auto;">'
+    html = '<table class="puzzle-table">'
     for i in range(3):
         html += '<tr>'
         for j in range(3):
             idx = i * 3 + j
             val = state[idx]
             if val == 0:
-                html += f'<td style="width: 60px; height: 60px; border: 2px solid #333; text-align: center; font-size: 24px; background-color: #fff; color: #1a1a1a;">&nbsp;</td>'
+                html += '<td class="blank">&nbsp;</td>'
             else:
-                html += f'<td style="width: 60px; height: 60px; border: 2px solid #333; text-align: center; font-size: 24px; background-color: #e3f2fd; color: #1a1a1a;">{val}</td>'
+                html += f'<td>{val}</td>'
         html += '</tr>'
     html += '</table>'
     
@@ -138,7 +115,10 @@ def run_selected_algorithm(name: str, params: dict):
     group = get_algorithm_group(name)
     if group in EDUCATIONAL_GROUPS:
         note = getattr(result, "notes", "")
-        educational_note = "Educational demo: this group is not a natural 8-puzzle solver."
+        if group == "Adversarial Search":
+            educational_note = "Educational demo: adversarial algorithms are represented with a Caro-style game model because 8-puzzle is not a 2-player game."
+        else:
+            educational_note = "Educational demo: this group is not a natural 8-puzzle solver."
         result.notes = f"{note} {educational_note}".strip() if note else educational_note
     return result
 
@@ -182,8 +162,8 @@ def main():
                             st.error("❌ State is not solvable!")
                     else:
                         st.error(f"❌ {msg}")
-                except Exception as e:
-                    st.error(f"❌ Error: {e}")
+                except ValueError as e:
+                    st.error(f"Invalid state: {e}. Enter 9 numbers 0-8 separated by spaces.")
         
         elif input_method == "Random":
             scramble_depth = st.slider("Scramble Depth", 5, 50, 20)
@@ -366,6 +346,7 @@ def main():
         # Run button
         if st.button("🚀 Run Algorithm", type="primary"):
             with st.spinner(f"Running {selected_algorithm}..."):
+                params["seed"] = int(time.time_ns() % 1_000_000_000)
                 result = run_selected_algorithm(selected_algorithm, params)
                 
                 st.session_state.current_result = result
@@ -492,8 +473,10 @@ def main():
                     try:
                         result = run_selected_algorithm(algo_name, params)
                         results.append(result)
+                    except ValueError as e:
+                        st.warning(f"{algo_name} failed: invalid parameters — {e}")
                     except Exception as e:
-                        st.warning(f"{algo_name} failed: {e}")
+                        st.warning(f"{algo_name} failed unexpectedly: {e}. Try different parameters or a simpler algorithm.")
                     
                     progress_bar.progress((i + 1) / len(selected_algos))
                 
@@ -625,15 +608,16 @@ def main():
         3. **Local Search**: Hill Climbing variants, Beam, Simulated Annealing
         4. **Complex Environments**: AND-OR, No Observation, Partially Observable, Online
         5. **Constraint Satisfaction**: Backtracking, Min-Conflicts
-        6. **Adversarial Search**: Minimax, Alpha-Beta, Expectimax
+        6. **Adversarial Search**: Minimax, Alpha-Beta, Expectimax as a Caro-style game demo
         
         **Heuristics:**
         - Misplaced Tiles
         - Manhattan Distance
         - Linear Conflict
         
-        **Note:** Some algorithms (CSP, Adversarial) are included for educational purposes
-        as 8-puzzle is not naturally a CSP or 2-player game.
+        **Note:** Some algorithms are included for educational purposes. CSP is not a
+        natural 8-puzzle solver, and adversarial search is demonstrated with a
+        Caro-style game model because 8-puzzle is not naturally a 2-player game.
         
         ---
         
