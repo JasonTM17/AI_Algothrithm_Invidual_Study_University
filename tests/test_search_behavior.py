@@ -97,6 +97,23 @@ def test_unsolvable_state_stops_before_expansion() -> None:
     assert not certificate["error"]
 
 
+def test_standard_solvers_handle_goal_and_unsolvable_states_consistently() -> None:
+    standard_algorithms = ["BFS", "DFS", "UCS", "IDS", "Greedy", "A*", "IDA*"]
+    goal_config = puzzle.TraceConfig(max_expansions=200, max_trace_rows=5, ids_max_depth=8, ida_max_iterations=8, dfs_depth_limit=8)
+    unsolvable_config = puzzle.TraceConfig(max_expansions=200, max_trace_rows=5, ids_max_depth=8, ida_max_iterations=8, dfs_depth_limit=8)
+
+    for algorithm in standard_algorithms:
+        goal_result = puzzle.run_algorithm(puzzle.GOAL_STATE, algorithm, "manhattan", goal_config)
+        assert goal_result.found, algorithm
+        assert goal_result.path_cost == 0, algorithm
+        assert goal_result.expanded == 0, algorithm
+
+        unsolvable_result = puzzle.run_algorithm((1, 2, 3, 4, 5, 6, 8, 7, 0), algorithm, "manhattan", unsolvable_config)
+        assert not unsolvable_result.found, algorithm
+        assert unsolvable_result.expanded == 0, algorithm
+        assert "not solvable" in unsolvable_result.message, algorithm
+
+
 def test_trace_disabled_does_not_crash_priority_search() -> None:
     config = puzzle.TraceConfig(max_expansions=10_000, max_trace_rows=0)
     result = puzzle.run_algorithm(puzzle.generate_random_state(20, seed=1), "A*", "manhattan", config)
@@ -450,6 +467,7 @@ def run_all_tests() -> None:
         test_a_star_matches_true_distance_on_shallow_states,
         test_heuristics_are_ordered_and_admissible_near_goal,
         test_unsolvable_state_stops_before_expansion,
+        test_standard_solvers_handle_goal_and_unsolvable_states_consistently,
         test_trace_disabled_does_not_crash_priority_search,
         test_academic_trace_contract_for_all_algorithms,
         test_result_certificate_and_markdown_export,

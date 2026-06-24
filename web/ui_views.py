@@ -87,11 +87,28 @@ def demo_readiness_html(lang: str, algorithm: str, heuristic: str) -> str:
     solvable = puzzle.is_solvable(st.session_state.start_state)
     preset = st.session_state.get("last_preset_name") or text(lang, "random_manual")
     mode_class = "ok" if run_mode["mode"] == "standard_solver" else "warn"
+    info = puzzle.ALGORITHM_INFO[algorithm]
+    guarantee_value = (
+        "Complete / Optimal"
+        if info["complete"] and info["optimal"]
+        else "Complete / Not optimal"
+        if info["complete"]
+        else "Bounded / Not optimal"
+    )
+    if lang == "vi":
+        guarantee_value = (
+            "Đầy đủ / Tối ưu"
+            if info["complete"] and info["optimal"]
+            else "Đầy đủ / Không tối ưu"
+            if info["complete"]
+            else "Giới hạn / Không tối ưu"
+        )
     chips = [
         readiness_chip(text(lang, "run_mode"), localize_trace_text(run_mode["label"], lang), mode_class),
         readiness_chip(text(lang, "solvable"), text(lang, "solvable") if solvable else text(lang, "unsolvable"), "ok" if solvable else "fail"),
         readiness_chip(text(lang, "current_preset"), preset, ""),
         readiness_chip(text(lang, "selected_heuristic"), heuristic, "ok"),
+        readiness_chip(text(lang, "guarantee"), guarantee_value, "ok" if info["complete"] else "warn"),
     ]
     description = escape(localize_trace_text(run_mode["description"], lang))
     return f'<div class="readiness-grid">{"".join(chips)}</div><p class="section-note">{description}</p>'

@@ -646,7 +646,7 @@ while frontier not empty:
 | Frontier | Stack LIFO: node đưa vào sau được mở trước. |
 | Trace cần nhìn | `Depth`, `Action`, `Skipped States`; app có `dfs_depth_limit` để tránh đi quá sâu. |
 | Complete/Optimal | Không optimal; complete chỉ khi có giới hạn và không gian hữu hạn đủ nhỏ. |
-| Hạn chế | Dễ đi vào nhánh xấu, nghiệm tìm được có thể dài. |
+| Hạn chế | Dễ đi vào nhánh xấu, nghiệm tìm được có thể dài. Trong demo, DFS còn bị chặn bởi `dfs_depth_limit` và `max_expansions`; nếu trace báo `Stopped by expansion/depth limit` thì đó là giới hạn trình diễn an toàn, không phải lỗi logic của trạng thái. |
 
 ### 9.3. UCS - Uniform Cost Search
 
@@ -857,7 +857,7 @@ while T > min_temperature:
 | Frontier | Candidate neighbor tại mỗi bước. |
 | Trace cần nhìn | `Selection Key` có `T`, `candidate_h`, accept/reject. |
 | Complete/Optimal | Không bảo đảm. |
-| Hạn chế | Phụ thuộc lịch làm nguội và seed. |
+| Hạn chế | Phụ thuộc lịch làm nguội, seed và giới hạn bước chạy. Nếu dừng với nghiệm tốt nhất hiện có thay vì goal, cần đọc như hành vi local search bị bound, không phải bằng chứng state vô nghiệm. |
 
 ### 9.14. AND-OR Search
 
