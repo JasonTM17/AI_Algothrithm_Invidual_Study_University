@@ -26,6 +26,7 @@ from web.ui_views import (
     image_board_html, playable_tile_grid, persist_game_image,
     certificate_chips_html, certificate_rows, trace_glossary_rows,
     academic_problem_markdown, readiness_chip, trace_detail_card,
+    caro_demo_panel_html,
 )
 
 
@@ -240,17 +241,26 @@ def main() -> None:
                 help=help_text(lang, "heuristic"),
             )
             st.markdown(demo_readiness_html(lang, algorithm, heuristic), unsafe_allow_html=True)
+            st.markdown(caro_demo_panel_html(lang, algorithm), unsafe_allow_html=True)
             st.caption(f"{text(lang, 'heuristic_usage')}: {localize_trace_text(heuristic_usage_note(lang, algorithm), lang)}")
             partial_goal_controls(lang, algorithm)
             if algorithm_group == "Constraint Satisfaction Problems" and algorithm == "Constraint Graph":
                 st.info(text(lang, "thu_duc_csp_hint"))
                 show_thu_duc_graph_coloring_page(lang)
             st.caption(f"{text(lang, 'algorithm')}: {algorithm} | {text(lang, 'heuristic')}: {heuristic}")
-            action_cols = st.columns(2)
-            with action_cols[0]:
-                run_clicked = st.button(text(lang, "run_selected"), type="primary", width="stretch", help=help_text(lang, "run_selected"))
-            with action_cols[1]:
-                compare_clicked = st.button(text(lang, "compare_all"), width="stretch", help=help_text(lang, "compare_all"))
+            run_clicked = st.button(
+                text(lang, "run_selected"),
+                type="primary",
+                width="stretch",
+                help=help_text(lang, "run_selected"),
+                key="run_selected_full_width",
+            )
+            compare_clicked = st.button(
+                text(lang, "compare_all"),
+                width="stretch",
+                help=help_text(lang, "compare_all"),
+                key="compare_all_full_width",
+            )
             st.caption(localize_trace_text(text(lang, "notes"), lang))
 
         if run_clicked:

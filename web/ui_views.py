@@ -101,6 +101,30 @@ def readiness_chip(label: str, value: str, css_class: str = "") -> str:
     return f'<div class="{class_attr}"><span>{escape(label)}</span><strong>{escape(value)}</strong></div>'
 
 
+def caro_demo_panel_html(lang: str, algorithm: str) -> str:
+    if puzzle.ALGORITHM_INFO[algorithm]["group"] != "Adversarial / Stochastic Search":
+        return ""
+    title = "Bàn Caro đối kháng" if lang == "vi" else "Adversarial Caro board"
+    subtitle = (
+        "MAX là X. MIN hoặc chance node là O. Nhóm này dùng Caro vì 8-puzzle chuẩn không có đối thủ."
+        if lang == "vi"
+        else "MAX is X. MIN or chance nodes are O. This group uses Caro because standard 8-puzzle has no opponent."
+    )
+    cells = "".join(
+        f'<div class="caro-cell caro-{escape(cell.lower() if cell != "." else "empty")}">{escape(cell)}</div>'
+        for cell in puzzle.CARO_START
+    )
+    return (
+        '<div class="caro-demo-panel">'
+        '<div>'
+        f'<strong>{escape(title)}</strong>'
+        f'<p>{escape(subtitle)}</p>'
+        '</div>'
+        f'<div class="caro-board" aria-label="{escape(title)}">{cells}</div>'
+        '</div>'
+    )
+
+
 def demo_readiness_html(lang: str, algorithm: str, heuristic: str) -> str:
     run_mode = puzzle.algorithm_run_mode(algorithm, lang=lang)
     solvable = puzzle.is_solvable(st.session_state.start_state)
@@ -858,21 +882,30 @@ def partial_goal_controls(lang: str, algorithm: str) -> None:
 
 
 def show_academic_context(lang: str, algorithm: str, heuristic: str) -> None:
-    st.subheader(text(lang, "academic_panel"))
-    with st.expander(text(lang, "grading_checklist"), expanded=False):
-        show_grading_checklist(lang)
-    with st.expander(text(lang, "peas_model"), expanded=False):
-        show_peas_model(lang, algorithm)
-    with st.expander(text(lang, "problem_variant"), expanded=False):
-        show_problem_variant(lang, algorithm)
-    with st.expander(text(lang, "problem_definition"), expanded=False):
-        st.markdown(academic_problem_markdown(lang, heuristic))
-    with st.expander(text(lang, "algorithm_profile"), expanded=False):
-        show_algorithm_profile(lang, algorithm)
-    with st.expander(text(lang, "evaluation_criteria"), expanded=False):
-        st.dataframe(evaluation_rows(lang), width="stretch", hide_index=True)
-    with st.expander(text(lang, "trace_glossary"), expanded=False):
-        st.dataframe(trace_glossary_rows(lang), width="stretch", hide_index=True)
+    with st.container(border=True):
+        st.markdown(
+            f"""
+            <div class="academic-section-heading">
+              <span>{escape(text(lang, "academic_panel"))}</span>
+              <strong>{escape(algorithm)} · {escape(heuristic)}</strong>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        with st.expander(text(lang, "grading_checklist"), expanded=False):
+            show_grading_checklist(lang)
+        with st.expander(text(lang, "peas_model"), expanded=False):
+            show_peas_model(lang, algorithm)
+        with st.expander(text(lang, "problem_variant"), expanded=False):
+            show_problem_variant(lang, algorithm)
+        with st.expander(text(lang, "problem_definition"), expanded=False):
+            st.markdown(academic_problem_markdown(lang, heuristic))
+        with st.expander(text(lang, "algorithm_profile"), expanded=False):
+            show_algorithm_profile(lang, algorithm)
+        with st.expander(text(lang, "evaluation_criteria"), expanded=False):
+            st.dataframe(evaluation_rows(lang), width="stretch", hide_index=True)
+        with st.expander(text(lang, "trace_glossary"), expanded=False):
+            st.dataframe(trace_glossary_rows(lang), width="stretch", hide_index=True)
 
 
 def route_rows(result: puzzle.SearchResult, lang: str, heuristic: str) -> Any:

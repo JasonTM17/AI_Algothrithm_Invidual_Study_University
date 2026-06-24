@@ -1567,3 +1567,297 @@ div[data-testid="stDataFrame"] [role="gridcell"] {
     flex-wrap: nowrap;
   }
 }
+
+/* ============================================================
+   Full Page Readability Sweep
+   Fix Streamlit/BaseWeb controls that can ignore the main theme.
+   ============================================================ */
+
+[data-testid="stIconMaterial"] {
+  visibility: visible !important;
+  width: 1rem !important;
+  min-width: 1rem !important;
+  max-width: 1rem !important;
+  overflow: hidden !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  opacity: 1 !important;
+}
+
+[data-testid="stTooltipIcon"] svg,
+[data-testid="stTooltipIcon"] path,
+svg[data-testid="stIconMaterial"],
+[data-testid="stIconMaterial"] svg,
+[data-testid="stIconMaterial"] path {
+  color: #64748b !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+
+[data-testid="stTooltipIcon"] {
+  position: relative !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+  border: 1px solid #94a3b8 !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+[data-testid="stTooltipIcon"] svg {
+  display: none !important;
+}
+
+[data-testid="stTooltipIcon"]::after {
+  content: "?";
+  color: #475569;
+  font: 800 0.72rem/1 Inter, system-ui, sans-serif;
+}
+
+div[data-testid="stTooltipIcon"]:has(.stTooltipHoverTarget > button) {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+}
+
+div[data-testid="stTooltipIcon"]:has(.stTooltipHoverTarget > button)::after {
+  content: none !important;
+}
+
+div[data-testid="stTooltipIcon"]:has(.stTooltipHoverTarget > button) .stTooltipHoverTarget {
+  width: 100% !important;
+  justify-content: stretch !important;
+}
+
+div[data-testid="stTooltipIcon"]:has(.stTooltipHoverTarget > button) button[data-testid*="stBaseButton"] {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex: 1 1 100% !important;
+}
+
+div[data-testid="stNumberInput"] {
+  background: transparent !important;
+}
+
+div[data-testid="stNumberInput"] button,
+div[data-testid="stNumberInput"] button:hover,
+div[data-testid="stNumberInput"] button:focus {
+  width: 2.55rem !important;
+  min-width: 2.55rem !important;
+  height: 2.75rem !important;
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: var(--shadow-xs) !important;
+  opacity: 1 !important;
+}
+
+div[data-testid="stNumberInput"] button:first-of-type {
+  border-radius: 12px 0 0 12px !important;
+}
+
+div[data-testid="stNumberInput"] button:last-of-type {
+  border-radius: 0 12px 12px 0 !important;
+}
+
+div[data-testid="stNumberInput"] button svg,
+div[data-testid="stNumberInput"] button path,
+div[data-testid="stNumberInput"] button * {
+  color: #0f172a !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+
+div[data-testid="stNumberInput"] input {
+  text-align: center !important;
+  border-radius: 0 !important;
+}
+
+div.stButton > button,
+div.stDownloadButton > button,
+button[data-testid*="stBaseButton"] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex: 1 1 100% !important;
+  justify-content: center !important;
+  color: #0f172a !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.16) !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.stTooltipHoverTarget {
+  justify-content: stretch !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+.stTooltipHoverTarget > button[data-testid*="stBaseButton"] {
+  width: 100% !important;
+  flex: 1 1 100% !important;
+}
+
+div.stButton > button * ,
+div.stDownloadButton > button * ,
+button[data-testid*="stBaseButton"] * {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+div[data-testid="stBaseButton-primary"] > button,
+button[kind="primary"],
+button[data-testid="stBaseButton-primary"] {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #0f9688, #08756d) !important;
+  border-color: transparent !important;
+}
+
+div[data-testid="stBaseButton-primary"] > button *,
+button[kind="primary"] *,
+button[data-testid="stBaseButton-primary"] * {
+  color: #ffffff !important;
+}
+
+div.stButton > button:disabled,
+div.stDownloadButton > button:disabled,
+button:disabled {
+  color: #475569 !important;
+  background: #e8eef5 !important;
+  border-color: #cbd5e1 !important;
+  opacity: 1 !important;
+}
+
+div[data-testid="stExpander"] {
+  margin: 0.56rem 0 !important;
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  box-shadow: var(--shadow-xs) !important;
+  overflow: hidden !important;
+}
+
+div[data-testid="stExpander"] details > summary {
+  min-height: 3.1rem !important;
+  padding: 0.78rem 0.95rem !important;
+  background: linear-gradient(90deg, rgba(15, 150, 136, 0.12), #ffffff 42%) !important;
+  border-left: 4px solid var(--accent) !important;
+  color: #0f172a !important;
+  font-weight: 760 !important;
+}
+
+div[data-testid="stExpander"] details > summary *,
+div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] p {
+  color: #0f172a !important;
+  opacity: 1 !important;
+}
+
+.academic-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 0 0.9rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.academic-section-heading span {
+  color: #0b1220;
+  font: 800 clamp(1.45rem, 2.2vw, 2rem)/1.1 'Outfit', Inter, sans-serif;
+}
+
+.academic-section-heading strong {
+  color: var(--accent-strong);
+  background: rgba(15, 150, 136, 0.10);
+  border: 1px solid rgba(15, 150, 136, 0.22);
+  border-radius: 999px;
+  padding: 0.38rem 0.62rem;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.caro-demo-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: center;
+  margin: 0.7rem 0 0.85rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(15, 150, 136, 0.24);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ecfdf5, #ffffff);
+  box-shadow: var(--shadow-xs);
+}
+
+.caro-demo-panel strong {
+  display: block;
+  color: #064e3b;
+  font-size: 0.98rem;
+}
+
+.caro-demo-panel p {
+  margin: 0.28rem 0 0;
+  color: #334155;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.caro-board {
+  display: grid;
+  grid-template-columns: repeat(3, 2rem);
+  gap: 0.25rem;
+  padding: 0.36rem;
+  border-radius: 12px;
+  background: #d9f4ef;
+}
+
+.caro-cell {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+  font-weight: 850;
+  font-family: 'Outfit', Inter, sans-serif;
+}
+
+.caro-x {
+  color: #0f766e;
+}
+
+.caro-o {
+  color: #be123c;
+}
+
+.caro-empty {
+  color: #94a3b8;
+}
+
+@media (max-width: 760px) {
+  .academic-section-heading,
+  .caro-demo-panel {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .academic-section-heading {
+    flex-direction: column;
+  }
+}
