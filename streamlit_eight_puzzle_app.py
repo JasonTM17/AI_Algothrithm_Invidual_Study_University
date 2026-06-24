@@ -169,7 +169,7 @@ def main() -> None:
                 f"""
                 <div class="panel-heading">
                   <h2>{escape(text(lang, "board_panel"))}</h2>
-                  <span>{escape(text(lang, "state_lab"))}</span>
+                  <span class="panel-badge">{escape(text(lang, "state_lab"))}</span>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -214,7 +214,7 @@ def main() -> None:
                 f"""
                 <div class="panel-heading">
                   <h2>{escape(text(lang, "run"))}</h2>
-                  <span>{escape(text(lang, "algorithm_cockpit"))}</span>
+                  <span class="panel-badge">{escape(text(lang, "algorithm_cockpit"))}</span>
                 </div>
                 """,
                 unsafe_allow_html=True,

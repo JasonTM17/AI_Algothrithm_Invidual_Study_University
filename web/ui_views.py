@@ -359,7 +359,7 @@ def show_image_puzzle_page(lang: str) -> None:
             f"""
             <div class="panel-heading">
               <h2>{escape(text(lang, "image_controls"))}</h2>
-              <span>{escape(text(lang, "game_title"))}</span>
+              <span class="panel-badge">{escape(text(lang, "game_title"))}</span>
             </div>
             """,
             unsafe_allow_html=True,

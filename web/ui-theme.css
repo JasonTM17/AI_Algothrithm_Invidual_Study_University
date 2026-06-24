@@ -8,15 +8,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
           :root {
-            --surface: var(--background-color, #f8fafc);
-            --surface-2: var(--secondary-background-color, #ffffff);
-            --panel: var(--secondary-background-color, #ffffff);
-            --panel-soft: var(--background-color, #f8fafc);
-            --ink: var(--text-color, #111827);
-            --muted: rgba(94, 82, 70, 0.72);
+            --surface: #f4f7fb;
+            --surface-2: #ffffff;
+            --panel: #ffffff;
+            --panel-soft: #f8fafc;
+            --ink: #0f172a;
+            --muted: rgba(51, 65, 85, 0.78);
             --line: rgba(30, 27, 24, 0.10);
-            --accent: var(--primary-color, #0d9488);
-            --accent-strong: var(--primary-color, #0f766e);
+            --accent: #0d9488;
+            --accent-strong: #0f766e;
             --accent-soft: rgba(13, 148, 136, 0.10);
             --amber: #b7791f;
             --amber-soft: rgba(180, 120, 30, 0.12);
@@ -24,7 +24,7 @@
             --danger-soft: rgba(220, 38, 38, 0.10);
             --success: #15803d;
             --success-soft: rgba(21, 128, 61, 0.10);
-            --graphite: var(--text-color, #1e1b18);
+            --graphite: #111827;
             --shadow-xs: 0 1px 2px rgba(30, 27, 24, 0.04);
             --shadow-sm: 0 8px 18px rgba(30, 27, 24, 0.06);
             --shadow-md: 0 14px 32px rgba(30, 27, 24, 0.07);
@@ -36,8 +36,8 @@
             --image-text: #faf8f5;
             --map-edge: rgba(30, 27, 24, 0.18);
             --map-node-stroke: var(--panel);
-            --tile-bg-1: var(--background-color, #ffffff);
-            --tile-bg-2: var(--secondary-background-color, #eef2f7);
+            --tile-bg-1: #ffffff;
+            --tile-bg-2: #eef2f7;
             --board-bg: rgba(30, 27, 24, 0.03);
             --color-tile-border: var(--line);
             --color-tile-bg: linear-gradient(180deg, var(--tile-bg-1), var(--tile-bg-2));
@@ -233,7 +233,7 @@
             letter-spacing: 0;
             margin: 0;
           }
-          .panel-heading span {
+          .panel-heading .panel-badge {
             border: 1px solid var(--line) !important;
             border-radius: 999px !important;
             color: var(--accent-strong) !important;
@@ -978,4 +978,177 @@ button:focus-visible,
   font-size: 2.5rem;
   margin-bottom: 0.75rem;
   opacity: 0.35;
+}
+
+/* ============================================================
+   Streamlit Widget Hardening
+   Keeps text readable even when Streamlit/user theme variables
+   drift to dark controls or low-contrast labels.
+   ============================================================ */
+
+.stApp {
+  --text-color: var(--ink) !important;
+  --background-color: var(--surface) !important;
+  --secondary-background-color: var(--panel) !important;
+  --primary-color: var(--accent) !important;
+}
+
+.main .block-container,
+[data-testid="stAppViewContainer"] .block-container {
+  padding-top: 2.6rem !important;
+  max-width: 1420px !important;
+}
+
+[data-testid="stSidebar"] {
+  background: #ffffff !important;
+  box-shadow: 8px 0 28px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] label p,
+[data-testid="stWidgetLabel"] p,
+[data-testid="stWidgetLabel"] label,
+[data-testid="stWidgetLabel"] span,
+.stMarkdown p,
+.stCaptionContainer,
+.stCaptionContainer p {
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] strong,
+.stMarkdown h1,
+.stMarkdown h2,
+.stMarkdown h3,
+.stMarkdown strong {
+  color: var(--ink) !important;
+}
+
+div[data-baseweb="select"] > div,
+div[data-baseweb="input"] > div,
+div[data-testid="stNumberInput"] input,
+div[data-testid="stTextInput"] input,
+textarea {
+  background: #ffffff !important;
+  color: var(--ink) !important;
+  border: 1px solid rgba(15, 23, 42, 0.16) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+div[data-baseweb="select"] *,
+div[data-baseweb="input"] *,
+div[data-testid="stNumberInput"] *,
+div[data-testid="stTextInput"] *,
+textarea {
+  color: var(--ink) !important;
+  opacity: 1 !important;
+}
+
+div[data-baseweb="popover"],
+div[data-baseweb="popover"] *,
+ul[role="listbox"],
+ul[role="listbox"] * {
+  background: #ffffff !important;
+  color: var(--ink) !important;
+}
+
+ul[role="listbox"] li:hover,
+ul[role="listbox"] li[aria-selected="true"] {
+  background: rgba(13, 148, 136, 0.10) !important;
+  color: var(--ink) !important;
+}
+
+[data-testid="stRadio"] label,
+[data-testid="stRadio"] label *,
+[data-testid="stCheckbox"] label,
+[data-testid="stCheckbox"] label * {
+  color: var(--ink) !important;
+  opacity: 1 !important;
+}
+
+[data-testid="stSlider"] [role="slider"] {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+div.stButton > button,
+div.stDownloadButton > button {
+  color: var(--ink) !important;
+  background: #ffffff !important;
+}
+
+div[data-testid="stBaseButton-primary"] > button,
+button[kind="primary"] {
+  color: #ffffff !important;
+}
+
+div.stButton > button:disabled,
+div.stDownloadButton > button:disabled {
+  color: #475569 !important;
+  background: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
+}
+
+.panel-heading {
+  align-items: flex-start !important;
+  margin-top: 0.15rem !important;
+}
+
+.panel-heading h2 {
+  line-height: 1.14 !important;
+  overflow: visible !important;
+}
+
+.panel-heading .panel-badge {
+  flex: 0 0 auto;
+  max-width: 38%;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.readiness-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+}
+
+.readiness-chip {
+  border-radius: 16px !important;
+  background: #ffffff !important;
+}
+
+.readiness-chip.ok {
+  background: #ecfdf5 !important;
+}
+
+.readiness-chip.warn {
+  background: #fffbeb !important;
+}
+
+.readiness-chip.fail {
+  background: #fef2f2 !important;
+}
+
+.puzzle-board {
+  background: #eef2f7 !important;
+}
+
+@media (max-width: 1100px) {
+  .main .block-container,
+  [data-testid="stAppViewContainer"] .block-container {
+    padding-top: 2rem !important;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .panel-heading .panel-badge {
+    max-width: 100%;
+  }
 }
