@@ -1,18 +1,35 @@
 import base64
+from typing import Optional
 
-def get_sidebar_game_html(image_path: str) -> str:
+
+def get_sidebar_game_html(image_path: str, theme_vars: Optional[dict] = None) -> str:
     try:
         with open(image_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
         img_data = f"data:image/png;base64,{encoded_string}"
-    except Exception:
+    except OSError:
         img_data = ""
+
+    # Build inline style from theme vars so the iframe inherits Streamlit's theme
+    style_attrs = ""
+    if theme_vars:
+        style_attrs = "; ".join(f"{k}: {v}" for k, v in theme_vars.items())
 
     html_code = f"""
     <!DOCTYPE html>
-    <html>
+    <html style="{style_attrs}">
     <head>
     <style>
+        :root {{
+            --game-bg: var(--background-color, #f7f5f2);
+            --game-panel: var(--secondary-background-color, #faf8f5);
+            --game-ink: var(--text-color, #1e1b18);
+            --game-line: color-mix(in srgb, var(--text-color, #1e1b18) 14%, transparent);
+            --game-accent: var(--primary-color, #0d9488);
+            --game-accent-strong: var(--primary-color, #0f766e);
+            --game-empty: color-mix(in srgb, var(--primary-color, #0d9488) 10%, transparent);
+            --game-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+        }}
         body {{
             margin: 0;
             padding: 0;
@@ -20,7 +37,8 @@ def get_sidebar_game_html(image_path: str) -> str:
             flex-direction: column;
             align-items: center;
             font-family: sans-serif;
-            color: #ccc;
+            background: var(--game-bg);
+            color: var(--game-ink);
             width: 100%;
         }}
         #puzzle-container {{
@@ -28,11 +46,11 @@ def get_sidebar_game_html(image_path: str) -> str:
             width: 100%;
             max-width: 600px;
             aspect-ratio: 1 / 1;
-            background: #222;
-            border: 2px solid #555;
+            background: var(--game-panel);
+            border: 2px solid var(--game-line);
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: var(--game-shadow);
             margin-bottom: 20px;
         }}
         .tile {{
@@ -41,16 +59,16 @@ def get_sidebar_game_html(image_path: str) -> str:
             height: 33.3333%;
             background-image: url('{img_data}');
             background-size: 300% 300%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--game-line);
             box-sizing: border-box;
             transition: top 0.2s, left 0.2s;
             cursor: pointer;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.32);
         }}
         .tile.empty {{
-            background: #111;
-            border: none;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            background: var(--game-empty);
+            border: 1px dashed var(--game-accent);
+            box-shadow: none;
             cursor: default;
         }}
         #controls {{
@@ -59,8 +77,8 @@ def get_sidebar_game_html(image_path: str) -> str:
             margin-bottom: 20px;
         }}
         button {{
-            background: #4CAF50;
-            color: white;
+            background: var(--game-accent);
+            color: var(--game-panel);
             border: none;
             padding: 12px 24px;
             border-radius: 6px;
@@ -69,12 +87,19 @@ def get_sidebar_game_html(image_path: str) -> str:
             font-weight: bold;
         }}
         button:hover {{
-            background: #45a049;
+            background: var(--game-accent-strong);
+        }}
+        .game-title {{
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--game-ink);
         }}
     </style>
     </head>
     <body>
-        <div style="text-align: center; margin-bottom: 15px; font-size: 20px; font-weight: bold; color: #fff;">Chơi trực quan (Interactive)</div>
+        <div class="game-title">Chơi trực quan (Interactive)</div>
         <div id="puzzle-container"></div>
         <div id="controls">
             <button onclick="shuffle()">Trộn (Shuffle)</button>

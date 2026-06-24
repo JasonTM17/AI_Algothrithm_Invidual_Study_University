@@ -1,0 +1,921 @@
+/* ============================================================
+   Design Tokens — 8-Puzzle AI Visualizer
+   ============================================================
+   These variables reference Streamlit theme properties so
+   the UI responds to Settings → Theme changes automatically.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+          :root {
+            --surface: var(--background-color, #f7f5f2);
+            --surface-2: var(--secondary-background-color, #faf8f5);
+            --panel: var(--secondary-background-color, #faf8f5);
+            --panel-soft: var(--background-color, #f7f5f2);
+            --ink: var(--text-color, #1e1b18);
+            --muted: rgba(94, 82, 70, 0.72);
+            --line: rgba(30, 27, 24, 0.10);
+            --accent: var(--primary-color, #0d9488);
+            --accent-strong: var(--primary-color, #0f766e);
+            --accent-soft: rgba(13, 148, 136, 0.10);
+            --amber: #b7791f;
+            --amber-soft: rgba(180, 120, 30, 0.12);
+            --danger: #dc2626;
+            --danger-soft: rgba(220, 38, 38, 0.10);
+            --success: #15803d;
+            --success-soft: rgba(21, 128, 61, 0.10);
+            --graphite: var(--text-color, #1e1b18);
+            --shadow-xs: 0 1px 2px rgba(30, 27, 24, 0.04);
+            --shadow-sm: 0 8px 18px rgba(30, 27, 24, 0.06);
+            --shadow-md: 0 14px 32px rgba(30, 27, 24, 0.07);
+            --shadow-lg: 0 22px 50px rgba(30, 27, 24, 0.08);
+            --focus-ring: 0 0 0 3px rgba(13, 148, 136, 0.20);
+            --tile-shadow: var(--shadow-sm);
+            --accent-shadow: 0 16px 28px rgba(13, 148, 136, 0.14);
+            --image-badge-bg: rgba(30, 27, 24, 0.62);
+            --image-text: #faf8f5;
+            --map-edge: rgba(30, 27, 24, 0.18);
+            --map-node-stroke: var(--panel);
+            --tile-bg-1: var(--background-color, #faf8f5);
+            --tile-bg-2: var(--secondary-background-color, #edeae4);
+            --board-bg: rgba(30, 27, 24, 0.03);
+            --color-tile-border: var(--line);
+            --color-tile-bg: linear-gradient(180deg, var(--tile-bg-1), var(--tile-bg-2));
+          }
+
+          @supports (color: color-mix(in srgb, red, blue)) {
+            :root {
+              --muted: color-mix(in srgb, var(--ink) 66%, transparent);
+              --line: color-mix(in srgb, var(--ink) 14%, transparent);
+              --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent);
+              --amber-soft: color-mix(in srgb, var(--amber) 15%, transparent);
+              --danger-soft: color-mix(in srgb, var(--danger) 14%, transparent);
+              --success-soft: color-mix(in srgb, var(--success) 14%, transparent);
+              --board-bg: color-mix(in srgb, var(--ink) 4%, transparent);
+              --color-tile-border: color-mix(in srgb, var(--tile-color), transparent 35%);
+              --color-tile-bg: linear-gradient(180deg, color-mix(in srgb, var(--tile-color), var(--panel) 78%), var(--tile-bg-1));
+              --accent-shadow: 0 16px 28px color-mix(in srgb, var(--accent) 20%, transparent);
+              --map-edge: color-mix(in srgb, var(--ink) 24%, transparent);
+            }
+          }
+
+          /* Force anti-aliasing and prevent pixelated/jagged font rendering */
+          html, body, .stApp {
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            text-rendering: optimizeLegibility !important;
+          }
+
+          /* Custom typography */
+          .stApp, .stApp *, [data-testid="stWidgetLabel"] p, .stMarkdown p, .stMarkdown span, .stButton button {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          }
+          
+          .app-hero h1, .app-hero h1 *, .panel-heading h2, .panel-heading h2 * {
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
+          }
+
+          .stApp {
+            background:
+              radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-soft), transparent 50rem),
+              radial-gradient(ellipse 40% 40% at 85% 60%, rgba(180, 120, 30, 0.06), transparent 35rem),
+              var(--surface) !important;
+            color: var(--ink) !important;
+          }
+
+          [data-testid="stSidebar"] {
+            background: var(--surface-2) !important;
+            border-right: 1px solid var(--line) !important;
+          }
+          [data-testid="stSidebar"] * {
+            color: var(--ink) !important;
+          }
+          [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+          [data-testid="stSidebar"] label p {
+            color: var(--muted) !important;
+          }
+          [data-testid="stSidebar"] section,
+          [data-testid="stSidebar"] div[data-testid="stExpander"] {
+            border-color: var(--line) !important;
+          }
+
+          /* Make Streamlit containers beautiful — clay-like depth */
+          div[data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: 20px !important;
+            border: 1px solid var(--line) !important;
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft)) !important;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.6),
+              0 2px 8px rgba(30,27,24,0.05),
+              0 8px 24px rgba(30,27,24,0.06) !important;
+          }
+
+          .block-container {
+            padding-top: 1.35rem;
+            padding-bottom: 4rem;
+            max-width: 1280px;
+          }
+          
+          /* Hide default Streamlit clutter */
+          #MainMenu,
+          footer,
+          header,
+          [data-testid="stToolbar"],
+          [data-testid="stDecoration"],
+          [data-testid="stStatusWidget"],
+          [data-testid="stDeployButton"],
+          .stDeployButton {
+            visibility: hidden !important;
+            height: 0 !important;
+            min-height: 0 !important;
+          }
+          [data-testid="stIconMaterial"] {
+            visibility: hidden !important;
+            width: 0 !important;
+            min-width: 0 !important;
+          }
+          [data-testid="stFileUploaderDropzoneInstructions"] {
+            display: none !important;
+          }
+          [data-testid="stFileUploaderDropzone"] small {
+            display: none !important;
+          }
+
+          .stMarkdown math,
+          .stMarkdown mjx-container,
+          .stMarkdown .katex-display,
+          .stMarkdown .MathJax,
+          [data-testid="stMarkdownContainer"] math,
+          [data-testid="stMarkdownContainer"] mjx-container,
+          [data-testid="stMarkdownContainer"] .katex-display,
+          [data-testid="stMarkdownContainer"] .MathJax {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+          }
+          .stMarkdown mjx-container[jax="CHTML"][display="true"],
+          [data-testid="stMarkdownContainer"] mjx-container[jax="CHTML"][display="true"] {
+            display: block !important;
+            padding-bottom: 0.25rem;
+          }
+          .stMarkdown .katex-display,
+          [data-testid="stMarkdownContainer"] .katex-display {
+            white-space: normal !important;
+          }
+          
+          .app-hero {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            margin-bottom: 1.2rem;
+            padding: 1.55rem 1.6rem 1.35rem;
+            background: linear-gradient(135deg, var(--panel) 0%, var(--panel) 70%, var(--accent-soft) 100%);
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.5),
+              0 4px 16px rgba(30,27,24,0.06),
+              0 12px 32px rgba(30,27,24,0.08);
+          }
+          .app-hero::after {
+            content: "";
+            position: absolute;
+            right: -5rem;
+            top: -6rem;
+            width: 18rem;
+            height: 18rem;
+            border-radius: 999px;
+            border: 1px solid var(--accent-soft);
+            background: radial-gradient(circle, var(--accent-soft), transparent 62%);
+          }
+          .app-kicker {
+            color: var(--accent-strong) !important;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: normal;
+            text-transform: none;
+          }
+          .app-hero h1 {
+            color: var(--ink) !important;
+            font-family: 'Outfit', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: clamp(2.35rem, 5vw, 4.65rem);
+            font-weight: 760;
+            line-height: 0.95;
+            letter-spacing: -0.01em;
+            margin: 0.38rem 0 0.65rem;
+            max-width: 780px;
+          }
+          .app-hero p {
+            color: var(--muted) !important;
+            opacity: 1 !important;
+            font-size: 1.05rem;
+            line-height: 1.65;
+            max-width: 720px;
+            margin: 0;
+          }
+          .workbench-shell {
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: var(--panel);
+            box-shadow: var(--shadow-lg);
+            padding: 1rem;
+            margin-bottom: 1rem;
+          }
+          .panel-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin: 0 0 0.9rem;
+          }
+          .panel-heading h2 {
+            color: var(--ink) !important;
+            font-family: 'Outfit', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: clamp(1.35rem, 2.4vw, 2rem);
+            line-height: 1;
+            letter-spacing: -0.01em;
+            margin: 0;
+          }
+          .panel-heading span {
+            border: 1px solid var(--line) !important;
+            border-radius: 999px !important;
+            color: var(--accent-strong) !important;
+            background: var(--accent-soft) !important;
+            padding: 0.35rem 0.62rem;
+            font-size: 0.72rem;
+            font-weight: 760;
+          }
+          .workbench-panel {
+            border: 1px solid var(--line) !important;
+            border-radius: 8px !important;
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft)) !important;
+            padding: 1rem;
+            margin-bottom: 1rem;
+          }
+          .workbench-title {
+            color: var(--ink) !important;
+            font-size: 1rem;
+            font-weight: 760;
+            margin: 0 0 0.55rem;
+          }
+          .readiness-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.7rem;
+            margin: 0.65rem 0 0.9rem;
+          }
+          .readiness-chip {
+            border: 1px solid var(--line) !important;
+            border-radius: 18px !important;
+            background: var(--panel) !important;
+            padding: 0.75rem 0.82rem;
+            min-height: 68px;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.6),
+              0 2px 6px rgba(30,27,24,0.04);
+          }
+          .readiness-chip span {
+            display: block;
+            color: var(--muted) !important;
+            font-size: 0.74rem;
+            line-height: 1.2;
+          }
+          .readiness-chip strong {
+            display: block;
+            color: var(--ink) !important;
+            font-size: 0.94rem;
+            line-height: 1.25;
+            margin-top: 0.18rem;
+          }
+          .readiness-chip.ok {
+            border-color: var(--success) !important;
+            background: var(--success-soft) !important;
+          }
+          .readiness-chip.warn {
+            border-color: var(--amber) !important;
+            background: var(--amber-soft) !important;
+          }
+          .readiness-chip.fail {
+            border-color: var(--danger) !important;
+            background: var(--danger-soft) !important;
+          }
+          div[data-testid="stVerticalBlock"] > div:has(> .metric-grid) {
+            width: 100%;
+          }
+          .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.8rem;
+            margin: 0.6rem 0 1.1rem;
+          }
+          .metric-card {
+            border: 1px solid var(--line) !important;
+            border-radius: 20px !important;
+            background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%) !important;
+            padding: 0.95rem 1rem;
+            min-height: 88px;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.6),
+              0 2px 8px rgba(30,27,24,0.05),
+              0 8px 24px rgba(30,27,24,0.06) !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+          }
+          .metric-card:hover {
+            transform: translateY(-1px);
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.6),
+              0 4px 14px rgba(30,27,24,0.08),
+              0 10px 30px rgba(30,27,24,0.06) !important;
+          }
+          .metric-card span {
+            display: block;
+            color: var(--ink) !important;
+            opacity: 0.74 !important;
+            font-size: 0.78rem;
+            line-height: 1.2;
+          }
+          .metric-card strong {
+            display: block;
+            color: var(--ink) !important;
+            font-size: 1.45rem;
+            line-height: 1.25;
+            margin-top: 0.25rem;
+            font-variant-numeric: tabular-nums;
+          }
+          .lab-panel {
+            border: 1px solid var(--line) !important;
+            border-radius: 18px !important;
+            background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%) !important;
+            padding: 0.95rem 1rem;
+            margin: 0.65rem 0 1rem;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.5),
+              0 2px 8px rgba(30,27,24,0.04),
+              0 6px 18px rgba(30,27,24,0.05) !important;
+          }
+          .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.55rem;
+            margin: 0.45rem 0 0.85rem;
+          }
+          .status-chip {
+            border: 1px solid var(--line) !important;
+            border-radius: 18px !important;
+            background: var(--panel) !important;
+            padding: 0.72rem 0.8rem !important;
+            min-height: 62px !important;
+            box-shadow: var(--shadow-sm) !important;
+          }
+          .status-chip span {
+            display: block;
+            color: var(--ink) !important;
+            opacity: 0.74 !important;
+            font-size: 0.75rem;
+            line-height: 1.2;
+          }
+          .status-chip strong {
+            display: block;
+            margin-top: 0.18rem;
+            color: var(--ink) !important;
+            font-size: 0.95rem;
+          }
+          .status-chip.pass {
+            border-color: var(--success) !important;
+            background: var(--success-soft) !important;
+          }
+          .status-chip.fail {
+            border-color: var(--danger) !important;
+            background: var(--danger-soft) !important;
+          }
+          .status-chip.pass strong {
+            color: var(--success) !important;
+          }
+          .status-chip.fail strong {
+            color: var(--danger) !important;
+          }
+          .section-note {
+            color: var(--ink);
+            opacity: 0.8;
+            line-height: 1.5;
+            margin: 0.1rem 0 0.75rem;
+          }
+          .trace-player-grid {
+            display: grid;
+            grid-template-columns: minmax(210px, 0.85fr) minmax(260px, 1.15fr);
+            gap: 1rem;
+            align-items: start;
+            margin: 0.6rem 0 1rem;
+          }
+          .trace-detail {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: var(--panel);
+            padding: 0.95rem 1rem;
+            min-height: 86px;
+            box-shadow: inset 0 1px 0 var(--panel);
+          }
+          .trace-detail span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+          }
+          .trace-detail pre {
+            white-space: pre-wrap;
+            margin: 0;
+            color: var(--ink);
+            font: inherit;
+            line-height: 1.42;
+          }
+          .trace-triptych {
+            display: grid;
+            grid-template-columns: minmax(220px, 0.9fr) minmax(260px, 1.1fr) minmax(260px, 1.1fr);
+            gap: 0.9rem;
+            align-items: stretch;
+            margin: 0.75rem 0 1rem;
+          }
+          .trace-state-panel {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: var(--panel);
+            padding: 0.88rem;
+            box-shadow: var(--shadow-md);
+          }
+          .trace-state-panel h4 {
+            color: var(--ink);
+            margin: 0 0 0.2rem;
+            font-size: 0.95rem;
+            letter-spacing: -0.01em;
+          }
+          .trace-state-panel p {
+            color: var(--muted);
+            margin: 0 0 0.65rem;
+            font-size: 0.78rem;
+            line-height: 1.35;
+          }
+          .state-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+            gap: 0.55rem;
+          }
+          .state-card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft));
+            padding: 0.55rem;
+          }
+          .state-card-title {
+            color: var(--accent-strong);
+            font-size: 0.72rem;
+            font-weight: 780;
+            margin-bottom: 0.35rem;
+          }
+          .mini-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+          }
+          .mini-board .mini-tile {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9px;
+            background: var(--tile-bg-1);
+            border: 1px solid var(--line);
+            color: var(--ink);
+            font-size: 0.88rem;
+            font-weight: 760;
+          }
+          .mini-board .mini-blank {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            border-style: dashed;
+          }
+          .tree-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+            gap: 0.7rem;
+            margin: 0.55rem 0 1rem;
+          }
+          .tree-card {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft));
+            padding: 0.75rem 0.8rem;
+            min-height: 126px;
+            box-shadow: var(--shadow-sm);
+          }
+          .tree-card strong {
+            color: var(--ink);
+            font-size: 0.86rem;
+          }
+          .tree-card code {
+            display: block;
+            margin: 0.35rem 0;
+            white-space: pre-wrap;
+            color: var(--ink);
+          }
+          .tree-card span {
+            color: var(--muted);
+            font-size: 0.74rem;
+          }
+          .puzzle-board {
+            display: grid;
+            grid-template-columns: repeat(3, clamp(58px, 7vw, 82px));
+            gap: 10px;
+            width: fit-content;
+            max-width: 100%;
+            margin: 0.65rem auto 1.35rem;
+            padding: 0.85rem;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: var(--board-bg);
+            box-shadow: inset 0 2px 6px rgba(30,27,24,0.04);
+          }
+          .puzzle-board .tile {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: linear-gradient(180deg, var(--tile-bg-1) 0%, var(--tile-bg-1) 40%, var(--tile-bg-2) 100%);
+            color: var(--ink);
+            font-size: clamp(1.35rem, 3vw, 1.85rem);
+            font-weight: 750;
+            line-height: 1;
+            box-shadow:
+              inset 0 2px 0 rgba(255,255,255,0.7),
+              0 2px 8px rgba(30,27,24,0.08),
+              0 6px 16px rgba(30,27,24,0.05);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+          }
+          .puzzle-board .tile:hover {
+            transform: translateY(-2px);
+            box-shadow:
+              inset 0 2px 0 rgba(255,255,255,0.7),
+              0 4px 12px rgba(30,27,24,0.10),
+              0 8px 24px rgba(30,27,24,0.06);
+          }
+          .puzzle-board .blank {
+            background: repeating-linear-gradient(135deg, var(--accent-soft) 0 8px, transparent 8px 16px);
+            color: var(--accent-strong);
+            opacity: 1;
+            border: 1px dashed var(--accent-strong);
+            box-shadow: none;
+          }
+          .coloring-board .coloring-tile {
+            flex-direction: column;
+            gap: 0.18rem;
+            border-color: var(--color-tile-border);
+            background: var(--color-tile-bg);
+          }
+          .coloring-board .coloring-tile strong {
+            color: var(--ink);
+            font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+          }
+          .coloring-board .coloring-tile span,
+          .coloring-board .coloring-tile small {
+            color: var(--ink);
+            opacity: 0.74;
+            font-size: 0.65rem;
+            line-height: 1.1;
+            text-align: center;
+          }
+          .image-puzzle-board .tile {
+            background-image: var(--puzzle-image);
+            background-size: 300% 300%;
+            background-repeat: no-repeat;
+            color: var(--image-text);
+            text-shadow: 0 1px 6px var(--image-badge-bg);
+            border-color: var(--panel);
+          }
+          .image-puzzle-board .tile::after {
+            content: attr(data-tile);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.65rem;
+            height: 1.65rem;
+            border-radius: 999px;
+            background: var(--image-badge-bg);
+            font-size: 0.8rem;
+          }
+          .image-puzzle-board .blank {
+            background-image: none;
+            background: repeating-linear-gradient(135deg, var(--accent-soft) 0 8px, transparent 8px 16px);
+            color: transparent;
+            text-shadow: none;
+          }
+          .image-puzzle-board .blank::after {
+            content: "0";
+            color: var(--accent-strong);
+            background: transparent;
+          }
+          .image-puzzle-board .tile-1 { background-position: 0% 0%; }
+          .image-puzzle-board .tile-2 { background-position: 50% 0%; }
+          .image-puzzle-board .tile-3 { background-position: 100% 0%; }
+          .image-puzzle-board .tile-4 { background-position: 0% 50%; }
+          .image-puzzle-board .tile-5 { background-position: 50% 50%; }
+          .image-puzzle-board .tile-6 { background-position: 100% 50%; }
+          .image-puzzle-board .tile-7 { background-position: 0% 100%; }
+          .image-puzzle-board .tile-8 { background-position: 50% 100%; }
+          .game-panel {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: var(--panel);
+            padding: 0.9rem;
+            margin: 0.45rem 0 1.1rem;
+            box-shadow: var(--shadow-sm);
+          }
+          .game-panel h3 {
+            margin: 0 0 0.2rem;
+            color: var(--ink);
+            font-family: 'Source Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            letter-spacing: -0.01em;
+          }
+          .game-panel .game-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin: 0.55rem 0 0.85rem;
+          }
+          .game-pill {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--accent-strong);
+            background: var(--accent-soft);
+            padding: 0.28rem 0.55rem;
+            font-size: 0.75rem;
+            font-weight: 760;
+            letter-spacing: normal;
+          }
+          .play-board-shell {
+            display: grid;
+            place-items: center;
+            margin: 0.65rem auto 0.85rem;
+          }
+          .play-board {
+            display: grid;
+            grid-template-columns: repeat(3, clamp(58px, 7vw, 82px));
+            gap: 10px;
+            width: fit-content;
+            padding: 0.85rem;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: var(--board-bg);
+          }
+          .play-tile {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-width: 0;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: linear-gradient(180deg, var(--tile-bg-1), var(--tile-bg-2));
+            color: var(--ink);
+            font-size: clamp(1.35rem, 3vw, 1.85rem);
+            font-weight: 800;
+            line-height: 1;
+            text-decoration: none !important;
+            box-shadow: var(--tile-shadow);
+            transition: transform .16s ease, opacity .16s ease, box-shadow .16s ease;
+          }
+          .play-tile.movable {
+            cursor: grab;
+          }
+          .play-tile.movable:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--accent-shadow);
+          }
+          .play-tile.locked {
+            cursor: not-allowed;
+            opacity: 0.42;
+          }
+          .play-tile.blank {
+            cursor: default;
+            color: var(--accent-strong);
+            border: 1px dashed var(--accent-strong);
+            background: repeating-linear-gradient(135deg, var(--accent-soft) 0 8px, transparent 8px 16px);
+            box-shadow: none;
+          }
+          .play-tile.image-tile {
+            background-size: 300% 300%;
+            color: var(--image-text);
+            text-shadow: 0 1px 6px var(--image-badge-bg);
+            border-color: var(--panel);
+          }
+          .play-tile.image-tile span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.65rem;
+            height: 1.65rem;
+            border-radius: 999px;
+            background: var(--image-badge-bg);
+            font-size: 0.8rem;
+          }
+          div[class*="st-key-play_tile_"] div.stButton > button {
+            aspect-ratio: 1 / 1;
+            min-height: 0;
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: linear-gradient(180deg, var(--tile-bg-1), var(--tile-bg-2));
+            color: var(--ink);
+            font-size: clamp(1.35rem, 3vw, 1.85rem);
+            font-weight: 800;
+            line-height: 1;
+            box-shadow: var(--tile-shadow);
+            transition: transform .16s ease, opacity .16s ease, box-shadow .16s ease;
+          }
+          div[class*="st-key-play_tile_"] div.stButton > button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--accent-shadow);
+          }
+          div[class*="st-key-play_tile_"] div.stButton > button:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+            color: var(--ink);
+          }
+          .dpad-note {
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.45;
+            margin: 0.2rem 0 0.65rem;
+          }
+          div.stButton > button {
+            border-radius: 999px;
+            min-height: 2.9rem;
+            font-weight: 660;
+            letter-spacing: 0.01em;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, var(--panel), var(--panel-soft));
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.7),
+              0 2px 6px rgba(30,27,24,0.06),
+              0 6px 16px rgba(30,27,24,0.05);
+            transition: all 0.2s ease;
+          }
+          div.stButton > button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.7),
+              0 4px 12px rgba(30,27,24,0.08),
+              0 8px 24px rgba(30,27,24,0.06);
+            border-color: var(--accent-strong);
+          }
+          div.stButton > button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: inset 0 1px 3px rgba(30,27,24,0.08);
+          }
+          /* Primary button — more emphasis */
+          div[data-testid="stBaseButton-primary"] > button,
+          button[kind="primary"] {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong)) !important;
+            color: #faf8f5 !important;
+            border-color: transparent !important;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.3),
+              0 4px 12px rgba(13,148,136,0.25),
+              0 8px 24px rgba(13,148,136,0.15) !important;
+          }
+          div[data-testid="stBaseButton-primary"] > button:hover:not(:disabled),
+          button[kind="primary"]:hover:not(:disabled) {
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.3),
+              0 6px 18px rgba(13,148,136,0.3),
+              0 10px 30px rgba(13,148,136,0.2) !important;
+          }
+          div[data-testid="stTabs"] button {
+            border-radius: 999px !important;
+            font-weight: 660;
+            transition: all 0.2s ease;
+          }
+          div[data-testid="stTabs"] button[aria-selected="true"] {
+            background: var(--accent-soft) !important;
+            color: var(--accent-strong) !important;
+            box-shadow: inset 0 1px 3px rgba(13,148,136,0.12);
+          }
+          div[data-testid="stDataFrame"] {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+          }
+          div[data-testid="stDataFrame"],
+          div[data-testid="stDataFrame"] > div,
+          .stDataFrame {
+            max-width: 100% !important;
+          }
+          .stMarkdown pre,
+          .stMarkdown code,
+          [data-testid="stMarkdownContainer"] pre,
+          [data-testid="stMarkdownContainer"] code {
+            max-width: 100%;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+          }
+          @media (max-width: 760px) {
+            .block-container {
+              padding-top: 1rem;
+              padding-left: 1rem;
+              padding-right: 1rem;
+            }
+            .app-hero {
+              margin-bottom: 0.85rem;
+              padding-bottom: 0.75rem;
+            }
+            .app-hero h1 {
+              font-size: 2rem;
+              margin-bottom: 0;
+            }
+            .app-hero p {
+              display: none;
+            }
+            .metric-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .puzzle-board {
+              grid-template-columns: repeat(3, minmax(52px, 17vw));
+              gap: 7px;
+              max-width: calc(100vw - 2rem);
+              overflow: hidden;
+            }
+            .play-board {
+              grid-template-columns: repeat(3, minmax(52px, 17vw));
+              gap: 7px;
+              max-width: calc(100vw - 2rem);
+              overflow: hidden;
+            }
+            .status-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .readiness-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .trace-player-grid {
+              grid-template-columns: 1fr;
+            }
+            .trace-triptych {
+              grid-template-columns: 1fr;
+            }
+            .tree-card-grid {
+              grid-template-columns: 1fr;
+            }
+            .lab-panel,
+            .workbench-panel,
+            .trace-detail,
+            .trace-state-panel {
+              min-width: 0;
+              overflow-wrap: anywhere;
+            }
+            .stMarkdown p,
+            [data-testid="stMarkdownContainer"] p {
+              overflow-wrap: anywhere;
+            }
+            div[data-testid="stDataFrame"],
+            div[data-testid="stDataFrame"] > div,
+            .stDataFrameGlideDataEditor,
+            .stMarkdown pre,
+            [data-testid="stMarkdownContainer"] pre,
+            .stMarkdown code,
+            [data-testid="stMarkdownContainer"] code,
+            .stMarkdown math,
+            .stMarkdown mjx-container,
+            [data-testid="stMarkdownContainer"] math,
+            [data-testid="stMarkdownContainer"] mjx-container {
+              max-width: 100vw !important;
+              overflow-x: auto !important;
+            }
+          }
+
+/* ── Focus-visible styles (Phase 4: Accessibility) ── */
+.tile[tabindex]:focus-visible,
+button:focus-visible,
+.stButton > button:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring) !important;
+}
+
+.mini-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ── Empty state (Phase 4: Accessibility) ── */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+.empty-state-icon {
+  display: block;
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.35;
+}
