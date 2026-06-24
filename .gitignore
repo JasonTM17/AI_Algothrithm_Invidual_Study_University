@@ -29,6 +29,7 @@ before-board-overlap.png
 after-board-layout-fix.png
 desktop-*.png
 mobile-*.png
+ui-audit-*.png
 *.trace.zip
 
 # Generated coursework exports
@@ -49,7 +50,9 @@ app-screenshot.png
 # Local tooling/agent artifacts (do not commit)
 .claude/
 .codex/
+.agents/
 plans/
+AGENTS.md
 CLAUDE.md
 
 # OS/editor
