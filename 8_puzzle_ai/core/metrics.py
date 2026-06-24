@@ -383,32 +383,32 @@ def get_algorithm_properties() -> Dict[str, Dict[str, Any]]:
         # Adversarial
         "Minimax": {
             "group": "Adversarial Search",
-            "complete": "For bounded 2-player games",
-            "optimal": "For 2-player zero-sum games",
+            "complete": "For the bounded Caro game tree",
+            "optimal": "For the bounded Caro zero-sum model",
             "time_complexity": "O(b^m)",
             "space_complexity": "O(bm)",
-            "uses_heuristic": True,
+            "uses_heuristic": False,
             "suitable": False,
-            "notes": "For 2-player games. 8-puzzle is single-player."
+            "notes": "Educational Caro mini-game; 8-puzzle is single-player."
         },
         "Alpha-Beta Pruning": {
             "group": "Adversarial Search",
-            "complete": "For bounded 2-player games",
-            "optimal": "For 2-player zero-sum games",
+            "complete": "For the bounded Caro game tree",
+            "optimal": "Same backed-up value as Minimax when depth/order match",
             "time_complexity": "O(b^(m/2))",
             "space_complexity": "O(bm)",
-            "uses_heuristic": True,
+            "uses_heuristic": False,
             "suitable": False,
-            "notes": "Optimized Minimax. Still needs opponent."
+            "notes": "Educational Caro mini-game with alpha-beta pruning."
         },
         "Expectimax": {
             "group": "Adversarial Search",
-            "complete": True,
-            "optimal": False,
+            "complete": "For the bounded Caro chance tree",
+            "optimal": "For the configured chance model",
             "time_complexity": "O(b^m)",
             "space_complexity": "O(bm)",
-            "uses_heuristic": True,
+            "uses_heuristic": False,
             "suitable": False,
-            "notes": "For stochastic games. 8-puzzle is deterministic."
+            "notes": "Educational Caro mini-game; O replies are chance outcomes."
         }
     }

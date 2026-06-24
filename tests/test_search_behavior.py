@@ -334,6 +334,20 @@ def test_educational_algorithms_return_canonical_results() -> None:
         assert {"Node", "Frontier", "Reached", "Decision/Note"} <= set(result.trace_rows[0])
 
 
+def test_adversarial_algorithms_use_caro_game_model() -> None:
+    start = (1, 2, 3, 4, 5, 6, 7, 0, 8)
+    config = puzzle.TraceConfig(max_expansions=300, max_trace_rows=5, dfs_depth_limit=4, ids_max_depth=4, seed=2)
+
+    for algorithm in ["Minimax", "Alpha-Beta Pruning", "Expectimax"]:
+        result = puzzle.run_algorithm(start, algorithm, "manhattan", config)
+        trace_text = "\n".join(str(row) for row in result.trace_rows)
+
+        assert "Caro" in result.message
+        assert "8-puzzle extension" not in result.message
+        assert "Caro board" in trace_text
+        assert "MAX" in trace_text
+
+
 def test_constraint_graph_models_thu_duc_graph_coloring() -> None:
     start = (1, 2, 3, 4, 5, 6, 7, 0, 8)
     result = puzzle.run_algorithm(start, "Constraint Graph", "manhattan", puzzle.TraceConfig(max_trace_rows=10))
@@ -434,6 +448,7 @@ def run_all_tests() -> None:
         test_experiment_suite_is_deterministic_and_exportable,
         test_six_group_registry_covers_coursework_spec,
         test_educational_algorithms_return_canonical_results,
+        test_adversarial_algorithms_use_caro_game_model,
         test_constraint_graph_models_thu_duc_graph_coloring,
         test_peas_trace_preview_and_submission_pack_exports,
         test_complex_environment_problem_formulations_match_algorithm_names,

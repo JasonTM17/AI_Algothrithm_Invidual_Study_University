@@ -7,7 +7,7 @@ The canonical app for demos and reports is the root-level pair:
 - `../eight_puzzle_search_app.py`
 - `../streamlit_eight_puzzle_app.py`
 
-This package is kept as an educational/reference implementation. Complex environment, CSP, and adversarial algorithms are simulations for explaining AI concepts; they are not natural solvers for the standard deterministic single-player 8-puzzle.
+This package is kept as an educational/reference implementation. Complex environment and CSP algorithms are simulations for explaining AI concepts. Adversarial algorithms use a Caro mini-game because the standard deterministic 8-puzzle is single-player.
 
 ## 🚀 Quick Start
 
@@ -52,9 +52,9 @@ streamlit run app.py
 - **Constraint Propagation** - Domain reduction
 
 ### 6. Adversarial Search
-- **Minimax** - 2-player game tree
-- **Alpha-Beta Pruning** - Optimized Minimax
-- **Expectimax** - Stochastic games
+- **Minimax** - Caro 2-player game tree
+- **Alpha-Beta Pruning** - Optimized Caro Minimax
+- **Expectimax** - Caro chance-node game tree
 
 ## 🎯 Heuristics
 
@@ -88,7 +88,7 @@ streamlit run app.py
 ## ⚠️ Important Notes
 
 1. **8-puzzle is deterministic** - Complex environment algorithms are for education
-2. **8-puzzle is single-player** - Adversarial algorithms are simulated
+2. **8-puzzle is single-player** - Adversarial algorithms run on a Caro mini-game
 3. **8-puzzle is state-space search** - CSP algorithms are modeled differently
 
 ## 📖 Exam Tips

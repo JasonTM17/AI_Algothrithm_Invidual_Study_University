@@ -70,29 +70,28 @@ hoặc bấm `Random Goal một phần`.
 - Với 8-puzzle, CSP được dùng như mô hình lập kế hoạch theo horizon.
 - Đây là demo học thuật, không quảng bá là solver chuẩn nhanh nhất.
 
-## 7. Demo Graph Coloring bằng Vacuum Game
+## 7. Demo Graph Coloring bằng Streamlit
 
-Trong desktop app:
+Trong app Streamlit chính:
 
 ```powershell
-python .\eight_puzzle_tk_app.py
+python -m streamlit run .\streamlit_eight_puzzle_app.py
 ```
 
-Mở tab `Máy hút bụi / Vacuum Game`.
+Mở chế độ `Tô màu đồ thị Thủ Đức` trong sidebar.
 
-1. Bấm `Random bụi` để tạo môi trường mới.
-2. Bấm `Tô màu / Color Plan`.
-3. Chỉ vào bảng bên phải:
-   - phòng là node;
-   - phòng kề nhau là edge;
-   - màu/slot là batch dọn;
-   - hai phòng kề nhau không cùng slot.
-4. Điều khiển máy hút bụi bằng `Up/Down/Left/Right/Suck`, hoặc bấm `Auto clean`.
+1. Chọn số màu tối đa bằng slider.
+2. Chỉ vào bản đồ và bảng tô màu:
+   - phường là biến/node;
+   - cạnh giáp ranh là ràng buộc;
+   - màu là miền giá trị;
+   - hai phường giáp ranh không được trùng màu.
+3. Mở phần `Các bước greedy coloring` để giải thích thứ tự gán màu.
 
 Điểm cần nói:
 - Graph coloring không giải 8-puzzle.
-- Đây là CSP lập lịch/constraint demo trong môi trường Vacuum Cleaner Agent.
-- PEAS của vacuum khác PEAS của 8-puzzle, nên app tách thành tab riêng để đúng học thuật.
+- Đây là CSP graph-coloring demo độc lập, dùng để minh họa biến, miền và ràng buộc.
+- App tách thành chế độ riêng để không nhầm graph coloring với solver 8-puzzle chuẩn.
 
 ## 8. Demo đối kháng/xác suất
 
@@ -101,9 +100,10 @@ Mở tab `Máy hút bụi / Vacuum Game`.
 
 Điểm cần nói:
 - 8-puzzle chuẩn không có đối thủ/chance node.
-- Các thuật toán này được mô phỏng thành môi trường mở rộng:
-  - MAX cố giảm h(n).
-  - MIN hoặc chance node tạo kết quả bất lợi/ngẫu nhiên.
+- Vì vậy nhóm này dùng Caro mini-game:
+  - MAX là quân `X`, chọn nước đi tốt nhất.
+  - MIN là quân `O` trong Minimax/Alpha-Beta.
+  - Expectimax xem phản hồi của `O` như chance/random outcome.
 - Mục tiêu là chứng minh hiểu đúng tên và dạng bài toán của thuật toán.
 
 ## 9. Xuất báo cáo
@@ -131,7 +131,7 @@ Báo cáo nên có:
 - [ ] Có Node / Frontier / Reached rõ trong trace.
 - [ ] Có giải thích `misplaced` và `manhattan`.
 - [ ] Có demo unsolvable dừng sớm.
-- [ ] Có demo Vacuum Game cho graph coloring/CSP không phù hợp với 8-puzzle.
+- [ ] Có demo `Tô màu đồ thị Thủ Đức` cho graph coloring/CSP không phù hợp với 8-puzzle.
 - [ ] Có báo cáo tải xuống.
 - [ ] Toàn bộ test local pass.
 

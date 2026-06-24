@@ -6,68 +6,45 @@ App chính của bài nộp là:
 
 - Core thuật toán: `eight_puzzle_search_app.py`
 - Giao diện web (Streamlit): `streamlit_eight_puzzle_app.py`
-- Giao diện desktop (Tkinter, song ngữ VI/EN): `eight_puzzle_tk_app.py`
-  + package `eight_puzzle_tk/`
 - Package phụ/educational: `8_puzzle_ai/`
+- Showcase phụ: `stage3_search_showcase_app.py`
 
-Chạy giao diện web:
+Chạy giao diện web chính:
 
 ```powershell
 python -m pip install -r requirements.txt
 python -m streamlit run .\streamlit_eight_puzzle_app.py
 ```
 
-Chạy giao diện desktop (Tkinter, **không cần pip install** — chỉ Python stdlib):
+Chạy package phụ/educational nếu cần đối chiếu thêm:
 
 ```powershell
-python .\eight_puzzle_tk_app.py
+python -m streamlit run .\8_puzzle_ai\app.py
 ```
 
-Build file `.exe` để nộp kèm hoặc mở demo trực tiếp:
+Chạy showcase phụ:
 
 ```powershell
-.\build_desktop_exe.ps1 -Python "C:\Users\Admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
-.\dist\8PuzzleSearchLab.exe
+python -m streamlit run .\stage3_search_showcase_app.py
 ```
 
-Giao diện desktop giữ cùng luồng học thuật với bản web: Start/Goal board, preset,
-nhóm thuật toán, heuristic `misplaced`/`manhattan`, trace `Node / Frontier / Reached`,
-certificate, experiment và report. Riêng Start board có thể tương tác như trò chơi:
-click ô nằm cạnh `0` để di chuyển trước khi chạy thuật toán.
+Ghi chú về desktop/Tkinter: bản workspace hiện tại không có `eight_puzzle_tk_app.py`
+hoặc package `eight_puzzle_tk/`. Vì vậy tài liệu nộp bài ưu tiên bản Streamlit chính
+và không yêu cầu chạy app desktop.
 
-Chế độ trò chơi trong desktop app:
+Các chế độ demo trong Streamlit chính:
 
-- `Reset ván`: đưa Start board về trạng thái lúc nạp preset/shuffle.
-- `Gợi ý A*`: dùng A* + Manhattan để đề xuất nước đi tiếp theo.
-- `Đi 1 bước tối ưu`: cho AI áp dụng đúng một bước từ nghiệm A* hiện tại.
-- `Auto-solve`: tự động phát nghiệm A* từng bước để demo trực quan.
-- Bộ đếm `Số nước chơi` và trạng thái thắng giúp phân biệt người chơi tự giải với
-  đường đi do thuật toán sinh ra.
+- `8-Puzzle Search`: chọn Start/Goal, thuật toán, heuristic, trace, experiment và report.
+- `Trò chơi xếp hình từ ảnh`: tải ảnh lên hoặc dùng số thường để chơi 8-puzzle trực quan.
+- `Tô màu đồ thị Thủ Đức`: demo CSP graph coloring độc lập với 8-puzzle chuẩn.
 
-Tab `Máy hút bụi / Vacuum Game` dùng để demo thuật toán không tự nhiên với
-8-puzzle:
-
-- Người xem có thể điều khiển máy hút bụi bằng `Up/Down/Left/Right/Suck`.
-- Có PEAS riêng cho Vacuum Agent.
-- Có `Tô màu / Color Plan`: mô hình graph coloring như CSP, trong đó phòng là
-  node, cạnh là quan hệ kề nhau, màu là batch/lượt dọn. Đây là nơi phù hợp hơn
-  cho thuật toán tô màu thay vì ép vào 8-puzzle.
-- Có `Auto clean` để máy hút bụi tự dọn toàn bộ phòng, giúp bạn demo rõ
-  và thấy rõ agent/action/sensor/performance.
-
-Chạy kiểm thử desktop (headless smoke test cho cả package Tkinter):
+Chạy kiểm thử trước khi nộp:
 
 ```powershell
-python .\eight_puzzle_tk_app.py --self-test
-```
-
-Chạy kiểm thử core:
-
-```powershell
+python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\sidebar_game.py .\stage3_search_showcase_app.py .\8_puzzle_ai\app.py
 python .\eight_puzzle_search_app.py --self-test
 python .\tests\test_search_behavior.py
 python .\8_puzzle_ai\tests\test_puzzle.py
-python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\8_puzzle_ai\app.py
 ```
 
 Phạm vi heuristic `h(n)` của app chính được cố ý giữ đúng hai hàm cơ bản trong môn học:
@@ -78,7 +55,8 @@ Phạm vi heuristic `h(n)` của app chính được cố ý giữ đúng hai h�
 Các nhóm `Complex Environments`, `Constraint Satisfaction Problems` và
 `Adversarial / Stochastic Search` được gắn nhãn là mô hình học thuật/educational.
 Chúng giúp chứng minh hiểu đúng dạng bài toán, PEAS, biến/ràng buộc, belief state,
-đối thủ hoặc chance node; không được trình bày như solver chuẩn thay thế BFS/UCS/A*.
+đối thủ hoặc chance node. Riêng nhóm đối kháng/xác suất dùng Caro mini-game
+vì 8-puzzle chuẩn không có đối thủ; không được trình bày như solver chuẩn thay thế BFS/UCS/A*.
 
 Checklist nộp bài:
 
@@ -478,13 +456,14 @@ Dự án cài đặt đủ 27 thuật toán/biến thể theo 6 nhóm học thu�
 | Local Search | Simple Hill Climbing, Steepest-Ascent Hill Climbing, Stochastic Hill Climbing, Random-Restart Hill Climbing, Local Beam Search, Simulated Annealing |
 | Complex Environments | AND-OR Search, No Observation Search, Partially Observable Search, Online Search |
 | Constraint Satisfaction Problems | CSP Definition, Constraint Propagation, Path Consistency, Global Constraints, CSP Backtracking, Min-Conflicts, Constraint Graph |
-| Adversarial / Stochastic Search | Minimax, Alpha-Beta Pruning, Expectimax |
+| Adversarial / Stochastic Search | Minimax, Alpha-Beta Pruning, Expectimax trên Caro mini-game |
 
-Lưu ý học thuật: nhóm `Complex Environments`, `CSP` và `Adversarial / Stochastic Search` không phải solver tự nhiên của 8-Puzzle deterministic/fully observable. App vẫn chạy phiên bản mô phỏng có giới hạn trên state hiện tại và ghi rõ trace, message, guarantee/failure mode để phục vụ báo cáo môn AI.
+Lưu ý học thuật: nhóm `Complex Environments` và `CSP` không phải solver tự nhiên của 8-Puzzle deterministic/fully observable. Nhóm `Adversarial / Stochastic Search` chuyển sang Caro mini-game để có MAX, MIN và chance node đúng bản chất thuật toán. App ghi rõ trace, message, guarantee/failure mode để phục vụ báo cáo môn AI.
 
 Riêng thuật toán tô màu đồ thị/graph coloring không được trình bày như cách giải
-8-puzzle. Bản desktop đặt nó trong tab `Vacuum Game`: tô màu dùng để lập lịch
-các phòng bẩn kề nhau thành những batch dọn khác nhau, đúng bản chất CSP hơn.
+8-puzzle. Bản Streamlit chính đặt nó trong chế độ `Tô màu đồ thị Thủ Đức`: phường
+là biến, màu là miền giá trị, cạnh giáp ranh là ràng buộc khác màu, đúng bản chất
+CSP hơn so với việc ép graph coloring thành solver 8-puzzle.
 
 ## 9. Giải thích chi tiết từng thuật toán
 

@@ -1,25 +1,238 @@
 """
-Adversarial and Stochastic Search Algorithms.
+Adversarial and stochastic search demos.
 
-Algorithms:
-1. Minimax
-2. Alpha-Beta Pruning
-3. Expectimax
-
-Note: 8-puzzle is NOT a 2-player game.
-These are educational implementations showing how these algorithms work.
-We create a simulated 2-player version for demonstration.
+The 8-puzzle is a deterministic single-player problem, so Minimax,
+Alpha-Beta, and Expectimax are demonstrated on a small Caro board instead of
+pretending the puzzle has an opponent.
 """
 
-from typing import Tuple, Optional, List, Dict, Any
-import random
-import sys
+from __future__ import annotations
 
-sys.path.append('..')
-from core.puzzle import PuzzleState
-from core.node import SearchResult
-from core.heuristics import get_heuristic
-from core.utils import Timer
+import math
+import random
+from typing import List, Optional, Tuple
+
+try:
+    from ..core.node import SearchResult
+    from ..core.utils import Timer
+except ImportError:
+    from core.node import SearchResult
+    from core.utils import Timer
+
+
+CaroBoard = Tuple[str, ...]
+CARO_START: CaroBoard = ("X", "O", "X", ".", "O", ".", ".", ".", ".")
+CARO_LINES = (
+    (0, 1, 2),
+    (3, 4, 5),
+    (6, 7, 8),
+    (0, 3, 6),
+    (1, 4, 7),
+    (2, 5, 8),
+    (0, 4, 8),
+    (2, 4, 6),
+)
+
+
+def _board_text(board: CaroBoard) -> str:
+    rows = [" ".join(board[index : index + 3]) for index in range(0, 9, 3)]
+    return "Caro board\n" + "\n".join(rows)
+
+
+def _winner(board: CaroBoard) -> Optional[str]:
+    for a, b, c in CARO_LINES:
+        if board[a] != "." and board[a] == board[b] == board[c]:
+            return board[a]
+    if "." not in board:
+        return "Draw"
+    return None
+
+
+def _moves(board: CaroBoard) -> List[int]:
+    return [index for index, cell in enumerate(board) if cell == "."]
+
+
+def _apply(board: CaroBoard, move: int, player: str) -> CaroBoard:
+    cells = list(board)
+    cells[move] = player
+    return tuple(cells)
+
+
+def _action(move: int, player: str) -> str:
+    row, col = divmod(move, 3)
+    return f"{player}@{row + 1},{col + 1}"
+
+
+def _children(board: CaroBoard, player: str, rng: random.Random) -> List[Tuple[str, CaroBoard]]:
+    children = [(_action(move, player), _apply(board, move, player)) for move in _moves(board)]
+    if len(children) > 1:
+        rng.shuffle(children)
+    return children
+
+
+def _utility(board: CaroBoard, ply: int) -> float:
+    winner = _winner(board)
+    if winner == "X":
+        return 100.0 - ply
+    if winner == "O":
+        return ply - 100.0
+    if winner == "Draw":
+        return 0.0
+
+    score = 0.0
+    for line in CARO_LINES:
+        cells = [board[index] for index in line]
+        x_count = cells.count("X")
+        o_count = cells.count("O")
+        if x_count and o_count:
+            continue
+        if x_count:
+            score += 1.5 * x_count
+        if o_count:
+            score -= 1.5 * o_count
+    return score - 0.01 * ply
+
+
+def _finish(
+    *,
+    timer: Timer,
+    algorithm: str,
+    trace: list,
+    chosen_action: str,
+    chosen_score: float,
+    nodes_expanded: int,
+    nodes_generated: int,
+    max_frontier_size: int,
+    note: str,
+) -> SearchResult:
+    timer.__exit__()
+    return SearchResult(
+        success=True,
+        algorithm=algorithm,
+        group="Adversarial Search",
+        path=[],
+        actions=[chosen_action] if chosen_action != "No move" else [],
+        path_cost=1 if chosen_action != "No move" else 0,
+        nodes_expanded=nodes_expanded,
+        nodes_generated=nodes_generated,
+        max_frontier_size=max_frontier_size,
+        reached_size=max_frontier_size + 1,
+        runtime_ms=timer.elapsed_ms,
+        trace=trace,
+        message=f"{algorithm} selected Caro move {chosen_action} for MAX (X), value={chosen_score:.2f}.",
+        optimal="For the bounded Caro game tree only",
+        complete="Yes, within configured Caro depth",
+        notes=note,
+    )
+
+
+def _trace_row(
+    *,
+    algorithm: str,
+    node: CaroBoard,
+    action: str,
+    depth: int,
+    score: float,
+    frontier: List[str],
+    reached: List[str],
+    note: str,
+    pruned: int = 0,
+) -> dict:
+    return {
+        "Step": 0,
+        "Algorithm": algorithm,
+        "Node": _board_text(node),
+        "Action": action,
+        "Depth": depth,
+        "g": 0,
+        "h": 0,
+        "f": round(score, 2),
+        "Frontier": "\n---\n".join(frontier),
+        "Reached": "\n---\n".join(reached),
+        "Priority Rule": "Caro game tree utility; MAX is X, MIN/chance is O",
+        "Selection Key": f"game=Caro; depth={depth}; utility={score:.2f}; pruned={pruned}",
+        "Note": note,
+    }
+
+
+def _minimax_like(
+    algorithm: str,
+    max_depth: int,
+    trace_limit: int,
+    seed: Optional[int],
+) -> SearchResult:
+    rng = random.Random(seed)
+    timer = Timer()
+    timer.__enter__()
+    depth_limit = max(1, min(6, max_depth))
+    nodes_expanded = 0
+    nodes_generated = 1
+    pruned = 0
+
+    def value(board: CaroBoard, depth: int, maximizing: bool, alpha: float, beta: float) -> float:
+        nonlocal nodes_expanded, nodes_generated, pruned
+        if depth == 0 or _winner(board) is not None:
+            return _utility(board, depth_limit - depth)
+
+        player = "X" if maximizing else "O"
+        children = _children(board, player, rng)
+        nodes_expanded += 1
+        nodes_generated += len(children)
+
+        if maximizing:
+            best = -math.inf
+            for index, (_child_action, child) in enumerate(children):
+                best = max(best, value(child, depth - 1, False, alpha, beta))
+                if algorithm == "Alpha-Beta Pruning":
+                    alpha = max(alpha, best)
+                    if beta <= alpha:
+                        pruned += len(children) - index - 1
+                        break
+            return best
+
+        best = math.inf
+        for index, (_child_action, child) in enumerate(children):
+            best = min(best, value(child, depth - 1, True, alpha, beta))
+            if algorithm == "Alpha-Beta Pruning":
+                beta = min(beta, best)
+                if beta <= alpha:
+                    pruned += len(children) - index - 1
+                    break
+        return best
+
+    scored = [
+        (value(child, depth_limit - 1, False, -math.inf, math.inf), action, child)
+        for action, child in _children(CARO_START, "X", rng)
+    ]
+    chosen_score, chosen_action, chosen_board = max(scored, key=lambda item: (item[0], item[1]))
+    frontier = [f"{action}\n{_board_text(board)}" for _score, action, board in scored]
+    trace = []
+    if trace_limit > 0:
+        trace.append(
+            _trace_row(
+                algorithm=algorithm,
+                node=CARO_START,
+                action=chosen_action,
+                depth=depth_limit,
+                score=chosen_score,
+                frontier=frontier,
+                reached=[_board_text(CARO_START), _board_text(chosen_board)],
+                note=f"MAX chooses {chosen_action}; backed-up utility={chosen_score:.2f}; pruned branches={pruned}.",
+                pruned=pruned,
+            )
+        )
+
+    return _finish(
+        timer=timer,
+        algorithm=algorithm,
+        trace=trace,
+        chosen_action=chosen_action,
+        chosen_score=chosen_score,
+        nodes_expanded=nodes_expanded,
+        nodes_generated=nodes_generated,
+        max_frontier_size=max(len(scored), 1),
+        note="Educational Caro mini-game: 8-puzzle has no opponent, so this demonstrates MAX/MIN game-tree reasoning separately.",
+    )
 
 
 def minimax(
@@ -28,143 +241,10 @@ def minimax(
     heuristic: str = "manhattan",
     max_depth: int = 4,
     trace_limit: int = 100,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
 ) -> SearchResult:
-    """
-    Minimax algorithm for 2-player game.
-    
-    Simulated 8-puzzle game:
-    - MAX: wants to minimize h (reach goal)
-    - MIN: wants to maximize h (opponent)
-    
-    This is EDUCATIONAL - 8-puzzle is single-player.
-    """
-    if goal is None:
-        goal = PuzzleState.GOAL_STATE
-    
-    if seed is not None:
-        random.seed(seed)
-    
-    h_func = get_heuristic(heuristic)
-    timer = Timer()
-    timer.__enter__()
-    
-    trace = []
-    
-    start_state = PuzzleState(start)
-    goal_state = PuzzleState(goal)
-    
-    if start_state.state == goal_state.state:
-        result = SearchResult(
-            success=True,
-            algorithm="Minimax",
-            group="Adversarial Search",
-            message="Already at goal!",
-            optimal="Yes, for 2-player zero-sum",
-            complete="Yes",
-            notes="Educational: 8-puzzle is single-player, this simulates 2-player"
-        )
-        timer.__exit__()
-        result.runtime_ms = timer.elapsed_ms
-        return result
-    
-    def minimax_recursive(state: Tuple[int, ...], depth: int, is_max: bool, path: List[str]) -> Tuple[int, Optional[str]]:
-        """Recursive minimax with depth limit."""
-        
-        puzzle = PuzzleState(state)
-        
-        # Terminal states
-        if state == goal:
-            return 1000 - depth, None  # MAX wins (prefer shorter paths)
-        
-        if depth == 0:
-            return -h_func(state, goal), None  # Use -heuristic as utility so MAX maximizes it
-        
-        neighbors = puzzle.get_neighbors()
-        if not neighbors:
-            return -1000 if is_max else 1000, None  # No moves = loss for current player
-        
-        if is_max:
-            # MAX wants to maximize utility
-            best_value = float('-inf')
-            best_action = None
-            
-            for action, neighbor in neighbors:
-                value, _ = minimax_recursive(neighbor.state, depth - 1, False, path + [action])
-                if value > best_value:
-                    best_value = value
-                    best_action = action
-            
-            return best_value, best_action
-        else:
-            # MIN wants to minimize utility
-            best_value = float('inf')
-            best_action = None
-            
-            for action, neighbor in neighbors:
-                value, _ = minimax_recursive(neighbor.state, depth - 1, True, path + [action])
-                if value < best_value:
-                    best_value = value
-                    best_action = action
-            
-            return best_value, best_action
-    
-    # Run minimax from start
-    value, best_action = minimax_recursive(start, max_depth, True, [])
-    
-    # Execute best action
-    if best_action:
-        puzzle = PuzzleState(start)
-        for action, neighbor in puzzle.get_neighbors():
-            if action == best_action:
-                path = [PuzzleState(start), neighbor]
-                actions = [best_action]
-                
-                if len(trace) < trace_limit:
-                    trace.append({
-                        "Step": 0,
-                        "Algorithm": "Minimax",
-                        "Node": str(puzzle),
-                        "Action": best_action,
-                        "Depth": max_depth,
-                        "g": 0,
-                        "h": h_func(start, goal),
-                        "f": value,
-                        "Frontier": 0,
-                        "Reached": 1,
-                        "Note": f"MAX chooses {best_action} with value {value}"
-                    })
-                
-                result = SearchResult(
-                    success=neighbor.state == goal,
-                    algorithm="Minimax",
-                    group="Adversarial Search",
-                    path=path,
-                    actions=actions,
-                    path_cost=1,
-                    trace=trace,
-                    message=f"MAX chose {best_action}, value={value}",
-                    optimal="Yes, for 2-player zero-sum",
-                    complete="Yes",
-                    notes="Educational: 8-puzzle is single-player, this simulates 2-player"
-                )
-                timer.__exit__()
-                result.runtime_ms = timer.elapsed_ms
-                return result
-    
-    result = SearchResult(
-        success=False,
-        algorithm="Minimax",
-        group="Adversarial Search",
-        trace=trace,
-        message="No valid action found",
-        optimal="Yes, for 2-player zero-sum",
-        complete="Yes",
-        notes="Educational: 8-puzzle is single-player, this simulates 2-player"
-    )
-    timer.__exit__()
-    result.runtime_ms = timer.elapsed_ms
-    return result
+    """Run Minimax on the educational Caro game tree."""
+    return _minimax_like("Minimax", max_depth, trace_limit, seed)
 
 
 def alpha_beta(
@@ -173,146 +253,10 @@ def alpha_beta(
     heuristic: str = "manhattan",
     max_depth: int = 6,
     trace_limit: int = 100,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
 ) -> SearchResult:
-    """
-    Alpha-Beta Pruning.
-    
-    Optimized minimax with pruning.
-    """
-    if goal is None:
-        goal = PuzzleState.GOAL_STATE
-    
-    if seed is not None:
-        random.seed(seed)
-    
-    h_func = get_heuristic(heuristic)
-    timer = Timer()
-    timer.__enter__()
-    
-    trace = []
-    nodes_visited = [0]
-    
-    start_state = PuzzleState(start)
-    goal_state = PuzzleState(goal)
-    
-    if start_state.state == goal_state.state:
-        result = SearchResult(
-            success=True,
-            algorithm="Alpha-Beta Pruning",
-            group="Adversarial Search",
-            message="Already at goal!",
-            optimal="Yes, for 2-player zero-sum",
-            complete="Yes",
-            notes="Educational: 8-puzzle is single-player"
-        )
-        timer.__exit__()
-        result.runtime_ms = timer.elapsed_ms
-        return result
-    
-    def alpha_beta_recursive(state: Tuple[int, ...], depth: int, alpha: float, beta: float, is_max: bool) -> Tuple[int, Optional[str]]:
-        """Alpha-beta pruning."""
-        
-        nodes_visited[0] += 1
-        puzzle = PuzzleState(state)
-        
-        if state == goal:
-            return 1000 - depth, None
-        
-        if depth == 0:
-            return -h_func(state, goal), None
-        
-        neighbors = puzzle.get_neighbors()
-        if not neighbors:
-            return -1000 if is_max else 1000, None
-        
-        if is_max:
-            best_value = float('-inf')
-            best_action = None
-            
-            for action, neighbor in neighbors:
-                value, _ = alpha_beta_recursive(neighbor.state, depth - 1, alpha, beta, False)
-                if value > best_value:
-                    best_value = value
-                    best_action = action
-                
-                alpha = max(alpha, value)
-                if value >= beta:
-                    # Pruning
-                    if len(trace) < trace_limit:
-                        trace.append({
-                            "Step": len(trace),
-                            "Algorithm": "Alpha-Beta",
-                            "Node": "PRUNED",
-                            "Action": action,
-                            "Depth": depth,
-                            "g": 0,
-                            "h": 0,
-                            "f": value,
-                            "Frontier": 0,
-                            "Reached": nodes_visited[0],
-                            "Note": f"Pruned: value {value:.1f} >= beta {beta:.1f}"
-                        })
-                    break
-            
-            return best_value, best_action
-        else:
-            best_value = float('inf')
-            best_action = None
-            
-            for action, neighbor in neighbors:
-                value, _ = alpha_beta_recursive(neighbor.state, depth - 1, alpha, beta, True)
-                if value < best_value:
-                    best_value = value
-                    best_action = action
-                
-                beta = min(beta, value)
-                if value <= alpha:
-                    break
-            
-            return best_value, best_action
-    
-    value, best_action = alpha_beta_recursive(start, max_depth, float('-inf'), float('inf'), True)
-    
-    if best_action:
-        puzzle = PuzzleState(start)
-        for action, neighbor in puzzle.get_neighbors():
-            if action == best_action:
-                path = [PuzzleState(start), neighbor]
-                actions = [best_action]
-                
-                result = SearchResult(
-                    success=neighbor.state == goal,
-                    algorithm="Alpha-Beta Pruning",
-                    group="Adversarial Search",
-                    path=path,
-                    actions=actions,
-                    path_cost=1,
-                    nodes_expanded=nodes_visited[0],
-                    trace=trace,
-                    message=f"Best action: {best_action}, value={value}",
-                    optimal="Yes, for 2-player zero-sum",
-                    complete="Yes",
-                    notes="Educational: 8-puzzle is single-player"
-                )
-                timer.__exit__()
-                result.runtime_ms = timer.elapsed_ms
-                return result
-    
-    result = SearchResult(
-        success=False,
-        algorithm="Alpha-Beta Pruning",
-        group="Adversarial Search",
-        nodes_expanded=nodes_visited[0],
-        trace=trace,
-        message="No valid action",
-        optimal="Yes, for 2-player zero-sum",
-        complete="Yes",
-        notes="Educational: 8-puzzle is single-player"
-    )
-    timer.__exit__()
-    result.runtime_ms = timer.elapsed_ms
-    return result
+    """Run Alpha-Beta Pruning on the educational Caro game tree."""
+    return _minimax_like("Alpha-Beta Pruning", max_depth, trace_limit, seed)
 
 
 def expectimax(
@@ -322,139 +266,72 @@ def expectimax(
     max_depth: int = 4,
     success_prob: float = 0.8,
     trace_limit: int = 100,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
 ) -> SearchResult:
-    """
-    Expectimax for stochastic games.
-    
-    Simulates 8-puzzle with probability of action success.
-    """
-    if goal is None:
-        goal = PuzzleState.GOAL_STATE
-    
-    if seed is not None:
-        random.seed(seed)
-    
-    h_func = get_heuristic(heuristic)
+    """Run Expectimax where O replies are chance outcomes in the Caro game."""
+    rng = random.Random(seed)
     timer = Timer()
     timer.__enter__()
-    
-    trace = []
-    
-    start_state = PuzzleState(start)
-    goal_state = PuzzleState(goal)
-    
-    if start_state.state == goal_state.state:
-        result = SearchResult(
-            success=True,
-            algorithm="Expectimax",
-            group="Adversarial Search",
-            message="Already at goal!",
-            optimal="No, for stochastic games",
-            complete="Yes",
-            notes="Educational: Simulates stochastic 8-puzzle"
-        )
-        timer.__exit__()
-        result.runtime_ms = timer.elapsed_ms
-        return result
-    
-    def expectimax_recursive(state: Tuple[int, ...], depth: int, is_max: bool) -> Tuple[float, Optional[str]]:
-        """Expectimax with chance nodes."""
-        
-        puzzle = PuzzleState(state)
-        
-        if state == goal:
-            return 1000 - depth, None
-        
-        if depth == 0:
-            return -h_func(state, goal), None
-        
-        neighbors = puzzle.get_neighbors()
-        if not neighbors:
-            return -1000, None
-        
-        if is_max:
-            # MAX node: choose action
-            best_value = float('-inf')
-            best_action = None
-            
-            for action, neighbor in neighbors:
-                # Chance node: expected value
-                # Success with prob success_prob
-                # Failure: random other outcome
-                expected_value = success_prob * expectimax_recursive(neighbor.state, depth - 1, False)[0]
-                
-                # Add failure cases
-                other_neighbors = [(a, n) for a, n in neighbors if a != action]
-                if other_neighbors:
-                    fail_prob = (1 - success_prob) / len(other_neighbors)
-                    for _, other in other_neighbors:
-                        expected_value += fail_prob * expectimax_recursive(other.state, depth - 1, False)[0]
-                
-                if expected_value > best_value:
-                    best_value = expected_value
-                    best_action = action
-            
-            return best_value, best_action
+    depth_limit = max(1, min(6, max_depth))
+    nodes_expanded = 0
+    nodes_generated = 1
+
+    def expected_value(board: CaroBoard, depth: int, maximizing: bool) -> float:
+        nonlocal nodes_expanded, nodes_generated
+        if depth == 0 or _winner(board) is not None:
+            return _utility(board, depth_limit - depth)
+
+        if maximizing:
+            children = _children(board, "X", rng)
+            nodes_expanded += 1
+            nodes_generated += len(children)
+            values = [expected_value(child, depth - 1, False) for _action, child in children]
+            return max(values) if values else _utility(board, depth_limit - depth)
+
+        children = _children(board, "O", rng)
+        nodes_expanded += 1
+        nodes_generated += len(children)
+        if not children:
+            return _utility(board, depth_limit - depth)
+        probability = 1.0 / len(children)
+        return sum(probability * expected_value(child, depth - 1, True) for _action, child in children)
+
+    scored = []
+    for action, child in _children(CARO_START, "X", rng):
+        o_children = _children(child, "O", rng)
+        if not o_children:
+            score = _utility(child, 1)
+            outcomes = [f"No O move\n{_board_text(child)}"]
         else:
-            # Chance node: expected value
-            expected_value = 0.0
-            for action, neighbor in neighbors:
-                expected_value += (1.0 / len(neighbors)) * expectimax_recursive(neighbor.state, depth - 1, True)[0]
-            
-            return expected_value, None
-    
-    value, best_action = expectimax_recursive(start, max_depth, True)
-    
-    if best_action:
-        puzzle = PuzzleState(start)
-        for action, neighbor in puzzle.get_neighbors():
-            if action == best_action:
-                path = [PuzzleState(start), neighbor]
-                actions = [best_action]
-                
-                if len(trace) < trace_limit:
-                    trace.append({
-                        "Step": 0,
-                        "Algorithm": "Expectimax",
-                        "Node": str(puzzle),
-                        "Action": best_action,
-                        "Depth": max_depth,
-                        "g": 0,
-                        "h": h_func(start, goal),
-                        "f": value,
-                        "Frontier": 0,
-                        "Reached": 1,
-                        "Note": f"MAX chooses {best_action}, expected value={value:.2f}"
-                    })
-                
-                result = SearchResult(
-                    success=neighbor.state == goal,
-                    algorithm="Expectimax",
-                    group="Adversarial Search",
-                    path=path,
-                    actions=actions,
-                    path_cost=1,
-                    trace=trace,
-                    message=f"Best action: {best_action}, expected value={value:.2f}",
-                    optimal="No, for stochastic games",
-                    complete="Yes",
-                    notes="Educational: Simulates stochastic 8-puzzle"
-                )
-                timer.__exit__()
-                result.runtime_ms = timer.elapsed_ms
-                return result
-    
-    result = SearchResult(
-        success=False,
+            probability = 1.0 / len(o_children)
+            score = sum(probability * expected_value(outcome, depth_limit - 1, True) for _o_action, outcome in o_children)
+            outcomes = [f"p={probability:.2f} {o_action}\n{_board_text(outcome)}" for o_action, outcome in o_children]
+        scored.append((score, action, child, outcomes))
+
+    chosen_score, chosen_action, chosen_board, outcomes = max(scored, key=lambda item: (item[0], item[1]))
+    trace = []
+    if trace_limit > 0:
+        trace.append(
+            _trace_row(
+                algorithm="Expectimax",
+                node=CARO_START,
+                action=chosen_action,
+                depth=depth_limit,
+                score=chosen_score,
+                frontier=outcomes,
+                reached=[_board_text(CARO_START), _board_text(chosen_board)],
+                note=f"MAX chooses {chosen_action}; expected utility={chosen_score:.2f}; chance outcomes={len(outcomes)}.",
+            )
+        )
+
+    return _finish(
+        timer=timer,
         algorithm="Expectimax",
-        group="Adversarial Search",
         trace=trace,
-        message="No valid action",
-        optimal="No, for stochastic games",
-        complete="Yes",
-        notes="Educational: Simulates stochastic 8-puzzle"
+        chosen_action=chosen_action,
+        chosen_score=chosen_score,
+        nodes_expanded=nodes_expanded,
+        nodes_generated=nodes_generated,
+        max_frontier_size=max(len(scored), len(outcomes), 1),
+        note="Educational Caro mini-game: Expectimax treats O replies as chance outcomes because 8-puzzle has no stochastic opponent.",
     )
-    timer.__exit__()
-    result.runtime_ms = timer.elapsed_ms
-    return result

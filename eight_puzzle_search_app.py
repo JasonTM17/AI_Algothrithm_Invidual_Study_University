@@ -60,6 +60,7 @@ class TraceConfig:
     random_restarts: int = 20
     beam_width: int = 4
     seed: Optional[int] = None
+    randomize_successors: bool = False
     sa_initial_temp: float = 100.0
     sa_cooling_rate: float = 0.995
     sa_min_temp: float = 0.01
@@ -266,21 +267,21 @@ ALGORITHM_INFO: Dict[str, Dict[str, str]] = {
     },
     "Minimax": {
         "group": "Adversarial / Stochastic Search",
-        "optimal": "Optimal only for the bounded adversarial game model, not for standard 8-puzzle",
+        "optimal": "Optimal only for the bounded Caro game tree, not for standard 8-puzzle",
         "complete": "Complete within configured game-tree depth",
-        "suitable": "Educational two-player extension: MAX reduces h, MIN increases h",
+        "suitable": "Educational two-player Caro model: MAX is X, MIN is O",
     },
     "Alpha-Beta Pruning": {
         "group": "Adversarial / Stochastic Search",
         "optimal": "Same bounded-game value as Minimax when depth/order match",
         "complete": "Complete within configured game-tree depth",
-        "suitable": "Educational pruning extension of Minimax",
+        "suitable": "Educational alpha-beta pruning on the same Caro game tree as Minimax",
     },
     "Expectimax": {
         "group": "Adversarial / Stochastic Search",
         "optimal": "Optimal expected action only for the configured stochastic model",
         "complete": "Complete within configured chance-tree depth",
-        "suitable": "Educational stochastic extension with chance outcomes",
+        "suitable": "Educational Caro expectimax with random O/chance outcomes",
     },
 }
 
@@ -458,9 +459,9 @@ def algorithm_run_mode(algorithm: str, lang: str = "en") -> Dict[str, str]:
         mode = "educational_adversarial"
         label = "Mô phỏng đối kháng/xác suất" if lang == "vi" else "Adversarial/stochastic demo"
         description = (
-            "Mô hình mở rộng có utility, đối thủ hoặc chance node; không phải solver chuẩn của 8-puzzle deterministic."
+            "Dùng trò chơi Caro mini-game để minh họa utility, đối thủ hoặc chance node; 8-puzzle không có đối thủ."
             if lang == "vi"
-            else "Extended model with utility, opponent, or chance nodes; not a standard deterministic 8-puzzle solver."
+            else "Uses a Caro mini-game to demonstrate utility, opponent, or chance nodes because 8-puzzle has no opponent."
         )
     return {
         "algorithm": canonical,
@@ -649,6 +650,15 @@ def neighbors(state: State) -> List[Tuple[str, State]]:
         next_state = list(state)
         next_state[blank], next_state[swap_index] = next_state[swap_index], next_state[blank]
         result.append((action, tuple(next_state)))
+    return result
+
+
+def search_neighbors(state: State, config: TraceConfig, rng: random.Random) -> List[Tuple[str, State]]:
+    """Return legal successors, optionally shuffled for non-deterministic demos."""
+
+    result = neighbors(state)
+    if config.randomize_successors and len(result) > 1:
+        rng.shuffle(result)
     return result
 
 
@@ -850,7 +860,7 @@ def peas_model(algorithm: Optional[str] = None, lang: str = "en") -> List[Dict[s
             "Local Search": "Không gian trạng thái 8-Puzzle nhìn như landscape theo h(n); thuật toán chỉ giữ một hoặc vài trạng thái ứng viên.",
             "Complex Environments": "Mô hình mở rộng học thuật: có belief state, quan sát thiếu, online learning hoặc hành động không xác định.",
             "Constraint Satisfaction Problems": "Mô hình CSP planning theo thời gian với biến X[t][p], A[t] và ràng buộc Initial/Goal/AllDifferent/Transition.",
-            "Adversarial / Stochastic Search": "Mô hình game/stochastic mở rộng: MAX, MIN hoặc Chance node; không phải môi trường chuẩn của 8-Puzzle.",
+            "Adversarial / Stochastic Search": "Trò chơi Caro mini-game: MAX là X, MIN hoặc Chance là O; 8-Puzzle chuẩn không có đối thủ.",
         }
         return [
             {
@@ -890,7 +900,7 @@ def peas_model(algorithm: Optional[str] = None, lang: str = "en") -> List[Dict[s
         "Local Search": "The 8-puzzle state space viewed as an h(n) landscape; only one or a small population of candidates is kept.",
         "Complex Environments": "An educational extension with belief states, partial/no observation, online learning, or nondeterministic actions.",
         "Constraint Satisfaction Problems": "A time-indexed planning CSP with X[t][p], A[t], Initial, Goal, AllDifferent, and Transition constraints.",
-        "Adversarial / Stochastic Search": "An educational game/stochastic extension with MAX, MIN, or Chance nodes, not the standard puzzle environment.",
+        "Adversarial / Stochastic Search": "A Caro mini-game: MAX is X and MIN or Chance is O because standard 8-puzzle has no opponent.",
     }
     return [
         {
@@ -950,9 +960,14 @@ def _states_from_items(items: Iterable[Any]) -> List[State]:
 
 
 def summarize_states(items: Iterable[Any], limit: int = 5) -> str:
-    states = _states_from_items(items)
+    item_list = list(items)
+    states = _states_from_items(item_list)
     if not states:
-        return ""
+        shown = [str(item) for item in item_list[:limit]]
+        text = "\n---\n".join(shown)
+        if len(item_list) > limit:
+            text += f"\n... (+{len(item_list) - limit} more)"
+        return text
     shown = states[:limit]
     text = "\n---\n".join(board_string(state) for state in shown)
     if len(states) > limit:
@@ -1077,6 +1092,7 @@ def _unsolvable_result(algorithm: str, start: State, goal: State, started_at: fl
 def _bfs(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "BFS"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     root = SearchNode(start, h=heuristic(start))
     frontier: Deque[SearchNode] = deque([root])
     reached: Dict[State, int] = {start: 0}
@@ -1096,8 +1112,9 @@ def _bfs(start: State, goal: State, heuristic: Callable[[State], int], config: T
         step += 1
         new_children: List[SearchNode] = []
         skipped = 0
+        found_child: Optional[SearchNode] = None
         
-        for action, next_state in neighbors(node.state):
+        for action, next_state in search_neighbors(node.state, config, rng):
             if next_state in reached:
                 skipped += 1
                 continue
@@ -1109,28 +1126,15 @@ def _bfs(start: State, goal: State, heuristic: Callable[[State], int], config: T
             generated += 1
             
             if child.state == goal:
-                add_trace(
-                    trace_rows,
-                    config,
-                    step,
-                    algorithm,
-                    child,
-                    child.action,
-                    child.depth,
-                    child.g,
-                    child.h,
-                    None,
-                    frontier,
-                    reached_order,
-                    "Early goal test succeeds during expansion.",
-                    selection_key=f"depth={child.depth}; early_goal={step}",
-                    generated_children=0,
-                    skipped_states=0,
-                )
-                return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=child, expanded=expanded + 1, generated=generated, max_frontier=max(max_frontier, len(frontier)), reached_count=len(reached), trace_rows=trace_rows, started_at=started_at, message="Goal found.")
+                found_child = child
         
         expanded += 1
         max_frontier = max(max_frontier, len(frontier))
+        decision_note = "Pop shallowest node, expand it, then append unseen children to the FIFO frontier."
+        selection_key = f"depth={node.depth}; fifo_pop={step}"
+        if found_child is not None:
+            decision_note += " Goal was discovered among the generated children."
+            selection_key += f"; early_goal_depth={found_child.depth}"
         add_trace(
             trace_rows,
             config,
@@ -1144,11 +1148,13 @@ def _bfs(start: State, goal: State, heuristic: Callable[[State], int], config: T
             None,
             frontier,
             reached_order,
-            "Pop shallowest node, expand it, then append unseen children to the FIFO frontier.",
-            selection_key=f"depth={node.depth}; fifo_pop={step}",
+            decision_note,
+            selection_key=selection_key,
             generated_children=len(new_children),
             skipped_states=skipped,
         )
+        if found_child is not None:
+            return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=found_child, expanded=expanded, generated=generated, max_frontier=max_frontier, reached_count=len(reached), trace_rows=trace_rows, started_at=started_at, message="Goal found.")
 
     message = "Stopped by expansion limit." if frontier else "Frontier exhausted."
     return _finish_result(algorithm=algorithm, start=start, goal=goal, found=False, terminal_node=None, expanded=expanded, generated=generated, max_frontier=max_frontier, reached_count=len(reached), trace_rows=trace_rows, started_at=started_at, message=message)
@@ -1157,6 +1163,7 @@ def _bfs(start: State, goal: State, heuristic: Callable[[State], int], config: T
 def _dfs(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "DFS"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     root = SearchNode(start, h=heuristic(start))
     frontier: List[SearchNode] = [root]
     reached: Dict[State, int] = {start: 0}
@@ -1174,7 +1181,7 @@ def _dfs(start: State, goal: State, heuristic: Callable[[State], int], config: T
         new_children: List[SearchNode] = []
         skipped = 0
         if not is_goal and node.depth < config.dfs_depth_limit:
-            for action, next_state in reversed(neighbors(node.state)):
+            for action, next_state in reversed(search_neighbors(node.state, config, rng)):
                 child_depth = node.depth + 1
                 if next_state in reached and child_depth >= reached[next_state]:
                     skipped += 1
@@ -1260,6 +1267,7 @@ def _priority_search(
     config: TraceConfig,
 ) -> SearchResult:
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     root = SearchNode(start, h=heuristic(start))
     counter = 0
 
@@ -1294,7 +1302,7 @@ def _priority_search(
         new_children: List[SearchNode] = []
         skipped = 0
         if not is_goal:
-            for action, next_state in neighbors(node.state):
+            for action, next_state in search_neighbors(node.state, config, rng):
                 next_g = node.g + 1
                 if next_g >= best_g.get(next_state, math.inf):
                     skipped += 1
@@ -1365,6 +1373,7 @@ def _priority_search(
 def _ids(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "IDS"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     expanded = 0
     generated = 0
     max_frontier = 0
@@ -1386,7 +1395,7 @@ def _ids(start: State, goal: State, heuristic: Callable[[State], int], config: T
             new_children: List[SearchNode] = []
             skipped = 0
             if not is_goal and node.depth < limit:
-                for action, next_state in reversed(neighbors(node.state)):
+                for action, next_state in reversed(search_neighbors(node.state, config, rng)):
                     if next_state in path_set:
                         skipped += 1
                         continue
@@ -1470,6 +1479,7 @@ def _ids(start: State, goal: State, heuristic: Callable[[State], int], config: T
 def _ida_star(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "IDA*"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     threshold = heuristic(start)
     expanded = 0
     generated = 1
@@ -1545,7 +1555,7 @@ def _ida_star(start: State, goal: State, heuristic: Callable[[State], int], conf
                 skipped_states=0,
             )
             return None, math.inf
-        neighbor_items = neighbors(node.state)
+        neighbor_items = search_neighbors(node.state, config, rng)
         candidate_nodes = [
             SearchNode(next_state, node, action, node.g + 1, node.depth + 1, heuristic(next_state))
             for action, next_state in neighbor_items
@@ -1666,7 +1676,7 @@ def _hill_climbing(
             reached_order.append(current.state)
             if current.state == goal:
                 return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=current, expanded=expanded, generated=generated, max_frontier=max_frontier, reached_count=len(reached), trace_rows=trace_rows, started_at=started_at, message=f"Goal found after restart {restart_index}.")
-            neighbor_items = neighbors(current.state)
+            neighbor_items = search_neighbors(current.state, config, rng)
             candidate_nodes = [
                 SearchNode(next_state, current, action, current.g + 1, current.depth + 1, heuristic(next_state))
                 for action, next_state in neighbor_items
@@ -1731,6 +1741,7 @@ def _hill_climbing(
 def _local_beam_search(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "Local Beam Search"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     root = SearchNode(start, h=heuristic(start))
     beams = [root]
     reached: Set[State] = {start}
@@ -1787,7 +1798,7 @@ def _local_beam_search(start: State, goal: State, heuristic: Callable[[State], i
         duplicate_skips = 0
         for node in beams:
             expanded += 1
-            for action, next_state in neighbors(node.state):
+            for action, next_state in search_neighbors(node.state, config, rng):
                 child = SearchNode(next_state, node, action, node.g + 1, node.depth + 1, heuristic(next_state))
                 old = candidates.get(next_state)
                 if old is None or (child.h, child.g) < (old.h, old.g):
@@ -1902,7 +1913,7 @@ def _simulated_annealing(
                 message=f"Goal found at step {step}, temperature {temperature:.4f}."
             )
         
-        neighbor_list = neighbors(current.state)
+        neighbor_list = search_neighbors(current.state, config, rng)
         candidate_nodes = [
             SearchNode(next_state, current, action, current.g + 1, current.depth + 1, heuristic(next_state))
             for action, next_state in neighbor_list
@@ -2002,6 +2013,7 @@ def _complex_environment_search(
 def _and_or_search(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "AND-OR Search"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     current = SearchNode(start, h=heuristic(start))
     reached: Set[State] = {start}
     reached_order = [start]
@@ -2035,7 +2047,7 @@ def _and_or_search(start: State, goal: State, heuristic: Callable[[State], int],
 
         child_nodes = [
             SearchNode(next_state, current, action, current.g + 1, current.depth + 1, heuristic(next_state))
-            for action, next_state in neighbors(current.state)
+            for action, next_state in search_neighbors(current.state, config, rng)
         ]
         child_nodes.sort(key=lambda item: (item.h, item.action))
         if not child_nodes:
@@ -2102,6 +2114,7 @@ def _belief_seed_states(start: State) -> List[State]:
 def _no_observation_search(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "No Observation Search"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     belief: Set[State] = set(_belief_seed_states(start))
     representative = SearchNode(start, h=heuristic(start))
     trace_rows: List[Dict[str, Any]] = []
@@ -2110,6 +2123,8 @@ def _no_observation_search(start: State, goal: State, heuristic: Callable[[State
     generated = len(belief)
     max_frontier = len(belief)
     actions = ["Up", "Down", "Left", "Right"]
+    if config.randomize_successors:
+        rng.shuffle(actions)
     limit = _educational_limit(config, default=12)
 
     for step in range(1, limit + 1):
@@ -2172,6 +2187,7 @@ def _no_observation_search(start: State, goal: State, heuristic: Callable[[State
 def _partially_observable_search(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "Partially Observable Search"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     pattern = config.partial_goal_pattern or PARTIAL_GOAL_PATTERN
     current = SearchNode(start, h=heuristic(start))
     belief: Set[State] = set(_belief_seed_states(start))
@@ -2187,7 +2203,7 @@ def _partially_observable_search(start: State, goal: State, heuristic: Callable[
             return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=current, expanded=expanded, generated=generated, max_frontier=max_frontier, reached_count=len(set(reached_order)), trace_rows=trace_rows, started_at=started_at, message="Representative actual state reached the goal under partial observation.")
         child_nodes = [
             SearchNode(next_state, current, action, current.g + 1, current.depth + 1, heuristic(next_state))
-            for action, next_state in neighbors(current.state)
+            for action, next_state in search_neighbors(current.state, config, rng)
         ]
         child_nodes.sort(key=lambda item: (partial_goal_mismatch(item.state, pattern), item.h, item.action))
         chosen = child_nodes[0]
@@ -2245,6 +2261,7 @@ def _partially_observable_search(start: State, goal: State, heuristic: Callable[
 def _online_lrta_star(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "Online Search"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     current = SearchNode(start, h=heuristic(start))
     learned_h: Dict[State, float] = {start: float(current.h)}
     visits: Dict[State, int] = {start: 1}
@@ -2261,7 +2278,7 @@ def _online_lrta_star(start: State, goal: State, heuristic: Callable[[State], in
             return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=current, expanded=expanded, generated=generated, max_frontier=max_frontier, reached_count=len(reached), trace_rows=trace_rows, started_at=started_at, message="LRTA* reached the goal while learning online.")
         child_nodes = [
             SearchNode(next_state, current, action, current.g + 1, current.depth + 1, heuristic(next_state))
-            for action, next_state in neighbors(current.state)
+            for action, next_state in search_neighbors(current.state, config, rng)
         ]
         for child in child_nodes:
             learned_h.setdefault(child.state, float(child.h))
@@ -2415,6 +2432,7 @@ def _csp_static_demo(
 def _csp_backtracking(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "CSP Backtracking"
     started_at = time.perf_counter()
+    rng = random.Random(config.seed)
     trace_rows: List[Dict[str, Any]] = []
     expanded = 0
     generated = 1
@@ -2467,13 +2485,14 @@ def _csp_backtracking(start: State, goal: State, heuristic: Callable[[State], in
                 skipped_states=len(neighbors(node.state)),
             )
             return None
+        neighbor_items = search_neighbors(node.state, config, rng)
         child_nodes = [
             SearchNode(next_state, node, action, node.g + 1, node.depth + 1, heuristic(next_state))
-            for action, next_state in neighbors(node.state)
+            for action, next_state in neighbor_items
             if next_state not in path_set
         ]
         child_nodes.sort(key=lambda item: (item.h, item.action))
-        skipped = len(neighbors(node.state)) - len(child_nodes)
+        skipped = len(neighbor_items) - len(child_nodes)
         expanded += 1
         generated += len(child_nodes)
         max_frontier = max(max_frontier, len(child_nodes), len(path_set) + len(child_nodes))
@@ -2543,7 +2562,7 @@ def _min_conflicts(start: State, goal: State, heuristic: Callable[[State], int],
             return _finish_result(algorithm=algorithm, start=start, goal=goal, found=True, terminal_node=current, expanded=expanded, generated=generated, max_frontier=max_frontier, reached_count=len(reached), trace_rows=trace_rows, started_at=started_at, message="Min-Conflicts local repair reached the goal assignment.")
         child_nodes = [
             SearchNode(next_state, current, action, current.g + 1, current.depth + 1, heuristic(next_state))
-            for action, next_state in neighbors(current.state)
+            for action, next_state in search_neighbors(current.state, config, rng)
         ]
         generated += len(child_nodes)
         expanded += 1
@@ -2596,10 +2615,76 @@ def _min_conflicts(start: State, goal: State, heuristic: Callable[[State], int],
     )
 
 
-def _utility(state: State, goal: State, heuristic: Callable[[State], int], depth: int) -> float:
-    if state == goal:
-        return 1000.0 - depth
-    return -float(heuristic(state)) - 0.01 * depth
+CaroBoard = Tuple[str, ...]
+CARO_START: CaroBoard = ("X", "O", "X", ".", "O", ".", ".", ".", ".")
+CARO_LINES = (
+    (0, 1, 2),
+    (3, 4, 5),
+    (6, 7, 8),
+    (0, 3, 6),
+    (1, 4, 7),
+    (2, 5, 8),
+    (0, 4, 8),
+    (2, 4, 6),
+)
+
+
+def _caro_board_string(board: CaroBoard) -> str:
+    rows = [" ".join(board[index : index + 3]) for index in range(0, 9, 3)]
+    return "Caro board\n" + "\n".join(rows)
+
+
+def _caro_winner(board: CaroBoard) -> Optional[str]:
+    for a, b, c in CARO_LINES:
+        if board[a] != "." and board[a] == board[b] == board[c]:
+            return board[a]
+    if "." not in board:
+        return "Draw"
+    return None
+
+
+def _caro_moves(board: CaroBoard) -> List[int]:
+    return [index for index, cell in enumerate(board) if cell == "."]
+
+
+def _caro_apply(board: CaroBoard, move: int, player: str) -> CaroBoard:
+    cells = list(board)
+    cells[move] = player
+    return tuple(cells)
+
+
+def _caro_action(move: int, player: str) -> str:
+    row, col = divmod(move, 3)
+    return f"{player}@{row + 1},{col + 1}"
+
+
+def _caro_children(board: CaroBoard, player: str, config: TraceConfig, rng: random.Random) -> List[Tuple[str, CaroBoard]]:
+    children = [(_caro_action(move, player), _caro_apply(board, move, player)) for move in _caro_moves(board)]
+    if config.randomize_successors and len(children) > 1:
+        rng.shuffle(children)
+    return children
+
+
+def _caro_utility(board: CaroBoard, depth: int) -> float:
+    winner = _caro_winner(board)
+    if winner == "X":
+        return 100.0 - depth
+    if winner == "O":
+        return depth - 100.0
+    if winner == "Draw":
+        return 0.0
+    score = 0.0
+    for line in CARO_LINES:
+        cells = [board[index] for index in line]
+        x_count = cells.count("X")
+        o_count = cells.count("O")
+        if x_count and o_count:
+            continue
+        if x_count:
+            score += 1.5 * x_count
+        if o_count:
+            score -= 1.5 * o_count
+    return score - 0.01 * depth
 
 
 def _adversarial_search(
@@ -2622,169 +2707,166 @@ def _minimax_like_search(
     config: TraceConfig,
 ) -> SearchResult:
     started_at = time.perf_counter()
-    depth_limit = max(1, min(3, config.dfs_depth_limit, config.ids_max_depth))
+    rng = random.Random(config.seed)
+    depth_limit = max(1, min(5, config.dfs_depth_limit, config.ids_max_depth))
     expanded = 0
     generated = 1
     pruned = 0
 
-    def value(state: State, depth: int, maximizing: bool, alpha: float, beta: float) -> float:
+    def value(board: CaroBoard, depth: int, maximizing: bool, alpha: float, beta: float) -> float:
         nonlocal expanded, generated, pruned
-        if depth == 0 or state == goal or expanded >= config.max_expansions:
-            return _utility(state, goal, heuristic, depth_limit - depth)
-        child_states = [next_state for _, next_state in neighbors(state)]
-        generated += len(child_states)
+        if depth == 0 or _caro_winner(board) is not None or expanded >= config.max_expansions:
+            return _caro_utility(board, depth_limit - depth)
+        player = "X" if maximizing else "O"
+        children = _caro_children(board, player, config, rng)
+        generated += len(children)
         expanded += 1
         if maximizing:
             best = -math.inf
-            for child in child_states:
+            for index, (_action, child) in enumerate(children):
                 best = max(best, value(child, depth - 1, False, alpha, beta))
                 if algorithm == "Alpha-Beta Pruning":
                     alpha = max(alpha, best)
                     if beta <= alpha:
-                        pruned += 1
+                        pruned += len(children) - index - 1
                         break
             return best
         best = math.inf
-        for child in child_states:
+        for index, (_action, child) in enumerate(children):
             best = min(best, value(child, depth - 1, True, alpha, beta))
             if algorithm == "Alpha-Beta Pruning":
                 beta = min(beta, best)
                 if beta <= alpha:
-                    pruned += 1
+                    pruned += len(children) - index - 1
                     break
         return best
 
     root = SearchNode(start, h=heuristic(start))
-    child_nodes = [
-        SearchNode(next_state, root, action, 1, 1, heuristic(next_state))
-        for action, next_state in neighbors(start)
-    ]
-    scored: List[Tuple[float, SearchNode]] = []
-    for child in child_nodes:
-        scored.append((value(child.state, depth_limit - 1, False, -math.inf, math.inf), child))
-    chosen_score, chosen = max(scored, key=lambda item: (item[0], -item[1].h, item[1].action)) if scored else (_utility(start, goal, heuristic, 0), root)
+    child_boards = _caro_children(CARO_START, "X", config, rng)
+    scored: List[Tuple[float, str, CaroBoard]] = []
+    for action, board in child_boards:
+        scored.append((value(board, depth_limit - 1, False, -math.inf, math.inf), action, board))
+    chosen_score, chosen_action, chosen_board = max(scored, key=lambda item: (item[0], item[1])) if scored else (_caro_utility(CARO_START, 0), "No move", CARO_START)
     trace_rows: List[Dict[str, Any]] = []
+    frontier_preview = [f"{action}\n{_caro_board_string(board)}" for _score, action, board in scored]
     add_trace(
         trace_rows,
         config,
         1,
         algorithm,
-        root,
-        chosen.action,
+        _caro_board_string(CARO_START),
+        chosen_action,
         0,
         0,
-        root.h,
+        0,
         int(chosen_score),
-        child_nodes,
-        [start],
+        frontier_preview,
+        [_caro_board_string(CARO_START), _caro_board_string(chosen_board)],
         (
-            f"{algorithm} evaluates a depth-{depth_limit} game tree where MAX reduces h and MIN increases h. "
-            f"Chosen action={chosen.action}, utility={chosen_score:.2f}, pruned_branches={pruned}."
+            f"{algorithm} evaluates a depth-{depth_limit} Caro game tree. "
+            f"MAX is X, MIN is O. Chosen move={chosen_action}, utility={chosen_score:.2f}, pruned_branches={pruned}."
         ),
-        selection_key=f"depth={depth_limit}; utility={chosen_score:.2f}; alpha_beta_pruned={pruned}",
-        generated_children=len(child_nodes),
+        priority_rule="Adversarial game tree on Caro; MAX chooses the move with best backed-up utility.",
+        selection_key=f"game=Caro; depth={depth_limit}; utility={chosen_score:.2f}; alpha_beta_pruned={pruned}",
+        generated_children=len(child_boards),
         skipped_states=pruned,
     )
-    found = chosen.state == goal
     return _finish_result(
         algorithm=algorithm,
         start=start,
         goal=goal,
-        found=found,
-        terminal_node=chosen if found else None,
+        found=False,
+        terminal_node=None,
         expanded=expanded,
         generated=generated,
-        max_frontier=max(len(child_nodes), 1),
-        reached_count=1 + len(child_nodes),
+        max_frontier=max(len(child_boards), 1),
+        reached_count=1 + len(child_boards),
         trace_rows=trace_rows,
         started_at=started_at,
-        message=f"{algorithm} selected action {chosen.action} for the bounded adversarial 8-puzzle extension; this is not a standard single-agent solver.",
+        message=f"{algorithm} selected Caro move {chosen_action} for MAX (X). The adversarial group uses Caro because 8-puzzle has no opponent.",
     )
 
 
-def _chance_outcomes(state: State, intended_action: str) -> List[Tuple[float, State, str]]:
-    legal = neighbors(state)
-    legal_map = dict(legal)
-    intended = legal_map.get(intended_action, state)
-    alternatives = [(action, next_state) for action, next_state in legal if action != intended_action]
-    if not alternatives:
-        return [(1.0, intended, intended_action)]
-    first_alt = alternatives[0]
-    second_alt = alternatives[1] if len(alternatives) > 1 else alternatives[0]
-    outcomes = [(0.8, intended, intended_action), (0.1, first_alt[1], first_alt[0]), (0.1, second_alt[1], second_alt[0])]
-    total = sum(prob for prob, _, _ in outcomes)
-    return [(prob / total, state_value, label) for prob, state_value, label in outcomes]
+def _caro_chance_outcomes(board: CaroBoard, config: TraceConfig, rng: random.Random) -> List[Tuple[float, CaroBoard, str]]:
+    children = _caro_children(board, "O", config, rng)
+    if not children:
+        return [(1.0, board, "No O move")]
+    probability = 1.0 / len(children)
+    return [(probability, child, action) for action, child in children]
 
 
 def _expectimax_search(start: State, goal: State, heuristic: Callable[[State], int], config: TraceConfig) -> SearchResult:
     algorithm = "Expectimax"
     started_at = time.perf_counter()
-    depth_limit = max(1, min(3, config.dfs_depth_limit, config.ids_max_depth))
+    rng = random.Random(config.seed)
+    depth_limit = max(1, min(5, config.dfs_depth_limit, config.ids_max_depth))
     expanded = 0
     generated = 1
 
-    def exp_value(state: State, depth: int) -> float:
+    def exp_value(board: CaroBoard, depth: int, maximizing: bool) -> float:
         nonlocal expanded, generated
-        if depth == 0 or state == goal or expanded >= config.max_expansions:
-            return _utility(state, goal, heuristic, depth_limit - depth)
-        action_values = []
-        for action, next_state in neighbors(state):
-            generated += 1
-            expected = 0.0
-            for prob, outcome, _label in _chance_outcomes(state, action):
-                expected += prob * exp_value(outcome if outcome != state else next_state, depth - 1)
-            action_values.append(expected)
+        if depth == 0 or _caro_winner(board) is not None or expanded >= config.max_expansions:
+            return _caro_utility(board, depth_limit - depth)
+        if maximizing:
+            action_values = []
+            for _action, next_board in _caro_children(board, "X", config, rng):
+                generated += 1
+                action_values.append(exp_value(next_board, depth - 1, False))
+            expanded += 1
+            return max(action_values) if action_values else _caro_utility(board, depth_limit - depth)
+        outcomes = _caro_chance_outcomes(board, config, rng)
+        generated += len(outcomes)
         expanded += 1
-        return max(action_values) if action_values else _utility(state, goal, heuristic, depth_limit - depth)
+        return sum(prob * exp_value(outcome, depth - 1, True) for prob, outcome, _label in outcomes)
 
     root = SearchNode(start, h=heuristic(start))
-    child_nodes = [
-        SearchNode(next_state, root, action, 1, 1, heuristic(next_state))
-        for action, next_state in neighbors(start)
-    ]
-    scored: List[Tuple[float, SearchNode, List[Tuple[float, State, str]]]] = []
-    for child in child_nodes:
-        outcomes = _chance_outcomes(start, child.action)
-        expected = sum(prob * exp_value(outcome, depth_limit - 1) for prob, outcome, _label in outcomes)
-        scored.append((expected, child, outcomes))
-    chosen_score, chosen, outcomes = max(scored, key=lambda item: (item[0], -item[1].h, item[1].action)) if scored else (_utility(start, goal, heuristic, 0), root, [])
+    child_boards = _caro_children(CARO_START, "X", config, rng)
+    scored: List[Tuple[float, str, CaroBoard, List[Tuple[float, CaroBoard, str]]]] = []
+    for action, board in child_boards:
+        outcomes = _caro_chance_outcomes(board, config, rng)
+        expected = 0.0
+        for prob, outcome, _label in outcomes:
+            generated += 1
+            expected += prob * exp_value(outcome, depth_limit - 1, True)
+        scored.append((expected, action, board, outcomes))
+    chosen_score, chosen_action, chosen_board, outcomes = max(scored, key=lambda item: (item[0], item[1])) if scored else (_caro_utility(CARO_START, 0), "No move", CARO_START, [])
     trace_rows: List[Dict[str, Any]] = []
-    outcome_note = "; ".join(f"p={prob:.1f}:{label}->h={heuristic(state)}" for prob, state, label in outcomes)
+    outcome_note = "; ".join(f"p={prob:.2f}:{label}->utility={_caro_utility(board, 1):.1f}" for prob, board, label in outcomes)
     add_trace(
         trace_rows,
         config,
         1,
         algorithm,
-        root,
-        chosen.action,
+        _caro_board_string(CARO_START),
+        chosen_action,
         0,
         0,
-        root.h,
+        0,
         int(chosen_score),
-        [SearchNode(state, root, label, 1, 1, heuristic(state)) for prob, state, label in outcomes],
-        [start],
+        [f"{label}\n{_caro_board_string(board)}" for prob, board, label in outcomes],
+        [_caro_board_string(CARO_START), _caro_board_string(chosen_board)],
         (
-            f"Expectimax evaluates MAX action followed by chance outcomes. "
-            f"Chosen action={chosen.action}, expected value={chosen_score:.2f}. Outcomes: {outcome_note}."
+            f"Expectimax evaluates a Caro MAX move followed by a random O response. "
+            f"Chosen move={chosen_action}, expected value={chosen_score:.2f}. Outcomes: {outcome_note}."
         ),
-        selection_key=f"depth={depth_limit}; expected_value={chosen_score:.2f}; chance_outcomes={len(outcomes)}",
+        priority_rule="Caro expectimax; MAX chooses the move with highest expected utility under random O replies.",
+        selection_key=f"game=Caro; depth={depth_limit}; expected_value={chosen_score:.2f}; chance_outcomes={len(outcomes)}",
         generated_children=len(outcomes),
         skipped_states=0,
     )
-    found = chosen.state == goal
     return _finish_result(
         algorithm=algorithm,
         start=start,
         goal=goal,
-        found=found,
-        terminal_node=chosen if found else None,
+        found=False,
+        terminal_node=None,
         expanded=expanded,
         generated=generated,
-        max_frontier=max(len(child_nodes), len(outcomes), 1),
-        reached_count=1 + len(child_nodes),
+        max_frontier=max(len(child_boards), len(outcomes), 1),
+        reached_count=1 + len(child_boards),
         trace_rows=trace_rows,
         started_at=started_at,
-        message="Expectimax selected the best expected action for a stochastic 8-puzzle extension; this is not a standard deterministic solver.",
+        message="Expectimax selected the best expected Caro move for MAX (X) against a random O response. The adversarial group uses Caro because 8-puzzle has no opponent.",
     )
 
 
@@ -3121,6 +3203,7 @@ def _experiment_config_summary(config: TraceConfig) -> Dict[str, Any]:
         "random_restarts": config.random_restarts,
         "beam_width": config.beam_width,
         "seed": config.seed,
+        "randomize_successors": config.randomize_successors,
     }
 
 
@@ -3544,7 +3627,7 @@ def academic_failure_mode(algorithm: str) -> str:
     if group == "Constraint Satisfaction Problems":
         return "Planning-CSP horizon can be too small, or inference alone may not solve."
     if group == "Adversarial / Stochastic Search":
-        return "Standard 8-puzzle has no opponent/chance node, so this is a bounded educational game model."
+        return "Standard 8-puzzle has no opponent/chance node, so this group runs a bounded Caro game model."
     return "Can stop by configured expansion, depth, or iteration limits."
 
 
@@ -3717,7 +3800,7 @@ def export_coursework_html(pack: Dict[str, Any]) -> str:
             "<!doctype html>",
             "<html><head><meta charset=\"utf-8\">",
             f"<title>{title}</title>",
-            "<style>body{font-family:Arial,sans-serif;line-height:1.5;max-width:980px;margin:40px auto;padding:0 20px;color:#17211b;}pre{white-space:pre-wrap;background:#f5f7f6;padding:16px;border:1px solid #d9e2df;border-radius:8px;}h1,h2{color:#0f766e;}table{border-collapse:collapse;width:100%;}td,th{border:1px solid #d9e2df;padding:6px;vertical-align:top;}</style>",
+            "<style>:root{--bg:#f8fafc;--panel:#ffffff;--ink:#0f172a;--muted:#475569;--line:#cbd5e1;--accent:#0f766e;}body{font-family:Arial,sans-serif;line-height:1.55;max-width:980px;margin:40px auto;padding:0 20px;color:var(--ink);background:var(--bg);}pre{white-space:pre-wrap;overflow-x:auto;background:var(--panel);padding:16px;border:1px solid var(--line);border-radius:8px;}h1,h2{color:var(--accent);}table{border-collapse:collapse;width:100%;background:var(--panel);}td,th{border:1px solid var(--line);padding:6px;vertical-align:top;}th{color:var(--ink);background:#e2e8f0;}@media(max-width:640px){body{margin:20px auto;padding:0 12px;}pre,table{font-size:14px;}}</style>",
             "</head><body>",
             f"<h1>{title}</h1>",
             "<pre>",

@@ -1,7 +1,7 @@
 # Stage 3 Showcase
 
 Stage 3 turns the project from a coursework solver into a portfolio-style demo.
-The new app is additive and does not replace the existing Streamlit or Tkinter apps.
+The new app is additive and does not replace the main Streamlit coursework app.
 
 ## Entry point
 
@@ -75,7 +75,7 @@ The repository now includes:
 - `Dockerfile` for containerized Streamlit deployment.
 - `.streamlit/config.toml` for Streamlit server defaults.
 - `render.yaml` for Render-style web deployment.
-- `.github/workflows/release-desktop.yml` for building and publishing a Windows `.exe`.
+- Optional CI/release workflow for packaging the Streamlit coursework assets.
 
 ## Recommended demo script
 
