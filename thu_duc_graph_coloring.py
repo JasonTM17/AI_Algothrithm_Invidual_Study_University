@@ -78,7 +78,6 @@ EDGES: Tuple[Edge, ...] = (
     ("Truong Thanh", "Long Binh"),
     ("Long Phuoc", "Long Binh"),
     ("Long Binh", "Linh Trung"),
-    ("Long Binh", "Tang Nhon Phu A"),
     ("Linh Trung", "Binh Tho"),
 )
 
