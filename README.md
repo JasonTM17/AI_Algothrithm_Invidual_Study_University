@@ -44,6 +44,7 @@ Chạy kiểm thử trước khi nộp:
 python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\sidebar_game.py .\stage3_search_showcase_app.py .\8_puzzle_ai\app.py
 python .\eight_puzzle_search_app.py --self-test
 python .\tests\test_search_behavior.py
+python .\tests\test_thu_duc_graph_coloring.py
 python .\8_puzzle_ai\tests\test_puzzle.py
 ```
 
@@ -71,6 +72,142 @@ Checklist nộp bài:
 - [ ] Tất cả lệnh kiểm thử phía trên pass trước khi nộp.
 
 Kịch bản demo chi tiết nằm ở `docs/demo_script.md`.
+
+## 0.1. Tổng quan chuyên nghiệp cho người đọc/chấm bài
+
+Dự án này không chỉ là một game 8-puzzle. Đây là một **phòng thí nghiệm trực quan cho bài toán tìm kiếm trong AI**:
+
+1. Người học chọn trạng thái Start/Goal và thuật toán.
+2. Chương trình chạy solver hoặc demo học thuật tương ứng.
+3. UI hiển thị lời giải, certificate, bảng `Node / Frontier / Reached`, cây tìm kiếm, heuristic inspector và report xuất file.
+4. Người đọc có thể so sánh thuật toán theo chi phí đường đi, số node mở rộng, số node sinh ra, frontier lớn nhất, runtime và tính tối ưu.
+
+Điểm cần phân biệt khi trình bày:
+
+- **8-Puzzle Search** là bài toán chính: deterministic, fully observable, single-agent, chi phí mỗi bước bằng `1`.
+- **Complex Environments** là nhóm mô phỏng mở rộng: belief state, partial observation, online learning.
+- **Constraint Satisfaction Problems** là nhóm CSP: có demo graph coloring Thủ Đức để thể hiện biến, miền giá trị và ràng buộc.
+- **Adversarial / Stochastic Search** dùng **Caro mini-game** vì 8-puzzle chuẩn không có đối thủ. Nhóm này minh họa MAX, MIN, alpha-beta và chance node đúng bản chất học thuật.
+
+## 0.2. Cấu trúc repo chi tiết
+
+```text
+.
+├── README.md
+│   └── Tài liệu chính: mục tiêu, cách chạy, cấu trúc, lý thuyết, thuật toán, trace, kiểm thử.
+├── requirements.txt
+│   └── Dependency tối thiểu cho Streamlit/Pandas và các phần xuất báo cáo.
+├── eight_puzzle_search_app.py
+│   ├── Core state-space 8-puzzle: parse state, validate state, solvability, neighbors.
+│   ├── Heuristic: misplaced tiles, Manhattan distance, helper giải thích h(n).
+│   ├── Solver chuẩn: BFS, DFS, UCS, IDS, Greedy, A*, IDA*, local search.
+│   ├── Demo học thuật: complex environment, CSP, adversarial/stochastic.
+│   ├── Trace engine: Node, Action, g, h, f, Frontier, Reached, Selection Key.
+│   ├── Certificate: kiểm tra path hợp lệ, goal đúng, cost đúng, unsolvable dừng sớm.
+│   └── Export: Markdown, DOCX, PDF, HTML, CSV benchmark.
+├── streamlit_eight_puzzle_app.py
+│   └── Entry point UI Streamlit chính, điều phối sidebar, run button, tabs và session state.
+├── web/
+│   ├── ui_views.py
+│   │   └── Component UI: board, trace replay, heuristic inspector, report tab, graph coloring page.
+│   ├── ui_text.py
+│   │   └── Toàn bộ nhãn song ngữ Tiếng Việt/English và bảng học thuật.
+│   ├── ui_theme.py
+│   │   └── Inject CSS theme.
+│   └── ui-theme.css
+│       └── Design tokens, layout, board tiles, trace cards, dataframe styling.
+├── thu_duc_graph_coloring.py
+│   └── CSP graph coloring demo: vùng/phường là biến, màu là domain, cạnh là ràng buộc khác màu.
+├── sidebar_game.py
+│   └── Mini game xếp hình tương tác trong sidebar/page ảnh.
+├── stage3_search_showcase_app.py
+│   └── Showcase phụ cho trực quan hóa thuật toán.
+├── 8_puzzle_ai/
+│   ├── app.py
+│   │   └── Streamlit app phụ để đối chiếu package educational.
+│   ├── core/
+│   │   └── Node, PuzzleState, heuristic, metrics, utility format ma trận.
+│   ├── algorithms/
+│   │   └── Các module thuật toán tách theo nhóm: uninformed, informed, local, csp, complex, adversarial.
+│   └── tests/
+│       └── Test package phụ.
+├── tests/
+│   ├── test_search_behavior.py
+│   │   └── Regression test cho solver chính, trace, report, 6 nhóm thuật toán, Caro, CSP.
+│   ├── test_thu_duc_graph_coloring.py
+│   │   └── Test graph coloring Thủ Đức.
+│   └── test_streamlit_constraint_graph_routing.py
+│       └── Test routing UI cho Constraint Graph.
+└── docs/
+    ├── demo_script.md
+    │   └── Kịch bản thuyết trình/demo.
+    └── stage3_showcase.md
+        └── Tài liệu showcase phụ.
+```
+
+## 0.3. Bản đồ học thuật 6 nhóm thuật toán
+
+| Nhóm | Thuật toán | Dùng để chứng minh | Cách hoạt động ngắn gọn | Kết quả kỳ vọng |
+|---|---|---|---|---|
+| Uninformed Search | BFS | Tìm kiếm theo tầng | Dùng FIFO frontier, mở node nông nhất trước | Complete, optimal nếu cost đều bằng 1 |
+| Uninformed Search | DFS | Tìm kiếm theo nhánh sâu | Dùng stack LIFO, đi sâu trước rồi quay lui | Ít bộ nhớ hơn, không bảo đảm optimal |
+| Uninformed Search | UCS | Tối ưu theo chi phí thật | Priority queue theo `g(n)` nhỏ nhất | Complete, optimal với cost không âm |
+| Uninformed Search | IDS | BFS bằng nhiều lượt DFS giới hạn | Tăng dần depth limit, mỗi lượt chạy depth-limited search | Complete và optimal theo số bước khi limit đủ |
+| Informed Search | Greedy | Ưu tiên heuristic | Priority queue theo `h(n)` nhỏ nhất | Thường nhanh, không bảo đảm optimal |
+| Informed Search | A* | Cân bằng cost thật và ước lượng | Priority queue theo `f(n)=g(n)+h(n)` | Optimal nếu heuristic admissible |
+| Informed Search | IDA* | A* tiết kiệm bộ nhớ | DFS có ngưỡng `f`, tăng threshold dần | Optimal nếu heuristic admissible và bound đủ |
+| Local Search | Simple Hill Climbing | Tìm kiếm cục bộ đơn giản | Chọn láng giềng đầu tiên làm giảm `h(n)` | Nhanh, dễ kẹt local optimum |
+| Local Search | Steepest-Ascent Hill Climbing | Chọn cải thiện tốt nhất | Xét toàn bộ neighbor rồi chọn `h(n)` thấp nhất | Tốt hơn simple, vẫn không complete |
+| Local Search | Stochastic Hill Climbing | Vai trò ngẫu nhiên | Chọn ngẫu nhiên trong các neighbor cải thiện | Có thể thoát vài hướng xấu, phụ thuộc seed |
+| Local Search | Random-Restart Hill Climbing | Giảm rủi ro kẹt | Chạy nhiều lần từ điểm restart và giữ trạng thái tốt nhất | Cải thiện xác suất tìm goal |
+| Local Search | Local Beam Search | Nhiều trạng thái song song | Giữ `k` candidate tốt nhất theo `h(n)` mỗi vòng | Khám phá rộng hơn hill climbing |
+| Local Search | Simulated Annealing | Chấp nhận bước xấu có kiểm soát | Có thể nhận neighbor tệ hơn theo nhiệt độ `T` giảm dần | Giúp tránh kẹt sớm, không bảo đảm optimal |
+| Complex Environments | AND-OR Search | Môi trường nondeterministic | Tạo conditional-plan trace với OR choice và AND outcome | Demo chính sách điều kiện, không phải solver chuẩn |
+| Complex Environments | No Observation Search | Belief state không quan sát | Một action áp vào nhiều possible worlds trong belief frontier | Minh họa agent không biết state thật |
+| Complex Environments | Partially Observable Search | Quan sát một phần | Lọc belief bằng quan sát vị trí blank/ô lân cận | Minh họa partial observation và belief update |
+| Complex Environments | Online Search | Agent học khi di chuyển | LRTA* cập nhật learned heuristic khi khám phá map | Minh họa online learning/search |
+| Constraint Satisfaction Problems | CSP Definition | Mô hình biến/miền/ràng buộc | Trình bày state như assignment thỏa constraints | Chứng minh hiểu CSP formulation |
+| Constraint Satisfaction Problems | Constraint Propagation | Lan truyền ràng buộc | Thu hẹp domain bằng constraint inference | Giảm search space |
+| Constraint Satisfaction Problems | Path Consistency | Kiểm tra nhất quán đường | Xem các cặp/đường ràng buộc để loại domain không hợp | Minh họa consistency mạnh hơn arc check |
+| Constraint Satisfaction Problems | Global Constraints | Ràng buộc toàn cục | Áp dụng constraint trên nhiều biến cùng lúc | Minh họa all-different/aggregate constraint |
+| Constraint Satisfaction Problems | CSP Backtracking | Tìm assignment hợp lệ | Gán biến, kiểm tra constraint, quay lui khi conflict | Complete nếu search đủ |
+| Constraint Satisfaction Problems | Min-Conflicts | Local search cho CSP | Sửa biến gây conflict để giảm số xung đột | Tốt cho CSP lớn, không luôn complete |
+| Constraint Satisfaction Problems | Constraint Graph | Graph coloring Thủ Đức | Mỗi phường là biến, màu là domain, cạnh giáp ranh là constraint | Tô màu hợp lệ, không có vùng kề trùng màu |
+| Adversarial / Stochastic Search | Minimax | Đối kháng MAX/MIN | MAX chọn nước tối đa utility, MIN chọn nước giảm utility | Optimal trong game tree bị giới hạn |
+| Adversarial / Stochastic Search | Alpha-Beta Pruning | Cắt nhánh minimax | Bỏ nhánh không thể ảnh hưởng quyết định cuối | Cùng giá trị minimax, ít node hơn |
+| Adversarial / Stochastic Search | Expectimax | Chance node/xác suất | MAX tối đa expected value khi đối thủ/chance ngẫu nhiên | Chọn nước có kỳ vọng tốt nhất |
+
+## 0.4. Chuẩn đọc trace Node / Frontier / Reached
+
+Mỗi dòng trace là một vòng quyết định của thuật toán.
+
+| Cột | Ý nghĩa khi thuyết trình |
+|---|---|
+| `Node` | Ma trận đang được chọn để xét/mở rộng ở vòng hiện tại. |
+| `Action` | Hướng đi tạo ra node hiện tại từ parent. |
+| `g` | Chi phí thật từ Start tới node hiện tại. |
+| `h` | Heuristic: `misplaced` hoặc `manhattan`. |
+| `f` | Hàm ưu tiên, thường là `g+h` với A*. |
+| `Priority Rule` | Quy tắc chọn node của thuật toán. |
+| `Selection Key` | Giá trị cụ thể khiến node này được chọn, ví dụ `f=4; g=2; h=2`. |
+| `Generated Children` | Số successor hợp lệ được sinh ra từ node hiện tại. |
+| `Skipped States` | Số state bị bỏ qua vì đã reached, nằm trên path, hoặc bị limit/prune. |
+| `Frontier` | Các node đang chờ mở rộng sau khi expand node hiện tại. Mỗi entry hiển thị dạng `(Node, Hướng đi, Số ô sai hoặc Manhattan)`. |
+| `Reached` | Các state đã ghi nhận để tránh lặp hoặc so sánh cost tốt hơn. |
+| `Decision/Note` | Diễn giải ngắn vì sao thuật toán làm bước đó. |
+
+Ví dụ Frontier sau khi A* mở rộng một node:
+
+```text
+(Node:
+1 2 3
+4 5 6
+7 8 0
+Hướng đi: Right
+Số ô sai hoặc Manhattan: 0)
+```
+
+Khi báo cáo, có thể đọc là: “Frontier đang giữ node ứng viên này; nó được tạo bởi hướng đi `Right`; giá trị heuristic hiện tại bằng `0`, nên nếu dùng A* thì `f=g+h` sẽ quyết định thứ tự ưu tiên.”
 
 ## 1. Thông tin dự án
 

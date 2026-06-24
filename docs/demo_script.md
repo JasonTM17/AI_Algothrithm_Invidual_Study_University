@@ -86,7 +86,7 @@ Mở chế độ `Tô màu đồ thị Thủ Đức` trong sidebar.
    - cạnh giáp ranh là ràng buộc;
    - màu là miền giá trị;
    - hai phường giáp ranh không được trùng màu.
-3. Mở phần `Các bước greedy coloring` để giải thích thứ tự gán màu.
+3. Mở phần `Các bước tô màu` để giải thích thứ tự gán màu.
 
 Điểm cần nói:
 - Graph coloring không giải 8-puzzle.

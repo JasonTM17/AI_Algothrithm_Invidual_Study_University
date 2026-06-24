@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import re
 import time
 from html import escape
 from typing import Any, Dict, Optional
@@ -12,7 +13,7 @@ import streamlit as st
 import eight_puzzle_search_app as puzzle
 import thu_duc_graph_coloring as thu_duc
 from web.ui_text import (
-    text, help_text, localize_table, localize_trace_text, localize_algorithm_group,
+    text, help_text, localize_action, localize_table, localize_trace_text, localize_algorithm_group,
     ALGORITHM_BASIS, ALGORITHM_PROFILES, TABLE_COLUMNS,
 )
 
@@ -401,6 +402,15 @@ def trace_states_from_text(value: Any, limit: int = 4) -> list[puzzle.State]:
         chunk = chunk.strip()
         if not chunk:
             continue
+        digits = re.findall(r"\b[0-8]\b", chunk)
+        if len(digits) >= 9:
+            try:
+                states.append(tuple(int(item) for item in digits[:9]))
+            except ValueError:
+                pass
+            if len(states) >= limit:
+                break
+            continue
         try:
             states.append(puzzle.parse_state(chunk))
         except ValueError:
@@ -423,6 +433,28 @@ def trace_state_panel_html(title: str, subtitle: str, states: list[puzzle.State]
         f'<h4>{escape(title)}</h4>'
         f'<p>{escape(subtitle)}</p>'
         f'<div class="state-card-grid">{cards}</div>'
+        '</div>'
+    )
+
+
+def trace_overview_html(result: puzzle.SearchResult, heuristic: str, lang: str) -> str:
+    found_label = "Found" if result.found and lang == "en" else "Tìm thấy" if result.found else "Not found" if lang == "en" else "Chưa tìm thấy"
+    result_label = "Result" if lang == "en" else "Kết quả"
+    chips = [
+        readiness_chip(text(lang, "algorithm"), result.algorithm, "ok" if result.found else "warn"),
+        readiness_chip(text(lang, "heuristic"), heuristic, "ok"),
+        readiness_chip(text(lang, "trace"), str(len(result.trace_rows)), ""),
+        readiness_chip(result_label, found_label, "ok" if result.found else "warn"),
+    ]
+    note = (
+        "Frontier entries show each candidate as (Node, move direction, selected h value)."
+        if lang == "en"
+        else "Frontier hiển thị từng ứng viên theo dạng (Node, hướng đi, giá trị h đã chọn)."
+    )
+    return (
+        '<div class="lab-panel trace-overview">'
+        f'<div class="readiness-grid">{"".join(chips)}</div>'
+        f'<p class="section-note">{escape(note)}</p>'
         '</div>'
     )
 
@@ -931,7 +963,7 @@ def show_trace_story(result: puzzle.SearchResult, lang: str, heuristic: str) -> 
     if not story_rows:
         st.info("Trace story is empty because trace capture is disabled." if lang == "en" else "Phần giải thích trace đang trống vì trace đang bị tắt.")
         return
-    st.dataframe(localize_table(puzzle._to_table(story_rows[:20]), lang), width="stretch", hide_index=True)
+    st.dataframe(localize_table(puzzle._to_table(story_rows[:20]), lang), width="stretch", hide_index=True, height=360)
 
 
 def trace_detail_card(label: str, value: Any) -> str:
@@ -1277,6 +1309,7 @@ def show_result(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
             show_path_player(result, lang, heuristic)
 
     with trace_tab:
+        st.markdown(trace_overview_html(result, heuristic, lang), unsafe_allow_html=True)
         show_trace_story(result, lang, heuristic)
         st.subheader(text(lang, "trace_player"))
         show_trace_replay_player(result, lang, heuristic)
@@ -1287,9 +1320,9 @@ def show_result(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
             {**row, "parent": "-" if row.get("parent", "") == "" else str(row.get("parent", ""))}
             for row in tree["nodes"]
         ]
-        st.dataframe(localize_table(puzzle._to_table(tree_rows), lang), width="stretch", hide_index=True)
+        st.dataframe(localize_table(puzzle._to_table(tree_rows), lang), width="stretch", hide_index=True, height=320)
         st.subheader(text(lang, "trace"))
-        st.dataframe(localize_table(puzzle.render_trace_table(result), lang), width="stretch")
+        st.dataframe(localize_table(puzzle.render_trace_table(result), lang), width="stretch", height=560)
         with st.expander(text(lang, "trace_glossary"), expanded=False):
             st.dataframe(trace_glossary_rows(lang), width="stretch", hide_index=True)
         with st.expander(text(lang, "algorithm_profile"), expanded=False):

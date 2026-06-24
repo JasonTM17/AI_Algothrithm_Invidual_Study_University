@@ -959,8 +959,33 @@ def _states_from_items(items: Iterable[Any]) -> List[State]:
     return states
 
 
+def _node_from_item(item: Any) -> Optional[SearchNode]:
+    if isinstance(item, SearchNode):
+        return item
+    if isinstance(item, tuple) and item and isinstance(item[-1], SearchNode):
+        return item[-1]
+    return None
+
+
+def _trace_node_summary(node: SearchNode) -> str:
+    return (
+        "(Node:\n"
+        f"{board_string(node.state)}\n"
+        f"Hướng đi: {node.action}\n"
+        f"Số ô sai hoặc Manhattan: {node.h})"
+    )
+
+
 def summarize_states(items: Iterable[Any], limit: int = 5) -> str:
     item_list = list(items)
+    nodes = [node for item in item_list if (node := _node_from_item(item)) is not None]
+    if nodes:
+        shown_nodes = nodes[:limit]
+        text = "\n---\n".join(_trace_node_summary(node) for node in shown_nodes)
+        if len(nodes) > limit:
+            text += f"\n... (+{len(nodes) - limit} more)"
+        return text
+
     states = _states_from_items(item_list)
     if not states:
         shown = [str(item) for item in item_list[:limit]]

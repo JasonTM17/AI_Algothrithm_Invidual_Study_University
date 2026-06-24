@@ -151,20 +151,64 @@ def color_graph(max_colors: int = 4) -> ColoringResult:
     palette = PALETTE[: max(1, min(max_colors, len(PALETTE)))]
     assignments: Dict[Region, str] = {}
     steps: List[Dict[str, str]] = []
-    ordered_regions = sorted(REGIONS, key=lambda region: (-len(_neighbors(region)), region))
-    for region in ordered_regions:
-        blocked = {assignments[neighbor] for neighbor in _neighbors(region) if neighbor in assignments}
-        chosen = next((color for color in palette if color not in blocked), palette[0])
-        assignments[region] = chosen
-        steps.append(
-            {
-                "Region": region,
-                "Blocked colors": ", ".join(sorted(blocked)) or "-",
-                "Chosen color": chosen,
-                "Degree": str(len(_neighbors(region))),
-            }
+    adjacency = {region: _neighbors(region) for region in REGIONS}
+
+    def choose_unassigned_region() -> Region:
+        candidates = [region for region in REGIONS if region not in assignments]
+        return min(
+            candidates,
+            key=lambda region: (
+                -len({assignments[neighbor] for neighbor in adjacency[region] if neighbor in assignments}),
+                -len(adjacency[region]),
+                region,
+            ),
         )
-    used = tuple(color for color in palette if color in set(assignments.values()))
+
+    def assign_next_region() -> bool:
+        if len(assignments) == len(REGIONS):
+            return True
+
+        region = choose_unassigned_region()
+        blocked = {assignments[neighbor] for neighbor in adjacency[region] if neighbor in assignments}
+        for chosen in palette:
+            if chosen in blocked:
+                continue
+            assignments[region] = chosen
+            steps.append(
+                {
+                    "Region": region,
+                    "Blocked colors": ", ".join(sorted(blocked)) or "-",
+                    "Chosen color": chosen,
+                    "Degree": str(len(adjacency[region])),
+                }
+            )
+            if assign_next_region():
+                return True
+            steps.pop()
+            del assignments[region]
+        return False
+
+    if not assign_next_region():
+        # Keep the UI inspectable for impossible palettes by returning a complete
+        # greedy coloring with conflicts instead of partial assignments.
+        assignments.clear()
+        steps.clear()
+        ordered_regions = sorted(REGIONS, key=lambda region: (-len(adjacency[region]), region))
+        for region in ordered_regions:
+            blocked = {assignments[neighbor] for neighbor in adjacency[region] if neighbor in assignments}
+            chosen = next((color for color in palette if color not in blocked), palette[0])
+            assignments[region] = chosen
+            steps.append(
+                {
+                    "Region": region,
+                    "Blocked colors": ", ".join(sorted(blocked)) or "-",
+                    "Chosen color": chosen,
+                    "Degree": str(len(adjacency[region])),
+                }
+            )
+
+    used_colors = set(assignments.values())
+    used = tuple(color for color in palette if color in used_colors)
     return ColoringResult(assignments, used, validate_coloring(assignments), steps)
 
 

@@ -18,11 +18,11 @@ def test_thu_duc_graph_has_expected_shape() -> None:
     assert all(left in regions and right in regions for left, right in coloring.EDGES)
 
 
-def test_four_color_solution_is_valid() -> None:
-    result = coloring.color_graph(max_colors=4)
+def test_three_color_solution_is_valid() -> None:
+    result = coloring.color_graph(max_colors=3)
 
     assert result.valid
-    assert len(result.colors_used) <= 4
+    assert len(result.colors_used) <= 3
     assert result.conflicts == []
 
 
@@ -46,7 +46,7 @@ def test_coloring_rows_cover_all_regions() -> None:
 def run_all_tests() -> None:
     tests = [
         test_thu_duc_graph_has_expected_shape,
-        test_four_color_solution_is_valid,
+        test_three_color_solution_is_valid,
         test_validate_coloring_detects_adjacent_conflict,
         test_coloring_rows_cover_all_regions,
     ]

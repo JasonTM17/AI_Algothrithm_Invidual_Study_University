@@ -227,6 +227,17 @@ def test_trace_semantics_match_academic_node_frontier_reached_model() -> None:
     assert "candidate_h=" in first_sa["Selection Key"]
 
 
+def test_frontier_entries_show_node_action_and_selected_heuristic_value() -> None:
+    start = (1, 2, 3, 4, 5, 6, 7, 0, 8)
+    result = puzzle.run_algorithm(start, "A*", "manhattan", puzzle.TraceConfig(max_trace_rows=5))
+    frontier = result.trace_rows[0]["Frontier"]
+
+    assert "(Node:" in frontier
+    assert "Hướng đi:" in frontier
+    assert "Số ô sai hoặc Manhattan:" in frontier
+    assert "7 8 0" in frontier
+
+
 def test_experiment_suite_is_deterministic_and_exportable() -> None:
     config = puzzle.TraceConfig(max_expansions=10_000, max_trace_rows=0, ida_max_iterations=30, seed=7)
     experiment_a = puzzle.run_experiment_suite(
@@ -445,6 +456,7 @@ def run_all_tests() -> None:
         test_heuristic_explainer_reports_two_course_heuristics,
         test_trace_story_explains_selection_rules,
         test_trace_semantics_match_academic_node_frontier_reached_model,
+        test_frontier_entries_show_node_action_and_selected_heuristic_value,
         test_experiment_suite_is_deterministic_and_exportable,
         test_six_group_registry_covers_coursework_spec,
         test_educational_algorithms_return_canonical_results,

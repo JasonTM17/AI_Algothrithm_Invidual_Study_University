@@ -8,11 +8,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
           :root {
-            --surface: var(--background-color, #f7f5f2);
-            --surface-2: var(--secondary-background-color, #faf8f5);
-            --panel: var(--secondary-background-color, #faf8f5);
-            --panel-soft: var(--background-color, #f7f5f2);
-            --ink: var(--text-color, #1e1b18);
+            --surface: var(--background-color, #f8fafc);
+            --surface-2: var(--secondary-background-color, #ffffff);
+            --panel: var(--secondary-background-color, #ffffff);
+            --panel-soft: var(--background-color, #f8fafc);
+            --ink: var(--text-color, #111827);
             --muted: rgba(94, 82, 70, 0.72);
             --line: rgba(30, 27, 24, 0.10);
             --accent: var(--primary-color, #0d9488);
@@ -36,8 +36,8 @@
             --image-text: #faf8f5;
             --map-edge: rgba(30, 27, 24, 0.18);
             --map-node-stroke: var(--panel);
-            --tile-bg-1: var(--background-color, #faf8f5);
-            --tile-bg-2: var(--secondary-background-color, #edeae4);
+            --tile-bg-1: var(--background-color, #ffffff);
+            --tile-bg-2: var(--secondary-background-color, #eef2f7);
             --board-bg: rgba(30, 27, 24, 0.03);
             --color-tile-border: var(--line);
             --color-tile-bg: linear-gradient(180deg, var(--tile-bg-1), var(--tile-bg-2));
@@ -77,9 +77,7 @@
 
           .stApp {
             background:
-              radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-soft), transparent 50rem),
-              radial-gradient(ellipse 40% 40% at 85% 60%, rgba(180, 120, 30, 0.06), transparent 35rem),
-              var(--surface) !important;
+              linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 42%, var(--surface) 100%) !important;
             color: var(--ink) !important;
           }
 
@@ -200,7 +198,7 @@
             font-size: clamp(2.35rem, 5vw, 4.65rem);
             font-weight: 760;
             line-height: 0.95;
-            letter-spacing: -0.01em;
+            letter-spacing: 0;
             margin: 0.38rem 0 0.65rem;
             max-width: 780px;
           }
@@ -232,7 +230,7 @@
             font-family: 'Outfit', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
             font-size: clamp(1.35rem, 2.4vw, 2rem);
             line-height: 1;
-            letter-spacing: -0.01em;
+            letter-spacing: 0;
             margin: 0;
           }
           .panel-heading span {
@@ -424,8 +422,7 @@
             white-space: pre-wrap;
             margin: 0;
             color: var(--ink);
-            font: inherit;
-            line-height: 1.42;
+            font: 0.86rem/1.48 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
           }
           .trace-triptych {
             display: grid;
@@ -441,11 +438,14 @@
             padding: 0.88rem;
             box-shadow: var(--shadow-md);
           }
+          .trace-overview {
+            border-color: var(--accent-soft) !important;
+          }
           .trace-state-panel h4 {
             color: var(--ink);
             margin: 0 0 0.2rem;
             font-size: 0.95rem;
-            letter-spacing: -0.01em;
+            letter-spacing: 0;
           }
           .trace-state-panel p {
             color: var(--muted);
@@ -486,6 +486,7 @@
             color: var(--ink);
             font-size: 0.88rem;
             font-weight: 760;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.72);
           }
           .mini-board .mini-blank {
             background: var(--accent-soft);
@@ -633,7 +634,7 @@
             margin: 0 0 0.2rem;
             color: var(--ink);
             font-family: 'Source Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            letter-spacing: -0.01em;
+            letter-spacing: 0;
           }
           .game-panel .game-meta {
             display: flex;
@@ -805,6 +806,7 @@
             border-radius: 18px;
             overflow: hidden;
             box-shadow: var(--shadow-sm);
+            background: var(--panel);
           }
           div[data-testid="stDataFrame"],
           div[data-testid="stDataFrame"] > div,
@@ -819,6 +821,16 @@
             overflow-x: auto;
             white-space: pre-wrap;
             overflow-wrap: anywhere;
+          }
+          div[data-testid="stDataFrame"] textarea,
+          div[data-testid="stDataFrame"] [role="gridcell"],
+          div[data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
+            font-size: 0.84rem !important;
+            line-height: 1.42 !important;
+          }
+          div[data-testid="stDataFrame"] [role="columnheader"] {
+            font-weight: 760 !important;
           }
           @media (max-width: 760px) {
             .block-container {
@@ -894,7 +906,7 @@
             }
           }
 
-/* ── Focus-visible styles (Phase 4: Accessibility) ── */
+/* Focus-visible styles (Phase 4: Accessibility) */
 .tile[tabindex]:focus-visible,
 button:focus-visible,
 .stButton > button:focus-visible {
@@ -908,7 +920,7 @@ button:focus-visible,
   outline-offset: 1px;
 }
 
-/* ── Empty state (Phase 4: Accessibility) ── */
+/* Empty state (Phase 4: Accessibility) */
 .empty-state {
   text-align: center;
   padding: 3rem 2rem;
