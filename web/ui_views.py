@@ -43,12 +43,31 @@ def _cached_color_graph(max_colors: int):
 
 
 def show_page_header(lang: str) -> None:
+    if lang == "vi":
+        hero_stats = [
+            ("6 nhóm", "thuật toán AI"),
+            ("27+", "biến thể/demo"),
+            ("Trace", "Node / Frontier / Reached"),
+        ]
+    else:
+        hero_stats = [
+            ("6 groups", "AI algorithms"),
+            ("27+", "variants/demos"),
+            ("Trace", "Node / Frontier / Reached"),
+        ]
+    stats_html = "".join(
+        f'<div class="hero-stat"><strong>{escape(value)}</strong><span>{escape(label)}</span></div>'
+        for value, label in hero_stats
+    )
     st.markdown(
         f"""
         <div class="app-hero">
-          <span class="app-kicker">{escape(text(lang, "app_kicker"))}</span>
-          <h1>{escape(text(lang, "page_title"))}</h1>
-          <p>{escape(text(lang, "page_subtitle"))}</p>
+          <div class="hero-copy">
+            <span class="app-kicker">{escape(text(lang, "app_kicker"))}</span>
+            <h1>{escape(text(lang, "page_title"))}</h1>
+            <p>{escape(text(lang, "page_subtitle"))}</p>
+          </div>
+          <div class="hero-stat-grid">{stats_html}</div>
         </div>
         """,
         unsafe_allow_html=True,
