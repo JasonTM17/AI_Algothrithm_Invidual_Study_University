@@ -701,20 +701,31 @@ def show_algorithm_profile(lang: str, algorithm: str) -> None:
     profile = ALGORITHM_PROFILES.get(lang, {}).get(algorithm) or fallback_algorithm_profile(lang, algorithm)
     st.markdown(f"#### {text(lang, 'priority_basis')}")
     show_priority_basis(lang, algorithm)
-    st.markdown(
-        f"""
-**{TABLE_COLUMNS[lang].get("Family", "Family")}:** {profile["Family"]}
-
-**{TABLE_COLUMNS[lang].get("Selection rule", "Selection rule")}:** {profile["Selection rule"]}
-
-**{TABLE_COLUMNS[lang].get("Evaluation function", "Evaluation function")}:** `{profile["Evaluation function"]}`
-
-**{TABLE_COLUMNS[lang].get("Guarantee", "Guarantee")}:** {profile["Guarantee"]}
-
-**{TABLE_COLUMNS[lang].get("Main limitation", "Main limitation")}:** {profile["Main limitation"]}
-"""
+    profile_items = [
+        (TABLE_COLUMNS[lang].get("Family", "Family"), profile["Family"]),
+        (TABLE_COLUMNS[lang].get("Selection rule", "Selection rule"), profile["Selection rule"]),
+        (TABLE_COLUMNS[lang].get("Evaluation function", "Evaluation function"), profile["Evaluation function"]),
+        (TABLE_COLUMNS[lang].get("Guarantee", "Guarantee"), profile["Guarantee"]),
+        (TABLE_COLUMNS[lang].get("Main limitation", "Main limitation"), profile["Main limitation"]),
+    ]
+    cards = "".join(
+        '<div class="academic-profile-card">'
+        f'<span>{escape(str(label))}</span>'
+        f'<strong>{escape(str(value))}</strong>'
+        '</div>'
+        for label, value in profile_items
     )
-    st.code(profile["pseudo"], language="text")
+    pseudo_label = "Pseudo-code" if lang == "en" else "Giả mã"
+    st.markdown(
+        '<div class="academic-profile-grid">'
+        f'{cards}'
+        '</div>'
+        '<div class="pseudo-panel">'
+        f'<span>{escape(pseudo_label)}</span>'
+        f'<pre>{escape(profile["pseudo"])}</pre>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def heuristic_usage_note(lang: str, algorithm: str) -> str:

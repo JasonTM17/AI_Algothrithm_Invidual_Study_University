@@ -604,375 +604,517 @@ CSP hơn so với việc ép graph coloring thành solver 8-puzzle.
 
 ## 9. Giải thích chi tiết từng thuật toán
 
+Phần này dùng để thuyết trình và bảo vệ bài. Mỗi thuật toán được mô tả theo 5 ý: mục đích, cách hoạt động, trace cần nhìn, ưu điểm/hạn chế, và vai trò trong dự án.
+
 ### 9.1. BFS - Breadth-First Search
 
-BFS là thuật toán tìm kiếm theo chiều rộng. Thuật toán mở rộng các node theo từng tầng.
-
-Nguyên tắc:
-
-```text
-Luôn mở node nông nhất trước.
-```
-
-Frontier của BFS là hàng đợi FIFO.
-
-Pseudo-code:
+BFS tìm kiếm theo chiều rộng, mở rộng trạng thái theo từng tầng độ sâu. Với 8-Puzzle có cost mỗi bước bằng `1`, tầng càng nông nghĩa là số bước càng ít.
 
 ```text
 frontier <- FIFO(start)
 reached <- {start}
-
 while frontier not empty:
     node <- pop_front(frontier)
-    if node is goal:
-        return solution
-    for child in successors(node):
-        if child not in reached:
-            add child to frontier
-            add child to reached
+    if node is goal: return solution
+    push all unseen children to back(frontier)
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Có, nếu không gian trạng thái hữu hạn |
-| Optimal | Có, nếu mọi bước có chi phí bằng nhau |
-| Ưu điểm | Tìm nghiệm ngắn nhất theo số bước |
-| Nhược điểm | Tốn bộ nhớ vì frontier tăng rất nhanh |
-| Phù hợp với 8-Puzzle | Tốt cho bài nhỏ hoặc trạng thái gần goal |
+| Mục đích | Tìm lời giải ít bước nhất khi mọi action cùng cost. |
+| Frontier | Hàng đợi FIFO: vào trước ra trước. |
+| Trace cần nhìn | `Selection Key` thường thể hiện depth/FIFO order; `Frontier` là các node cùng tầng hoặc tầng kế tiếp. |
+| Complete/Optimal | Complete và optimal với không gian hữu hạn, cost đều. |
+| Hạn chế | Tốn bộ nhớ vì giữ nhiều node trong frontier. |
 
 ### 9.2. DFS - Depth-First Search
 
-DFS là thuật toán tìm kiếm theo chiều sâu. Thuật toán đi sâu vào một nhánh trước khi quay lui.
-
-Nguyên tắc:
-
-```text
-Luôn mở node sâu nhất trước.
-```
-
-Frontier của DFS là stack LIFO.
-
-Pseudo-code:
+DFS tìm kiếm theo chiều sâu, chọn nhánh mới nhất để đi sâu trước. Nó minh họa rõ sự khác biệt giữa “tìm được nghiệm” và “tìm nghiệm tốt”.
 
 ```text
 frontier <- Stack(start)
-reached <- {start}
-
 while frontier not empty:
-    node <- pop(frontier)
-    if node is goal:
-        return solution
+    node <- pop_stack(frontier)
+    if node is goal: return solution
     if depth(node) < depth_limit:
         push successors(node)
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Không đảm bảo nếu không giới hạn hoặc có vòng lặp |
-| Optimal | Không |
-| Ưu điểm | Dùng ít bộ nhớ hơn BFS |
-| Nhược điểm | Có thể đi sâu vào nhánh xấu |
-| Trong app | Có giới hạn `dfs_depth_limit` để tránh chạy quá sâu |
+| Mục đích | Khám phá sâu một nhánh, dùng ít bộ nhớ hơn BFS. |
+| Frontier | Stack LIFO: node đưa vào sau được mở trước. |
+| Trace cần nhìn | `Depth`, `Action`, `Skipped States`; app có `dfs_depth_limit` để tránh đi quá sâu. |
+| Complete/Optimal | Không optimal; complete chỉ khi có giới hạn và không gian hữu hạn đủ nhỏ. |
+| Hạn chế | Dễ đi vào nhánh xấu, nghiệm tìm được có thể dài. |
 
 ### 9.3. UCS - Uniform Cost Search
 
-UCS mở rộng node có chi phí đường đi `g(n)` nhỏ nhất.
-
-Nguyên tắc:
-
-```text
-Luôn chọn node có g(n) nhỏ nhất.
-```
-
-Với 8-Puzzle trong dự án này, mỗi bước có chi phí bằng `1`, vì vậy UCS thường cho độ dài nghiệm giống BFS.
-
-Pseudo-code:
+UCS chọn node có chi phí đường đi thật `g(n)` nhỏ nhất. Nếu mỗi bước cost bằng `1`, UCS gần giống BFS về nghiệm, nhưng khác về tư duy vì nó tổng quát cho bài toán có cost không đều.
 
 ```text
 frontier <- PriorityQueue(start, priority=g)
 best_g[start] <- 0
-
 while frontier not empty:
     node <- pop_lowest_g(frontier)
-    if node is goal:
-        return solution
-    for child in successors(node):
-        if g(child) is better:
-            update child in frontier
+    relax all children by path cost
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Có, nếu chi phí không âm |
-| Optimal | Có |
-| Ưu điểm | Tổng quát hơn BFS khi chi phí bước khác nhau |
-| Nhược điểm | Không dùng heuristic nên có thể mở nhiều node |
-| Phù hợp với 8-Puzzle | Có ý nghĩa học thuật để so sánh với BFS |
+| Mục đích | Tìm đường đi có tổng cost nhỏ nhất. |
+| Frontier | Priority queue theo `g(n)`. |
+| Trace cần nhìn | `Selection Key` có `g=...`; node có `g` thấp được chọn trước. |
+| Complete/Optimal | Complete và optimal với chi phí không âm. |
+| Hạn chế | Không dùng heuristic nên có thể mở nhiều node. |
 
 ### 9.4. IDS - Iterative Deepening Search
 
-IDS kết hợp ưu điểm của BFS và DFS. Thuật toán chạy Depth-Limited Search nhiều lần với giới hạn tăng dần.
-
-Nguyên tắc:
-
-```text
-Chạy DFS với limit = 0, 1, 2, 3, ...
-```
-
-Pseudo-code:
+IDS chạy DFS nhiều lần với depth limit tăng dần. Nó dùng ít bộ nhớ kiểu DFS nhưng vẫn tìm nghiệm nông nhất như BFS khi cost đều.
 
 ```text
 for limit in 0..max_depth:
     result <- depth_limited_search(start, limit)
-    if result found:
-        return result
+    if found: return result
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Có nếu giới hạn đủ lớn |
-| Optimal | Có với chi phí bước bằng nhau |
-| Ưu điểm | Ít tốn bộ nhớ hơn BFS |
-| Nhược điểm | Mở lại các node nông nhiều lần |
-| Phù hợp với 8-Puzzle | Tốt để minh họa trade-off thời gian và bộ nhớ |
+| Mục đích | Cân bằng giữa bộ nhớ thấp của DFS và nghiệm ngắn của BFS. |
+| Frontier | Stack trong từng lượt depth-limited search. |
+| Trace cần nhìn | `Selection Key`/`Decision` nêu depth limit hiện tại, node bị bỏ qua khi vượt limit. |
+| Complete/Optimal | Complete và optimal theo số bước nếu limit đủ lớn, cost đều. |
+| Hạn chế | Mở lại node nông nhiều lần. |
 
 ### 9.5. Greedy Best-First Search
 
-Greedy chọn node có heuristic `h(n)` nhỏ nhất, tức là node có vẻ gần goal nhất.
-
-Nguyên tắc:
-
-```text
-Luôn chọn node có h(n) nhỏ nhất.
-```
-
-Pseudo-code:
+Greedy chọn node có heuristic `h(n)` nhỏ nhất, tức trạng thái trông gần goal nhất. Nó nhanh nhưng dễ bị đánh lừa vì bỏ qua cost đã đi.
 
 ```text
 frontier <- PriorityQueue(start, priority=h)
-
 while frontier not empty:
     node <- pop_lowest_h(frontier)
-    if node is goal:
-        return solution
     expand node
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Không đảm bảo trong mọi trường hợp nếu không kiểm soát lặp |
-| Optimal | Không |
-| Ưu điểm | Thường chạy nhanh |
-| Nhược điểm | Dễ bị heuristic dẫn sai |
-| Phù hợp với 8-Puzzle | Dùng để thấy heuristic giúp giảm expanded node nhưng có rủi ro không tối ưu |
+| Mục đích | Minh họa sức mạnh và rủi ro của heuristic. |
+| Frontier | Priority queue theo `h(n)`. |
+| Trace cần nhìn | `Selection Key` có `h=...`; `g` có thể cao nhưng vẫn được chọn nếu `h` thấp. |
+| Complete/Optimal | Không bảo đảm optimal. |
+| Hạn chế | Có thể chọn đường ngắn hạn đẹp nhưng tổng đường đi dài. |
 
 ### 9.6. A*
 
-A* là thuật toán tìm kiếm có thông tin, kết hợp chi phí đã đi và ước lượng chi phí còn lại.
-
-Hàm đánh giá:
+A* kết hợp chi phí đã đi `g(n)` và heuristic còn lại `h(n)` bằng `f(n)=g(n)+h(n)`. Đây là thuật toán trung tâm của bài vì rất phù hợp với 8-Puzzle.
 
 ```text
-f(n) = g(n) + h(n)
-```
-
-Trong đó:
-
-- `g(n)`: chi phí từ start đến node `n`.
-- `h(n)`: ước lượng chi phí từ node `n` đến goal.
-- `f(n)`: tổng chi phí ước lượng của lời giải đi qua node `n`.
-
-Pseudo-code:
-
-```text
-frontier <- PriorityQueue(start, priority=g+h)
+frontier <- PriorityQueue(start, priority=f=g+h)
 best_g[start] <- 0
-
 while frontier not empty:
     node <- pop_lowest_f(frontier)
-    if node is goal:
-        return solution
-    for child in successors(node):
-        if g(child) is better:
-            update child in frontier
+    if goal: return solution
+    relax children if new g is better
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Có với không gian hữu hạn |
-| Optimal | Có nếu heuristic admissible |
-| Ưu điểm | Thường mở ít node hơn BFS/UCS |
-| Nhược điểm | Có thể tốn bộ nhớ |
-| Phù hợp với 8-Puzzle | Rất phù hợp, đặc biệt với Manhattan Distance |
+| Mục đích | Tìm nghiệm tối ưu nhưng mở ít node hơn UCS/BFS nhờ heuristic. |
+| Frontier | Priority queue theo `f(n)=g(n)+h(n)`. |
+| Trace cần nhìn | `g`, `h`, `f`, `Selection Key`; node có `f` thấp nhất được mở. |
+| Complete/Optimal | Complete và optimal nếu heuristic admissible như Manhattan. |
+| Hạn chế | Có thể tốn bộ nhớ khi frontier lớn. |
 
 ### 9.7. IDA* - Iterative Deepening A*
 
-IDA* kết hợp ý tưởng của IDS và A*. Thuật toán dùng DFS nhưng giới hạn bởi ngưỡng `f(n)`.
-
-Nguyên tắc:
-
-```text
-Chỉ đi sâu nếu f(n) <= threshold.
-```
-
-Pseudo-code:
+IDA* dùng ý tưởng A* nhưng chạy DFS theo ngưỡng `f`. Nếu node có `f(n)` vượt threshold thì bị prune; threshold tăng dần theo giá trị vượt nhỏ nhất.
 
 ```text
 threshold <- h(start)
-
 repeat:
-    result, next_threshold <- DFS_bounded_by_f(start, threshold)
-    if result found:
-        return result
-    threshold <- next_threshold
+    DFS while f(node) <= threshold
+    if goal found: return solution
+    threshold <- next exceeded f
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Có nếu không bị giới hạn vòng lặp |
-| Optimal | Có với heuristic admissible |
-| Ưu điểm | Tiết kiệm bộ nhớ hơn A* |
-| Nhược điểm | Có thể mở lại node nhiều lần |
-| Phù hợp với 8-Puzzle | Rất có giá trị học thuật vì thể hiện trade-off giữa A* và IDS |
+| Mục đích | Giữ tính định hướng của A* nhưng dùng ít bộ nhớ hơn. |
+| Frontier | Đường DFS hiện tại, không giữ toàn bộ priority queue lớn như A*. |
+| Trace cần nhìn | `Selection Key` có `threshold=...`, `pruned=True/False`. |
+| Complete/Optimal | Optimal với heuristic admissible nếu giới hạn iteration đủ. |
+| Hạn chế | Mở lại node nhiều lần qua các threshold. |
 
 ### 9.8. Simple Hill Climbing
 
-Simple Hill Climbing là thuật toán tìm kiếm cục bộ. Thuật toán chỉ quan tâm trạng thái hiện tại và các láng giềng.
-
-Nguyên tắc:
-
-```text
-Chọn láng giềng đầu tiên có h(n) tốt hơn hiện tại.
-```
-
-Pseudo-code:
+Simple Hill Climbing là local search: không xây cây tìm kiếm đầy đủ, chỉ nhìn trạng thái hiện tại và neighbor. Nó chọn neighbor đầu tiên làm giảm `h(n)`.
 
 ```text
 current <- start
-
-while exists improving neighbor:
-    current <- first improving neighbor
-
-return current
+while exists first neighbor with lower h:
+    current <- that neighbor
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Không |
-| Optimal | Không |
-| Ưu điểm | Đơn giản, ít bộ nhớ |
-| Nhược điểm | Dễ kẹt local optimum hoặc plateau |
-| Phù hợp với 8-Puzzle | Dùng để minh họa hạn chế của local search |
+| Mục đích | Minh họa tối ưu cục bộ bằng heuristic. |
+| Frontier | Các neighbor của current node. |
+| Trace cần nhìn | `h`, `Decision/Note`; nếu không còn neighbor tốt hơn thì dừng. |
+| Complete/Optimal | Không complete, không optimal. |
+| Hạn chế | Dễ kẹt local optimum, ridge, plateau. |
 
 ### 9.9. Steepest-Ascent Hill Climbing
 
-Biến thể này xét toàn bộ láng giềng và chọn láng giềng tốt nhất.
-
-Nguyên tắc:
+Steepest-Ascent xét toàn bộ neighbor rồi chọn neighbor có `h(n)` thấp nhất. Nó cẩn thận hơn Simple Hill Climbing nhưng vẫn chỉ tối ưu cục bộ.
 
 ```text
-Chọn neighbor có h(n) nhỏ nhất trong tất cả neighbor.
+neighbors <- successors(current)
+best <- argmin_h(neighbors)
+if h(best) < h(current): current <- best
+else stop
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Không |
-| Optimal | Không |
-| Ưu điểm | Quyết định tốt hơn Simple Hill Climbing |
-| Nhược điểm | Vẫn kẹt local optimum |
-| Phù hợp với 8-Puzzle | Dùng để so sánh với Simple Hill Climbing |
+| Mục đích | Chọn bước cải thiện mạnh nhất trong vùng lân cận. |
+| Frontier | Toàn bộ neighbor đang được cân nhắc. |
+| Trace cần nhìn | Frontier liệt kê candidate; node có `h` thấp nhất được chọn. |
+| Complete/Optimal | Không complete, không optimal. |
+| Hạn chế | Vẫn kẹt nếu mọi neighbor không cải thiện. |
 
 ### 9.10. Stochastic Hill Climbing
 
-Stochastic Hill Climbing chọn ngẫu nhiên một láng giềng có cải thiện.
-
-Nguyên tắc:
+Stochastic Hill Climbing đưa yếu tố ngẫu nhiên vào local search. Nếu có nhiều neighbor cải thiện, thuật toán chọn ngẫu nhiên một neighbor thay vì luôn chọn tốt nhất.
 
 ```text
-Nếu có nhiều neighbor tốt hơn, chọn ngẫu nhiên một neighbor.
+improving <- neighbors with h lower than current
+current <- random_choice(improving)
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Không |
-| Optimal | Không |
-| Ưu điểm | Có tính ngẫu nhiên, đôi khi tránh được một số đường xấu |
-| Nhược điểm | Kết quả phụ thuộc seed |
-| Phù hợp với 8-Puzzle | Dùng để minh họa vai trò của randomness trong local search |
+| Mục đích | Cho thấy randomness có thể thay đổi đường đi tìm kiếm. |
+| Frontier | Các neighbor cải thiện. |
+| Trace cần nhìn | `Selection Key`/`Decision` có seed hoặc lựa chọn ngẫu nhiên. |
+| Complete/Optimal | Không complete, không optimal. |
+| Hạn chế | Kết quả phụ thuộc seed, khó tái lập nếu không cố định seed. |
 
 ### 9.11. Random-Restart Hill Climbing
 
-Random-Restart Hill Climbing chạy hill climbing nhiều lần từ các điểm khởi động khác nhau.
-
-Trong app, các điểm restart được tạo bằng random-walk từ start để lời giải vẫn có quan hệ với trạng thái bắt đầu.
-
-Nguyên tắc:
+Random-Restart chạy hill climbing nhiều lần từ các điểm khởi động khác nhau. Trong app, restart tạo từ random-walk quanh bài toán để vẫn gắn với Start.
 
 ```text
-Chạy hill climbing nhiều lần và giữ nghiệm tốt nhất.
+best <- start
+for each restart:
+    candidate <- hill_climb(randomized_start)
+    best <- lower_h(best, candidate)
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Không tuyệt đối |
-| Optimal | Không |
-| Ưu điểm | Giảm nguy cơ kẹt local optimum |
-| Nhược điểm | Tốn thời gian hơn hill climbing thường |
-| Phù hợp với 8-Puzzle | Tốt để minh họa cách restart cải thiện local search |
+| Mục đích | Giảm xác suất kẹt local optimum. |
+| Frontier | Neighbor trong từng lượt restart. |
+| Trace cần nhìn | `Decision/Note` cho biết restart index và best h hiện tại. |
+| Complete/Optimal | Không bảo đảm tuyệt đối. |
+| Hạn chế | Tốn thời gian hơn hill climbing một lượt. |
 
 ### 9.12. Local Beam Search
 
-Local Beam Search duy trì nhiều trạng thái cùng lúc. Ở mỗi vòng, thuật toán sinh successor từ tất cả trạng thái trong beam và giữ lại `k` trạng thái tốt nhất.
-
-Nguyên tắc:
-
-```text
-Giữ k trạng thái tốt nhất theo h(n).
-```
-
-Pseudo-code:
+Local Beam Search giữ nhiều trạng thái tốt cùng lúc. Mỗi vòng, nó sinh successor từ tất cả state trong beam, rồi giữ lại `k` state tốt nhất.
 
 ```text
 beam <- {start}
-
-while step limit not reached:
-    candidates <- successors of all states in beam
-    beam <- k best candidates by h
-    if goal in beam:
-        return solution
+repeat:
+    candidates <- successors(all states in beam)
+    beam <- k states with lowest h
 ```
 
-Đặc điểm:
-
-| Tiêu chí | Nhận xét |
+| Mục | Giải thích |
 |---|---|
-| Complete | Không |
-| Optimal | Không |
-| Ưu điểm | Khám phá nhiều hướng hơn hill climbing |
-| Nhược điểm | Beam nhỏ có thể bỏ mất nhánh tốt |
-| Phù hợp với 8-Puzzle | Dùng để so sánh local search đơn trạng thái và đa trạng thái |
+| Mục đích | Khám phá nhiều hướng song song trong local search. |
+| Frontier | Beam mới sau khi lọc top-k candidate. |
+| Trace cần nhìn | `Generated Children`, `Frontier`, `h`; beam width ảnh hưởng mạnh tới kết quả. |
+| Complete/Optimal | Không complete, không optimal. |
+| Hạn chế | Beam nhỏ có thể bỏ mất nhánh tốt. |
+
+### 9.13. Simulated Annealing
+
+Simulated Annealing cho phép nhận bước xấu với xác suất giảm dần theo nhiệt độ `T`. Lúc đầu thuật toán khám phá rộng; về sau nó trở nên “khó tính” hơn.
+
+```text
+current <- start
+T <- initial_temperature
+while T > min_temperature:
+    candidate <- random_neighbor(current)
+    accept if better or random() < exp(-delta_h / T)
+    T <- T * cooling_rate
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Tránh kẹt local optimum quá sớm. |
+| Frontier | Candidate neighbor tại mỗi bước. |
+| Trace cần nhìn | `Selection Key` có `T`, `candidate_h`, accept/reject. |
+| Complete/Optimal | Không bảo đảm. |
+| Hạn chế | Phụ thuộc lịch làm nguội và seed. |
+
+### 9.14. AND-OR Search
+
+AND-OR Search dùng cho môi trường nondeterministic, nơi một action có thể dẫn tới nhiều outcome. OR node là lựa chọn của agent; AND node là các kết quả môi trường phải xử lý hết.
+
+```text
+OR: choose an action
+AND: handle every possible outcome of that action
+return conditional plan
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Minh họa conditional plan trong môi trường không chắc chắn. |
+| Frontier | Các nhánh outcome/candidate trong mô hình học thuật. |
+| Trace cần nhìn | `Decision/Note` mô tả OR choice và AND outcomes. |
+| Vai trò trong bài | Không phải solver 8-puzzle chuẩn; dùng để chứng minh hiểu complex environment. |
+| Hạn chế | Trace là demo bounded, không phải chứng minh lời giải đầy đủ cho mọi nondeterministic world. |
+
+### 9.15. No Observation Search
+
+No Observation Search giả định agent không quan sát được trạng thái thật. Agent phải duy trì belief state: tập các trạng thái có thể đang xảy ra.
+
+```text
+belief <- possible states
+for each action:
+    next_belief <- apply action to every state in belief
+    choose action minimizing total belief h
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Minh họa tìm kiếm trên belief state khi không có sensor. |
+| Frontier | Tập belief sau action. |
+| Trace cần nhìn | `belief_size`, `total_h`, action được chọn. |
+| Vai trò trong bài | Cho thấy PEAS thay đổi khi sensors không quan sát board thật. |
+| Hạn chế | Demo bounded để học thuật, không phải solver 8-puzzle thông thường. |
+
+### 9.16. Partially Observable Search
+
+Partially Observable Search cho agent chỉ quan sát một phần board. App dùng pattern goal có dấu `?` để thể hiện ô chưa biết, rồi lọc belief bằng observation.
+
+```text
+observe partial board
+predict belief after action
+filter states matching observation
+choose state/action by partial_goal_mismatch and h
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Minh họa cập nhật belief khi chỉ thấy một phần môi trường. |
+| Frontier | Belief states còn phù hợp sau quan sát. |
+| Trace cần nhìn | `partial_goal_mismatch`, `observation_blank`, `belief_after`. |
+| Vai trò trong bài | Giúp phân biệt fully observable 8-puzzle chuẩn với partial observation. |
+| Hạn chế | Không thay thế A*/BFS cho bài 8-puzzle chuẩn. |
+
+### 9.17. Online Search
+
+Online Search minh họa agent vừa đi vừa học môi trường, không biết toàn bộ state graph từ đầu. App mô phỏng kiểu LRTA*: cập nhật heuristic đã học cho trạng thái hiện tại rồi chọn bước tiếp.
+
+```text
+H(current) <- min(1 + H(neighbor))
+move to neighbor with lowest learned estimate
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Minh họa learning/search online. |
+| Frontier | Neighbor quan sát được tại current state. |
+| Trace cần nhìn | `updated_H`, `chosen`, estimated cost. |
+| Vai trò trong bài | Cho thấy agent online khác solver offline như A*. |
+| Hạn chế | Có thể đi vòng hoặc chưa tới goal trong bound. |
+
+### 9.18. CSP Definition
+
+CSP Definition không tìm đường đi từng move như A*. Nó trình bày bài toán dưới dạng biến, miền giá trị và ràng buộc.
+
+```text
+variables <- cells/regions/decision variables
+domains <- possible values
+constraints <- allowed combinations
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Chứng minh hiểu formulation CSP. |
+| Frontier | Các assignment/candidate còn xét. |
+| Trace cần nhìn | `Decision/Note` nêu biến, domain, constraint. |
+| Vai trò trong bài | Cầu nối giữa search problem và constraint problem. |
+| Hạn chế | Là mô hình hóa, không phải solver đường đi 8-puzzle chính. |
+
+### 9.19. Constraint Propagation
+
+Constraint Propagation lan truyền ràng buộc để thu hẹp domain trước hoặc trong khi search. Khi một biến được gán, các giá trị không còn hợp lệ ở biến liên quan bị loại.
+
+```text
+queue <- constraints affected by assignment
+while queue not empty:
+    revise domains
+    enqueue newly affected constraints
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Giảm search space bằng suy luận constraint. |
+| Frontier | Các domain/assignment còn khả thi. |
+| Trace cần nhìn | Domain bị thu hẹp, số conflict giảm. |
+| Vai trò trong bài | Minh họa inference trong CSP. |
+| Hạn chế | Propagation có thể chưa đủ để giải, vẫn cần search. |
+
+### 9.20. Path Consistency
+
+Path Consistency kiểm tra tính nhất quán mạnh hơn giữa các cặp biến qua biến trung gian. Một cặp giá trị chỉ hợp lệ nếu tồn tại giá trị của biến thứ ba làm toàn bộ path constraint thỏa.
+
+```text
+for each variable triple (Xi, Xj, Xk):
+    remove pair values unsupported through Xk
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Minh họa consistency bậc cao hơn arc consistency. |
+| Frontier | Các relation/cặp giá trị còn hợp lệ. |
+| Trace cần nhìn | Pair/domain bị loại do không có support. |
+| Vai trò trong bài | Cho thấy CSP không chỉ là backtracking brute force. |
+| Hạn chế | Tốn chi phí kiểm tra hơn propagation đơn giản. |
+
+### 9.21. Global Constraints
+
+Global Constraints là ràng buộc áp dụng lên nhiều biến cùng lúc, ví dụ all-different hoặc giới hạn tổng. Chúng giúp mô hình gọn hơn nhiều ràng buộc nhị phân rời rạc.
+
+```text
+apply global rule over variable set
+prune values violating the shared invariant
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Diễn tả invariant lớn của bài toán bằng một constraint rõ. |
+| Frontier | Assignment/domain sau khi áp global rule. |
+| Trace cần nhìn | `Decision/Note` nêu constraint toàn cục đang áp. |
+| Vai trò trong bài | Giải thích vì sao CSP có thể mô hình hóa bài toán sạch hơn. |
+| Hạn chế | Cần propagator phù hợp cho từng loại global constraint. |
+
+### 9.22. CSP Backtracking
+
+CSP Backtracking gán biến từng bước. Nếu assignment vi phạm constraint, thuật toán quay lui để thử giá trị khác.
+
+```text
+if all variables assigned: return assignment
+var <- select_unassigned_variable
+for value in domain(var):
+    if consistent:
+        assign and recurse
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Tìm assignment thỏa toàn bộ constraint. |
+| Frontier | Các partial assignment trong stack recursion. |
+| Trace cần nhìn | Biến được chọn, giá trị thử, conflict/backtrack. |
+| Complete/Optimal | Complete nếu duyệt hết domain hữu hạn; optimal không phải mục tiêu mặc định. |
+| Hạn chế | Có thể chậm nếu không có ordering/propagation tốt. |
+
+### 9.23. Min-Conflicts
+
+Min-Conflicts là local search cho CSP. Nó bắt đầu từ một assignment đầy đủ, rồi sửa biến đang gây conflict bằng giá trị làm số conflict thấp nhất.
+
+```text
+assignment <- random complete assignment
+repeat:
+    var <- conflicted variable
+    value <- value minimizing conflicts
+    update assignment
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Giải CSP bằng tối thiểu hóa số xung đột. |
+| Frontier | Các assignment lân cận sau khi đổi một biến. |
+| Trace cần nhìn | Conflict count, biến được sửa, giá trị mới. |
+| Complete/Optimal | Không bảo đảm complete trong bound hữu hạn. |
+| Hạn chế | Có thể dao động nếu landscape xấu. |
+
+### 9.24. Constraint Graph
+
+Constraint Graph trong app dùng bài toán tô màu đồ thị Thủ Đức. Mỗi phường/vùng là một biến, domain là màu, cạnh giáp ranh là ràng buộc hai vùng kề nhau không được trùng màu.
+
+```text
+variables <- Thu Duc regions
+domains <- palette colors
+constraints <- adjacent regions must differ
+solve by backtracking/ordering, then validate conflicts
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Demo CSP trực quan, dễ hiểu hơn ép CSP vào đường đi 8-puzzle. |
+| Frontier | Region assignments chưa/chờ tô. |
+| Trace cần nhìn | Region, blocked colors, chosen color, degree. |
+| Kết quả đúng | Không có cặp vùng giáp ranh trùng màu. |
+| Hạn chế | Đây là demo CSP độc lập, không phải thuật toán giải 8-puzzle. |
+
+### 9.25. Minimax
+
+Minimax dùng cho game đối kháng hai người. MAX chọn nước làm utility lớn nhất; MIN chọn nước làm utility nhỏ nhất. Vì 8-puzzle không có đối thủ, app dùng Caro mini-game.
+
+```text
+max_value(state):
+    return max(min_value(child))
+min_value(state):
+    return min(max_value(child))
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Minh họa quyết định tối ưu trong game tree đối kháng. |
+| Frontier | Các nước đi Caro trong cây game bị giới hạn độ sâu. |
+| Trace cần nhìn | MAX/MIN turn, utility, selected move. |
+| Complete/Optimal | Optimal trong game tree bounded nếu duyệt đủ depth đã đặt. |
+| Hạn chế | Không áp dụng trực tiếp cho 8-puzzle single-agent. |
+
+### 9.26. Alpha-Beta Pruning
+
+Alpha-Beta là Minimax có cắt nhánh. Nếu một nhánh chắc chắn không ảnh hưởng quyết định cuối, thuật toán bỏ qua nhánh đó.
+
+```text
+alpha <- best value MAX can guarantee
+beta <- best value MIN can guarantee
+if alpha >= beta: prune
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Giữ kết quả Minimax nhưng giảm số node phải xét. |
+| Frontier | Game tree Caro còn lại sau khi prune. |
+| Trace cần nhìn | `alpha`, `beta`, prune note, utility. |
+| Complete/Optimal | Cùng quyết định với Minimax nếu cùng depth/order. |
+| Hạn chế | Hiệu quả phụ thuộc thứ tự xét nước đi. |
+
+### 9.27. Expectimax
+
+Expectimax dùng khi có chance node hoặc đối thủ hành động ngẫu nhiên. MAX chọn nước có expected utility cao nhất, còn chance node lấy trung bình có trọng số theo xác suất.
+
+```text
+max node: choose highest expected value
+chance node: sum(probability(outcome) * value(outcome))
+```
+
+| Mục | Giải thích |
+|---|---|
+| Mục đích | Minh họa quyết định dưới bất định/xác suất. |
+| Frontier | Nước đi MAX và các phản hồi O/chance trong Caro mini-game. |
+| Trace cần nhìn | Expected value, chance outcomes, selected MAX move. |
+| Complete/Optimal | Tối ưu theo expected utility trong tree bounded. |
+| Hạn chế | Cần mô hình xác suất hợp lý; không phải solver 8-puzzle chuẩn. |
 
 ## 10. Bảng so sánh tổng quát
 
