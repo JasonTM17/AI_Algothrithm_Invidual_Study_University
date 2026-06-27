@@ -265,17 +265,6 @@ Khi báo cáo, có thể đọc là: “Frontier đang giữ node ứng viên n�
 **Giao diện:** Streamlit, có hỗ trợ Tiếng Việt và English  
 **Ngày tạo dự án:** 04/06/2026  
 
-### Người thực hiện
-
-| Vai trò | Thông tin |
-|---|---|
-| Người làm báo cáo/dự án | `[Điền tên sinh viên hoặc nhóm tại đây]` |
-| Lớp / môn học | `[Điền lớp và học phần tại đây]` |
-| Hỗ trợ xây dựng mã nguồn và tài liệu | Codex, theo yêu cầu của người dùng |
-| Môi trường phát triển | `D:\Trí tuệ nhân tạo` |
-
-> Ghi chú: phần tên sinh viên, lớp và học phần nên được thay bằng thông tin thật trước khi nộp báo cáo.
-
 ## 2. Mục tiêu của dự án
 
 Dự án này xây dựng một chương trình mô phỏng trò chơi **8-Puzzle** nhằm minh họa cách các thuật toán tìm kiếm hoạt động trong trí tuệ nhân tạo.
@@ -371,12 +360,7 @@ Thư mục `8_puzzle_ai/` là package phụ phục vụ tham khảo và minh h�
 D:\Trí tuệ nhân tạo
 ├── eight_puzzle_search_app.py
 ├── streamlit_eight_puzzle_app.py
-├── README.md
-└── plans/
-    ├── plan.md
-    ├── phase-01-research.md
-    ├── phase-02-implement.md
-    └── phase-03-test.md
+└── README.md
 ```
 
 ### 4.1. `eight_puzzle_search_app.py`
@@ -417,15 +401,6 @@ File giao diện web Streamlit chứa:
 - Tab `Heuristics` để xem h(n) theo `misplaced` và `manhattan`, kèm đóng góp từng ô.
 - Tab `Experiment` để chạy benchmark deterministic trên preset cố định.
 - Tab `Report` để tải báo cáo Markdown phục vụ nộp bài.
-
-### 4.3. `plans/`
-
-Thư mục kế hoạch ClaudeKit dùng để theo dõi quá trình triển khai:
-
-- `phase-01-research.md`: khảo sát môi trường.
-- `phase-02-implement.md`: triển khai mã nguồn.
-- `phase-03-test.md`: kiểm thử.
-- `plan.md`: tổng hợp trạng thái kế hoạch.
 
 ## 5. Cách chạy chương trình
 
