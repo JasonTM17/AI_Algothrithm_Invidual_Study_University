@@ -38,7 +38,44 @@ Các chế độ demo trong Streamlit chính:
 - `Trò chơi xếp hình từ ảnh`: board số chơi được ngay; tải ảnh để đổi 8 ô thành mảnh ảnh, hỗ trợ Undo/Reset/Shuffle và chỉ đổi Start solver khi bấm `Dùng làm trạng thái bắt đầu`.
 
 Mỗi thuật toán trong 6 nhóm có một GIF chạy thật ngay tại vùng chọn thuật toán. GIF được sinh từ
-chính `run_algorithm` với Start/heuristic/seed cố định, không phải minh họa giả. Tạo lại toàn bộ 26 GIF:
+chính `run_algorithm` với Start/heuristic/seed cố định, không phải minh họa giả.
+
+### GIF demo trực tiếp cho từng thuật toán
+
+Bảng dưới đây nhúng trực tiếp các GIF đang nằm trong repo tại `web/assets/algorithm-demos/`.
+Mỗi GIF được sinh từ một lần chạy core thật, nên khi mở README trên GitHub người chấm có thể thấy ngay
+từng thuật toán đang chạy.
+
+| Nhóm | Thuật toán | GIF chạy thật |
+|---|---|---|
+| Uninformed Search | BFS | <img src="web/assets/algorithm-demos/bfs.gif" alt="BFS demo" width="280"> |
+| Uninformed Search | DFS | <img src="web/assets/algorithm-demos/dfs.gif" alt="DFS demo" width="280"> |
+| Uninformed Search | UCS | <img src="web/assets/algorithm-demos/ucs.gif" alt="UCS demo" width="280"> |
+| Uninformed Search | IDS | <img src="web/assets/algorithm-demos/ids.gif" alt="IDS demo" width="280"> |
+| Informed Search | Greedy | <img src="web/assets/algorithm-demos/greedy.gif" alt="Greedy demo" width="280"> |
+| Informed Search | A* | <img src="web/assets/algorithm-demos/a-star.gif" alt="A* demo" width="280"> |
+| Informed Search | IDA* | <img src="web/assets/algorithm-demos/ida-star.gif" alt="IDA* demo" width="280"> |
+| Local Search | Simple Hill Climbing | <img src="web/assets/algorithm-demos/simple-hill-climbing.gif" alt="Simple Hill Climbing demo" width="280"> |
+| Local Search | Steepest-Ascent Hill Climbing | <img src="web/assets/algorithm-demos/steepest-ascent-hill-climbing.gif" alt="Steepest-Ascent Hill Climbing demo" width="280"> |
+| Local Search | Stochastic Hill Climbing | <img src="web/assets/algorithm-demos/stochastic-hill-climbing.gif" alt="Stochastic Hill Climbing demo" width="280"> |
+| Local Search | Random-Restart Hill Climbing | <img src="web/assets/algorithm-demos/random-restart-hill-climbing.gif" alt="Random-Restart Hill Climbing demo" width="280"> |
+| Local Search | Local Beam Search | <img src="web/assets/algorithm-demos/local-beam-search.gif" alt="Local Beam Search demo" width="280"> |
+| Local Search | Simulated Annealing | <img src="web/assets/algorithm-demos/simulated-annealing.gif" alt="Simulated Annealing demo" width="280"> |
+| Complex Environments | AND-OR Search | <img src="web/assets/algorithm-demos/and-or-search.gif" alt="AND-OR Search demo" width="280"> |
+| Complex Environments | No Observation Search | <img src="web/assets/algorithm-demos/no-observation-search.gif" alt="No Observation Search demo" width="280"> |
+| Complex Environments | Partially Observable Search | <img src="web/assets/algorithm-demos/partially-observable-search.gif" alt="Partially Observable Search demo" width="280"> |
+| Complex Environments | Online Search | <img src="web/assets/algorithm-demos/online-search.gif" alt="Online Search demo" width="280"> |
+| Constraint Satisfaction Problems | CSP Definition | <img src="web/assets/algorithm-demos/csp-definition.gif" alt="CSP Definition demo" width="280"> |
+| Constraint Satisfaction Problems | Constraint Propagation | <img src="web/assets/algorithm-demos/constraint-propagation.gif" alt="Constraint Propagation demo" width="280"> |
+| Constraint Satisfaction Problems | Path Consistency | <img src="web/assets/algorithm-demos/path-consistency.gif" alt="Path Consistency demo" width="280"> |
+| Constraint Satisfaction Problems | Global Constraints | <img src="web/assets/algorithm-demos/global-constraints.gif" alt="Global Constraints demo" width="280"> |
+| Constraint Satisfaction Problems | CSP Backtracking | <img src="web/assets/algorithm-demos/csp-backtracking.gif" alt="CSP Backtracking demo" width="280"> |
+| Constraint Satisfaction Problems | Min-Conflicts | <img src="web/assets/algorithm-demos/min-conflicts.gif" alt="Min-Conflicts demo" width="280"> |
+| Adversarial / Stochastic Search | Minimax | <img src="web/assets/algorithm-demos/minimax.gif" alt="Minimax demo" width="280"> |
+| Adversarial / Stochastic Search | Alpha-Beta Pruning | <img src="web/assets/algorithm-demos/alpha-beta-pruning.gif" alt="Alpha-Beta Pruning demo" width="280"> |
+| Adversarial / Stochastic Search | Expectimax | <img src="web/assets/algorithm-demos/expectimax.gif" alt="Expectimax demo" width="280"> |
+
+Tạo lại toàn bộ 26 GIF:
 
 ```powershell
 python .\scripts\generate-algorithm-demo-gifs.py

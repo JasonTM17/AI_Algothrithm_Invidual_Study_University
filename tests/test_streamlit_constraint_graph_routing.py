@@ -164,6 +164,16 @@ def test_algorithm_demo_gifs_cover_all_registered_algorithms() -> None:
             assert gif.size == (800, 450)
 
 
+def test_readme_embeds_each_algorithm_demo_gif() -> None:
+    readme = _source("README.md")
+
+    assert "GIF demo trực tiếp cho từng thuật toán" in readme
+    for algorithm in puzzle.DEFAULT_ALGORITHMS:
+        relative_path = algorithm_demo_path(algorithm).relative_to(ROOT).as_posix()
+        assert f'<img src="{relative_path}"' in readme, f"README missing GIF for {algorithm}"
+        assert f'alt="{algorithm} demo"' in readme, f"README missing alt text for {algorithm}"
+
+
 def test_streamlit_run_compare_and_playback_controls() -> None:
     app = AppTest.from_file(str(ROOT / "streamlit_eight_puzzle_app.py"), default_timeout=30).run()
     assert not app.exception
@@ -203,6 +213,7 @@ def run_all_tests() -> None:
         test_streamlit_image_game_native_controls,
         test_persist_game_image_accepts_uploaded_file_like_object,
         test_algorithm_demo_gifs_cover_all_registered_algorithms,
+        test_readme_embeds_each_algorithm_demo_gif,
         test_streamlit_run_compare_and_playback_controls,
     ]
     for test in tests:
