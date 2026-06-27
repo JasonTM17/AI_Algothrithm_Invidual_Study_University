@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 import streamlit as st
 
 import eight_puzzle_search_app as puzzle
-import thu_duc_graph_coloring as thu_duc
+from web.playback_controls import render_step_player, reset_playback_state
 from web.ui_text import (
     text, help_text, localize_action, localize_table, localize_trace_text, localize_algorithm_group,
     ALGORITHM_BASIS, ALGORITHM_PROFILES, TABLE_COLUMNS,
@@ -37,22 +37,17 @@ def _cached_grading_checklist(lang: str):
     return puzzle.coursework_grading_checklist(lang)
 
 
-@st.cache_data(show_spinner=False)
-def _cached_color_graph(max_colors: int):
-    return thu_duc.color_graph(max_colors=max_colors)
-
-
 def show_page_header(lang: str) -> None:
     if lang == "vi":
         hero_stats = [
             ("6 nhóm", "thuật toán AI"),
-            ("27+", "biến thể/demo"),
+            ("26", "biến thể/demo"),
             ("Trace", "Node / Frontier / Reached"),
         ]
     else:
         hero_stats = [
             ("6 groups", "AI algorithms"),
-            ("27+", "variants/demos"),
+            ("26", "variants/demos"),
             ("Trace", "Node / Frontier / Reached"),
         ]
     stats_html = "".join(
@@ -131,19 +126,23 @@ def demo_readiness_html(lang: str, algorithm: str, heuristic: str) -> str:
     preset = st.session_state.get("last_preset_name") or text(lang, "random_manual")
     mode_class = "ok" if run_mode["mode"] == "standard_solver" else "warn"
     info = puzzle.ALGORITHM_INFO[algorithm]
+    complete_text = str(info.get("complete", ""))
+    optimal_text = str(info.get("optimal", ""))
+    complete_yes = complete_text.lower().startswith("yes")
+    optimal_yes = optimal_text.lower().startswith("yes")
     guarantee_value = (
         "Complete / Optimal"
-        if info["complete"] and info["optimal"]
+        if complete_yes and optimal_yes
         else "Complete / Not optimal"
-        if info["complete"]
+        if complete_yes
         else "Bounded / Not optimal"
     )
     if lang == "vi":
         guarantee_value = (
             "Đầy đủ / Tối ưu"
-            if info["complete"] and info["optimal"]
+            if complete_yes and optimal_yes
             else "Đầy đủ / Không tối ưu"
-            if info["complete"]
+            if complete_yes
             else "Giới hạn / Không tối ưu"
         )
     chips = [
@@ -151,7 +150,7 @@ def demo_readiness_html(lang: str, algorithm: str, heuristic: str) -> str:
         readiness_chip(text(lang, "solvable"), text(lang, "solvable") if solvable else text(lang, "unsolvable"), "ok" if solvable else "fail"),
         readiness_chip(text(lang, "current_preset"), preset, ""),
         readiness_chip(text(lang, "selected_heuristic"), heuristic, "ok"),
-        readiness_chip(text(lang, "guarantee"), guarantee_value, "ok" if info["complete"] else "warn"),
+        readiness_chip(text(lang, "guarantee"), guarantee_value, "ok" if complete_yes else "warn"),
     ]
     description = escape(localize_trace_text(run_mode["description"], lang))
     return f'<div class="readiness-grid">{"".join(chips)}</div><p class="section-note">{description}</p>'
@@ -242,148 +241,6 @@ def playable_tile_grid(state: puzzle.State, lang: str) -> None:
                     st.rerun()
     note = "Bấm trực tiếp ô hợp lệ cạnh ô trống để di chuyển." if lang == "vi" else "Click a legal tile next to the blank to move it."
     st.info(note)
-
-
-# Shared Thu Duc color mapping: VN palette name → (English key, hex color)
-_THU_DUC_COLORS: dict[str, tuple[str, str]] = {
-    "Xanh ngoc": ("thu_duc_color_teal", "#0f766e"),
-    "Vang dat": ("thu_duc_color_amber", "#b7791f"),
-    "Do gach": ("thu_duc_color_brick", "#b42318"),
-    "Tim than": ("thu_duc_color_violet", "#4c1d95"),
-    "Xanh troi": ("thu_duc_color_sky", "#0369a1"),
-    "Hong sen": ("thu_duc_color_lotus", "#be185d"),
-}
-
-# Internal English key → hex (used by thu_duc_map_svg for SVG fill lookup)
-_THU_DUC_COLOR_HEX: dict[str, str] = {
-    en_key: hex_val for _vn, (en_key, hex_val) in _THU_DUC_COLORS.items()
-}
-
-
-def thu_duc_map_svg(result: thu_duc.ColoringResult, lang: str) -> str:
-    def _resolve_color(vn_name: str) -> str:
-        en_key = _THU_DUC_COLORS.get(vn_name, ("", "#94a3b8"))[0]
-        return _THU_DUC_COLOR_HEX.get(en_key, "#94a3b8")
-    edges = []
-    for left, right in thu_duc.EDGES:
-        x1, y1 = thu_duc.WARD_POSITIONS[left]
-        x2, y2 = thu_duc.WARD_POSITIONS[right]
-        edges.append(
-            f'<line x1="{x1 * 100:.1f}" y1="{y1 * 100:.1f}" x2="{x2 * 100:.1f}" y2="{y2 * 100:.1f}" />'
-        )
-    nodes = []
-    for ward, (x, y) in thu_duc.WARD_POSITIONS.items():
-        color = _resolve_color(result.assignments.get(ward, ""))
-        nodes.append(
-            f'<g><circle cx="{x * 100:.1f}" cy="{y * 100:.1f}" r="4.4" fill="{color}" />'
-            f'<text x="{x * 100:.1f}" y="{y * 100 + 8:.1f}">{escape(ward)}</text></g>'
-        )
-    return (
-        '<div class="lab-panel">'
-        f'<svg viewBox="0 0 100 108" role="img" aria-label="{escape(text(lang, "thu_duc_title"))}" '
-        'style="width:100%;max-height:620px;">'
-        '<style>line{stroke:var(--map-edge);stroke-width:.7} circle{stroke:var(--map-node-stroke);stroke-width:.7}'
-        'text{font-size:2.35px;fill:var(--ink);text-anchor:middle;font-weight:700}</style>'
-        f'{"".join(edges)}{"".join(nodes)}</svg></div>'
-    )
-
-
-def _translate_color_name(vn_name: str, lang: str) -> str:
-    """Translate a Vietnamese palette color name to the current display language."""
-    entry = _THU_DUC_COLORS.get(vn_name)
-    if entry is None:
-        return vn_name
-    return text(lang, entry[0])
-
-
-def _localize_coloring_rows(rows: list[dict], lang: str) -> list[dict]:
-    """Translate Vietnamese color names in coloring table rows."""
-    localized = []
-    for row in rows:
-        r = dict(row)
-        r["Color"] = _translate_color_name(r.get("Color", ""), lang)
-        localized.append(r)
-    return localized
-
-
-def _localize_coloring_steps(steps: list[dict], lang: str) -> list[dict]:
-    """Translate Vietnamese color names in coloring step rows."""
-    localized = []
-    for step in steps:
-        s = dict(step)
-        s["Chosen color"] = _translate_color_name(s.get("Chosen color", ""), lang)
-        blocked_raw = s.get("Blocked colors", "")
-        if blocked_raw and blocked_raw != "-":
-            translated = [_translate_color_name(c.strip(), lang) for c in blocked_raw.split(",")]
-            s["Blocked colors"] = ", ".join(translated)
-        localized.append(s)
-    return localized
-
-
-def _build_palette_legend_html(result, lang: str) -> str:
-    """Build an HTML legend showing which colors map to which names."""
-    items = []
-    for vn_name in result.colors_used:
-        display_name = _translate_color_name(vn_name, lang)
-        hex_color = _THU_DUC_COLORS.get(vn_name, ("", "#94a3b8"))[1]
-        items.append(
-            f'<span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px;">'
-            f'<span style="width:14px;height:14px;border-radius:3px;background:{hex_color};display:inline-block;"></span>'
-            f'{escape(display_name)}</span>'
-        )
-    if not items:
-        return ""
-    return f'<div class="lab-panel" style="margin:0.5rem 0 1rem;"><strong>{"Palette" if lang == "en" else "Bảng màu"}:</strong> {"".join(items)}</div>'
-
-
-def show_thu_duc_graph_coloring_page(lang: str) -> None:
-    st.markdown(
-        f"""
-        <div class="lab-panel">
-          <strong>{escape(text(lang, "thu_duc_title"))}</strong>
-          <p class="section-note">{escape(text(lang, "thu_duc_subtitle"))}</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    max_colors = st.slider(text(lang, "thu_duc_palette"), 3, len(thu_duc.PALETTE), 4, key="thu_duc_max_colors")
-    result = _cached_color_graph(max_colors)
-    status = text(lang, "thu_duc_valid") if result.valid else text(lang, "thu_duc_invalid")
-    cards = "".join(
-        f'<div class="metric-card"><span>{escape(label)}</span><strong>{value}</strong></div>'
-        for label, value in [
-            (text(lang, "thu_duc_stat_regions"), len(thu_duc.REGIONS)),
-            (text(lang, "thu_duc_stat_edges"), len(thu_duc.EDGES)),
-            (text(lang, "thu_duc_stat_colors_used"), len(result.colors_used)),
-            (text(lang, "thu_duc_stat_status"), status),
-        ]
-    )
-    st.markdown(f'<h3>{escape(text(lang, "thu_duc_stats"))}</h3><div class="metric-grid">{cards}</div>', unsafe_allow_html=True)
-
-    # Palette color legend (color swatches with bilingual names)
-    legend_html = _build_palette_legend_html(result, lang)
-    if legend_html:
-        st.markdown(legend_html, unsafe_allow_html=True)
-
-    left, right = st.columns([1.1, 1], gap="large")
-    with left:
-        st.markdown(thu_duc_map_svg(result, lang), unsafe_allow_html=True)
-    with right:
-        # Validation result banner
-        if result.conflicts:
-            conflict_list = " / ".join(
-                f"{escape(left)} - {escape(right)}" for left, right in result.conflicts
-            )
-            if lang == "vi":
-                st.error(f"Phát hiện {len(result.conflicts)} cặp xung đột: {conflict_list}")
-            else:
-                st.error(f"Found {len(result.conflicts)} conflicting pair(s): {conflict_list}")
-        else:
-            st.success(text(lang, "thu_duc_no_conflicts"))
-        st.subheader(text(lang, "thu_duc_assignments"))
-        st.dataframe(_localize_coloring_rows(thu_duc.coloring_rows(result), lang), width="stretch", hide_index=True)
-    st.subheader(text(lang, "thu_duc_steps"))
-    st.dataframe(_localize_coloring_steps(result.steps, lang), width="stretch", hide_index=True)
 
 
 def show_image_puzzle_page(lang: str) -> None:
@@ -932,6 +789,19 @@ def localized_action_sequence(result: puzzle.SearchResult, lang: str) -> str:
     return " -> ".join(localize_action(action, lang) for action in result.actions)
 
 
+def playback_labels(lang: str, slider_label: str) -> Dict[str, str]:
+    return {
+        "previous": text(lang, "previous_step"),
+        "next": text(lang, "next_step"),
+        "play": text(lang, "play_steps"),
+        "pause": text(lang, "pause_steps"),
+        "reset": text(lang, "reset_steps"),
+        "speed": text(lang, "playback_speed"),
+        "seconds": text(lang, "seconds_per_step"),
+        "slider": slider_label,
+    }
+
+
 def show_path_player(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
     st.subheader(text(lang, "path_player"))
     if not result.path:
@@ -939,54 +809,39 @@ def show_path_player(result: puzzle.SearchResult, lang: str, heuristic: str) -> 
         return
 
     max_step = len(result.path) - 1
-    st.session_state.playback_step = min(st.session_state.playback_step, max_step)
-    current_step = st.session_state.playback_step
-
-    prev_col, slider_col, next_col = st.columns([1, 3, 1])
-    with prev_col:
-        if st.button(text(lang, "previous_step"), disabled=current_step <= 0, width="stretch", help=help_text(lang, "previous_step")):
-            st.session_state.playback_step = max(0, current_step - 1)
-            st.rerun()
-    with slider_col:
-        selected_step = st.slider(
-            text(lang, "step_slider"),
-            min_value=0,
-            max_value=max_step,
-            value=current_step,
-            help=help_text(lang, "step_slider"),
-        )
-        if selected_step != current_step:
-            st.session_state.playback_step = selected_step
-            current_step = selected_step
-    with next_col:
-        if st.button(text(lang, "next_step"), disabled=current_step >= max_step, width="stretch", help=help_text(lang, "next_step")):
-            st.session_state.playback_step = min(max_step, current_step + 1)
-            st.rerun()
-
-    current_state = result.path[current_step]
-    previous_state = result.path[current_step - 1] if current_step > 0 else result.path[0]
-    current_action = text(lang, "start") if current_step == 0 else localize_action(result.actions[current_step - 1], lang)
-    next_action = (
-        localize_action(result.actions[current_step], lang)
-        if current_step < len(result.actions)
-        else "-"
-    )
     h_func = puzzle.get_heuristic(heuristic)
-    h_value = h_func(current_state)
 
-    metric_cols = st.columns(5)
-    metric_cols[0].metric(text(lang, "step"), f"{current_step}/{max_step}", help=help_text(lang, "metric_step"))
-    metric_cols[1].metric("g(n)", current_step, help=help_text(lang, "metric_g"))
-    metric_cols[2].metric("h(n)", h_value, help=help_text(lang, "metric_h"))
-    metric_cols[3].metric("f(n)", current_step + h_value, help=help_text(lang, "metric_f"))
-    metric_cols[4].metric(text(lang, "total_steps"), max_step, help=help_text(lang, "metric_total_steps"))
+    def render_frame(current_step: int) -> None:
+        current_state = result.path[current_step]
+        previous_state = result.path[current_step - 1] if current_step > 0 else result.path[0]
+        current_action = text(lang, "start") if current_step == 0 else localize_action(result.actions[current_step - 1], lang)
+        next_action = (
+            localize_action(result.actions[current_step], lang)
+            if current_step < len(result.actions)
+            else "-"
+        )
+        h_value = h_func(current_state)
 
-    st.caption(f"{text(lang, 'current_action')}: {current_action} | {text(lang, 'next_action')}: {next_action}")
-    before_col, after_col = st.columns(2)
-    with before_col:
-        show_board(text(lang, "before_move"), previous_state, lang)
-    with after_col:
-        show_board(text(lang, "after_move"), current_state, lang)
+        metric_cols = st.columns(5)
+        metric_cols[0].metric(text(lang, "step"), f"{current_step}/{max_step}", help=help_text(lang, "metric_step"))
+        metric_cols[1].metric("g(n)", current_step, help=help_text(lang, "metric_g"))
+        metric_cols[2].metric("h(n)", h_value, help=help_text(lang, "metric_h"))
+        metric_cols[3].metric("f(n)", current_step + h_value, help=help_text(lang, "metric_f"))
+        metric_cols[4].metric(text(lang, "total_steps"), max_step, help=help_text(lang, "metric_total_steps"))
+
+        st.caption(f"{text(lang, 'current_action')}: {current_action} | {text(lang, 'next_action')}: {next_action}")
+        before_col, after_col = st.columns(2)
+        with before_col:
+            show_board(text(lang, "before_move"), previous_state, lang)
+        with after_col:
+            show_board(text(lang, "after_move"), current_state, lang)
+
+    render_step_player(
+        prefix="solution_playback",
+        max_step=max_step,
+        labels=playback_labels(lang, text(lang, "step_slider")),
+        render_frame=render_frame,
+    )
 
     st.markdown(f"**{text(lang, 'route_sequence')}:** `{localized_action_sequence(result, lang)}`")
     with st.expander(text(lang, "route_table"), expanded=False):
@@ -1000,21 +855,35 @@ def certificate_rows(validation: Dict[str, Any], lang: str) -> Any:
         "terminal_matches_goal": "Terminal khớp Goal" if lang == "vi" else "Terminal matches goal",
         "solvability_checked": "Đã kiểm tra solvability" if lang == "vi" else "Solvability checked",
         "heuristic_values_valid": "Heuristic hợp lệ" if lang == "vi" else "Valid heuristic values",
+        "path_verified": "Đường đi đã xác minh" if lang == "vi" else "Path verified",
+        "goal_reached": "Đã đạt Goal" if lang == "vi" else "Goal reached",
+        "optimality_proven": "Đã chứng minh tối ưu" if lang == "vi" else "Optimality proven",
+        "termination_reason": "Lý do kết thúc" if lang == "vi" else "Termination reason",
         "error": "Lỗi" if lang == "vi" else "Error",
     }
     rows = []
-    for key in ["path_valid", "cost_matches_actions", "terminal_matches_goal", "solvability_checked", "heuristic_values_valid"]:
+    for key in [
+        "path_valid",
+        "cost_matches_actions",
+        "terminal_matches_goal",
+        "solvability_checked",
+        "heuristic_values_valid",
+        "path_verified",
+        "goal_reached",
+        "optimality_proven",
+    ]:
         value = validation.get(key)
         rows.append({"Check": labels[key], "Value": "PASS" if value else "FAIL"})
+    rows.append({"Check": labels["termination_reason"], "Value": validation.get("termination_reason") or "-"})
     rows.append({"Check": labels["error"], "Value": validation.get("error") or "-"})
     return localize_table(puzzle._to_table(rows), lang)
 
 
 def certificate_chips_html(validation: Dict[str, Any], lang: str) -> str:
     labels = {
-        "path_valid": "Path hợp lệ" if lang == "vi" else "Valid path",
-        "cost_matches_actions": "Cost khớp action" if lang == "vi" else "Cost matches actions",
-        "terminal_matches_goal": "Terminal khớp Goal" if lang == "vi" else "Terminal matches goal",
+        "path_verified": "Đường đi đã xác minh" if lang == "vi" else "Path verified",
+        "goal_reached": "Đã đạt Goal" if lang == "vi" else "Goal reached",
+        "optimality_proven": "Đã chứng minh tối ưu" if lang == "vi" else "Optimality proven",
         "solvability_checked": "Đã kiểm tra solvability" if lang == "vi" else "Solvability checked",
         "heuristic_values_valid": "Heuristic hợp lệ" if lang == "vi" else "Valid heuristic values",
     }
@@ -1062,66 +931,70 @@ def show_trace_replay_player(result: puzzle.SearchResult, lang: str, heuristic: 
         return
 
     story_rows = puzzle.build_trace_story(result, heuristic)
-    replay_index = st.slider(
-        text(lang, "trace_replay_row"),
-        min_value=0,
-        max_value=len(replay_rows) - 1,
-        value=0,
-    )
-    row = replay_rows[replay_index]
-    story = story_rows[replay_index] if replay_index < len(story_rows) else {}
 
-    st.markdown(
-        f"""
-        <div class="readiness-grid">
-          {readiness_chip(text(lang, "step"), str(row.get("Step", "")), "")}
-          {readiness_chip("g(n)", str(row.get("g", "")), "")}
-          {readiness_chip("h(n)", str(row.get("h", "")), "")}
-          {readiness_chip("f(n)", str(row.get("f", "")), "")}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    def render_frame(replay_index: int) -> None:
+        row = replay_rows[replay_index]
+        story = story_rows[replay_index] if replay_index < len(story_rows) else {}
 
-    try:
-        node_states = [puzzle.parse_state(str(row.get("Node", "")))]
-    except ValueError:
-        node_states = []
-    frontier_states = trace_states_from_text(row.get("Frontier After Expansion", ""), limit=4)
-    reached_states = trace_states_from_text(row.get("Reached After Expansion", ""), limit=4)
-    trace_html = "".join(
-        [
-            trace_state_panel_html(
-                text(lang, "selected_node"),
-                text(lang, "node_expansion_subtitle"),
-                node_states,
-                row.get("Node", ""),
-            ),
-            trace_state_panel_html(
-                text(lang, "frontier_after"),
-                text(lang, "frontier_subtitle"),
-                frontier_states,
-                row.get("Frontier After Expansion", ""),
-            ),
-            trace_state_panel_html(
-                text(lang, "reached_after"),
-                text(lang, "reached_subtitle"),
-                reached_states,
-                row.get("Reached After Expansion", ""),
-            ),
-        ]
-    )
-    st.markdown(f'<div class="trace-triptych">{trace_html}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div class="readiness-grid">
+              {readiness_chip(text(lang, "step"), str(row.get("Step", "")), "")}
+              {readiness_chip(text(lang, "current_action"), str(row.get("Action", "Start")), "")}
+              {readiness_chip("g(n)", str(row.get("g", "")), "")}
+              {readiness_chip("h(n)", str(row.get("h", "")), "")}
+              {readiness_chip("f(n)", str(row.get("f", "")), "")}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    detail_html = "".join(
-        [
-            trace_detail_card(text(lang, "priority_rule"), localize_trace_text(row.get("Priority Rule", ""), lang)),
-            trace_detail_card(text(lang, "selection_key"), localize_trace_text(row.get("Selection Key", ""), lang)),
-            trace_detail_card(text(lang, "generated_skipped"), f"{row.get('Generated Children', '')} / {row.get('Skipped States', '')}"),
-            trace_detail_card(text(lang, "trace_story"), localize_trace_text(story.get("Why This Node", row.get("Decision/Note", "")), lang)),
-        ]
+        try:
+            node_states = [puzzle.parse_state(str(row.get("Node", "")))]
+        except ValueError:
+            node_states = []
+        frontier_states = trace_states_from_text(row.get("Frontier After Expansion", ""), limit=4)
+        reached_states = trace_states_from_text(row.get("Reached After Expansion", ""), limit=4)
+        trace_html = "".join(
+            [
+                trace_state_panel_html(
+                    text(lang, "selected_node"),
+                    text(lang, "node_expansion_subtitle"),
+                    node_states,
+                    row.get("Node", ""),
+                ),
+                trace_state_panel_html(
+                    text(lang, "frontier_after"),
+                    text(lang, "frontier_subtitle"),
+                    frontier_states,
+                    row.get("Frontier After Expansion", ""),
+                ),
+                trace_state_panel_html(
+                    text(lang, "reached_after"),
+                    text(lang, "reached_subtitle"),
+                    reached_states,
+                    row.get("Reached After Expansion", ""),
+                ),
+            ]
+        )
+        st.markdown(f'<div class="trace-triptych">{trace_html}</div>', unsafe_allow_html=True)
+
+        detail_html = "".join(
+            [
+                trace_detail_card(text(lang, "priority_rule"), localize_trace_text(row.get("Priority Rule", ""), lang)),
+                trace_detail_card(text(lang, "selection_key"), localize_trace_text(row.get("Selection Key", ""), lang)),
+                trace_detail_card(text(lang, "generated_skipped"), f"{row.get('Generated Children', '')} / {row.get('Skipped States', '')}"),
+                trace_detail_card(text(lang, "trace_story"), localize_trace_text(story.get("Why This Node", row.get("Decision/Note", "")), lang)),
+            ]
+        )
+        st.markdown(f'<div class="trace-player-grid">{detail_html}</div>', unsafe_allow_html=True)
+
+    render_step_player(
+        prefix="trace_playback",
+        max_step=len(replay_rows) - 1,
+        labels=playback_labels(lang, text(lang, "trace_replay_row")),
+        render_frame=render_frame,
     )
-    st.markdown(f'<div class="trace-player-grid">{detail_html}</div>', unsafe_allow_html=True)
 
 
 def search_tree_cards_html(tree: Dict[str, Any], lang: str) -> str:
@@ -1248,7 +1121,7 @@ def shuffle_start_state(scramble_moves: int) -> None:
     st.session_state.last_comparison = None
     st.session_state.last_benchmark = None
     st.session_state.last_preset_name = ""
-    st.session_state.playback_step = 0
+    reset_playback_state("solution_playback", "trace_playback")
 
 
 def load_demo_preset(preset_name: str) -> None:
@@ -1258,7 +1131,7 @@ def load_demo_preset(preset_name: str) -> None:
     st.session_state.last_result = None
     st.session_state.last_comparison = None
     st.session_state.last_benchmark = None
-    st.session_state.playback_step = 0
+    reset_playback_state("solution_playback", "trace_playback")
 
 
 def reset_game_state(state: puzzle.State | None = None) -> None:
@@ -1272,7 +1145,7 @@ def clear_solver_outputs() -> None:
     st.session_state.last_result = None
     st.session_state.last_comparison = None
     st.session_state.last_benchmark = None
-    st.session_state.playback_step = 0
+    reset_playback_state("solution_playback", "trace_playback")
 
 
 def move_game(action: str) -> None:

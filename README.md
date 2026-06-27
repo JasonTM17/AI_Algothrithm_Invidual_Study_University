@@ -36,7 +36,10 @@ Các chế độ demo trong Streamlit chính:
 
 - `8-Puzzle Search`: chọn Start/Goal, thuật toán, heuristic, trace, experiment và report.
 - `Trò chơi xếp hình từ ảnh`: tải ảnh lên hoặc dùng số thường để chơi 8-puzzle trực quan.
-- `Tô màu đồ thị Thủ Đức`: demo CSP graph coloring độc lập với 8-puzzle chuẩn.
+
+`Chạy thuật toán đã chọn` và `So sánh nhóm đang chọn` luôn dùng đúng ma trận Start đang hiển thị.
+Muốn tạo bài mới, người dùng chủ động bấm `Tự trộn ma trận`. Kết quả lời giải và trace đều có
+điều khiển Bước trước/Bước sau/Về đầu, Play/Pause, tốc độ phát và slider chọn bước.
 
 Chạy kiểm thử trước khi nộp:
 
@@ -44,7 +47,7 @@ Chạy kiểm thử trước khi nộp:
 python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\sidebar_game.py .\stage3_search_showcase_app.py .\8_puzzle_ai\app.py
 python .\eight_puzzle_search_app.py --self-test
 python .\tests\test_search_behavior.py
-python .\tests\test_thu_duc_graph_coloring.py
+python .\tests\test_streamlit_constraint_graph_routing.py
 python .\8_puzzle_ai\tests\test_puzzle.py
 ```
 
@@ -86,7 +89,7 @@ Dự án này không chỉ là một game 8-puzzle. Đây là một **phòng th�
 
 - **8-Puzzle Search** là bài toán chính: deterministic, fully observable, single-agent, chi phí mỗi bước bằng `1`.
 - **Complex Environments** là nhóm mô phỏng mở rộng: belief state, partial observation, online learning.
-- **Constraint Satisfaction Problems** là nhóm CSP: có demo graph coloring Thủ Đức để thể hiện biến, miền giá trị và ràng buộc.
+- **Constraint Satisfaction Problems** là nhóm CSP: mô hình hóa 8-puzzle bằng biến, miền giá trị, ràng buộc và planning horizon.
 - **Adversarial / Stochastic Search** dùng **Caro mini-game** vì 8-puzzle chuẩn không có đối thủ. Nhóm này minh họa MAX, MIN, alpha-beta và chance node đúng bản chất học thuật.
 
 ## 0.2. Cấu trúc repo chi tiết
@@ -109,15 +112,13 @@ Dự án này không chỉ là một game 8-puzzle. Đây là một **phòng th�
 │   └── Entry point UI Streamlit chính, điều phối sidebar, run button, tabs và session state.
 ├── web/
 │   ├── ui_views.py
-│   │   └── Component UI: board, trace replay, heuristic inspector, report tab, graph coloring page.
+│   │   └── Component UI: board, trace replay, heuristic inspector, report tab, path playback.
 │   ├── ui_text.py
 │   │   └── Toàn bộ nhãn song ngữ Tiếng Việt/English và bảng học thuật.
 │   ├── ui_theme.py
 │   │   └── Inject CSS theme.
 │   └── ui-theme.css
 │       └── Design tokens, layout, board tiles, trace cards, dataframe styling.
-├── thu_duc_graph_coloring.py
-│   └── CSP graph coloring demo: vùng/phường là biến, màu là domain, cạnh là ràng buộc khác màu.
 ├── sidebar_game.py
 │   └── Mini game xếp hình tương tác trong sidebar/page ảnh.
 ├── stage3_search_showcase_app.py
@@ -134,10 +135,8 @@ Dự án này không chỉ là một game 8-puzzle. Đây là một **phòng th�
 ├── tests/
 │   ├── test_search_behavior.py
 │   │   └── Regression test cho solver chính, trace, report, 6 nhóm thuật toán, Caro, CSP.
-│   ├── test_thu_duc_graph_coloring.py
-│   │   └── Test graph coloring Thủ Đức.
 │   └── test_streamlit_constraint_graph_routing.py
-│       └── Test routing UI cho Constraint Graph.
+│       └── Test routing UI, Start cố định và điều khiển playback từng bước.
 └── docs/
     ├── demo_script.md
     │   └── Kịch bản thuyết trình/demo.
@@ -172,7 +171,6 @@ Dự án này không chỉ là một game 8-puzzle. Đây là một **phòng th�
 | Constraint Satisfaction Problems | Global Constraints | Ràng buộc toàn cục | Áp dụng constraint trên nhiều biến cùng lúc | Minh họa all-different/aggregate constraint |
 | Constraint Satisfaction Problems | CSP Backtracking | Tìm assignment hợp lệ | Gán biến, kiểm tra constraint, quay lui khi conflict | Complete nếu search đủ |
 | Constraint Satisfaction Problems | Min-Conflicts | Local search cho CSP | Sửa biến gây conflict để giảm số xung đột | Tốt cho CSP lớn, không luôn complete |
-| Constraint Satisfaction Problems | Constraint Graph | Graph coloring Thủ Đức | Mỗi phường là biến, màu là domain, cạnh giáp ranh là constraint | Tô màu hợp lệ, không có vùng kề trùng màu |
 | Adversarial / Stochastic Search | Minimax | Đối kháng MAX/MIN | MAX chọn nước tối đa utility, MIN chọn nước giảm utility | Optimal trong game tree bị giới hạn |
 | Adversarial / Stochastic Search | Alpha-Beta Pruning | Cắt nhánh minimax | Bỏ nhánh không thể ảnh hưởng quyết định cuối | Cùng giá trị minimax, ít node hơn |
 | Adversarial / Stochastic Search | Expectimax | Chance node/xác suất | MAX tối đa expected value khi đối thủ/chance ngẫu nhiên | Chọn nước có kỳ vọng tốt nhất |
@@ -584,7 +582,7 @@ Cả hai đều admissible cho 8-Puzzle chuẩn. `manhattan` thường tốt hơ
 
 ## 8. Danh sách thuật toán đã cài đặt
 
-Dự án cài đặt đủ 27 thuật toán/biến thể theo 6 nhóm học thuật:
+Dự án cài đặt đủ 26 thuật toán/biến thể theo 6 nhóm học thuật:
 
 | Nhóm | Thuật toán |
 |---|---|
@@ -592,15 +590,10 @@ Dự án cài đặt đủ 27 thuật toán/biến thể theo 6 nhóm học thu�
 | Informed Search | Greedy, A*, IDA* |
 | Local Search | Simple Hill Climbing, Steepest-Ascent Hill Climbing, Stochastic Hill Climbing, Random-Restart Hill Climbing, Local Beam Search, Simulated Annealing |
 | Complex Environments | AND-OR Search, No Observation Search, Partially Observable Search, Online Search |
-| Constraint Satisfaction Problems | CSP Definition, Constraint Propagation, Path Consistency, Global Constraints, CSP Backtracking, Min-Conflicts, Constraint Graph |
+| Constraint Satisfaction Problems | CSP Definition, Constraint Propagation, Path Consistency, Global Constraints, CSP Backtracking, Min-Conflicts |
 | Adversarial / Stochastic Search | Minimax, Alpha-Beta Pruning, Expectimax trên Caro mini-game |
 
 Lưu ý học thuật: nhóm `Complex Environments` và `CSP` không phải solver tự nhiên của 8-Puzzle deterministic/fully observable. Nhóm `Adversarial / Stochastic Search` chuyển sang Caro mini-game để có MAX, MIN và chance node đúng bản chất thuật toán. App ghi rõ trace, message, guarantee/failure mode để phục vụ báo cáo môn AI.
-
-Riêng thuật toán tô màu đồ thị/graph coloring không được trình bày như cách giải
-8-puzzle. Bản Streamlit chính đặt nó trong chế độ `Tô màu đồ thị Thủ Đức`: phường
-là biến, màu là miền giá trị, cạnh giáp ranh là ràng buộc khác màu, đúng bản chất
-CSP hơn so với việc ép graph coloring thành solver 8-puzzle.
 
 ## 9. Giải thích chi tiết từng thuật toán
 
@@ -1043,26 +1036,7 @@ repeat:
 | Complete/Optimal | Không bảo đảm complete trong bound hữu hạn. |
 | Hạn chế | Có thể dao động nếu landscape xấu. |
 
-### 9.24. Constraint Graph
-
-Constraint Graph trong app dùng bài toán tô màu đồ thị Thủ Đức. Mỗi phường/vùng là một biến, domain là màu, cạnh giáp ranh là ràng buộc hai vùng kề nhau không được trùng màu.
-
-```text
-variables <- Thu Duc regions
-domains <- palette colors
-constraints <- adjacent regions must differ
-solve by backtracking/ordering, then validate conflicts
-```
-
-| Mục | Giải thích |
-|---|---|
-| Mục đích | Demo CSP trực quan, dễ hiểu hơn ép CSP vào đường đi 8-puzzle. |
-| Frontier | Region assignments chưa/chờ tô. |
-| Trace cần nhìn | Region, blocked colors, chosen color, degree. |
-| Kết quả đúng | Không có cặp vùng giáp ranh trùng màu. |
-| Hạn chế | Đây là demo CSP độc lập, không phải thuật toán giải 8-puzzle. |
-
-### 9.25. Minimax
+### 9.24. Minimax
 
 Minimax dùng cho game đối kháng hai người. MAX chọn nước làm utility lớn nhất; MIN chọn nước làm utility nhỏ nhất. Vì 8-puzzle không có đối thủ, app dùng Caro mini-game.
 
@@ -1081,7 +1055,7 @@ min_value(state):
 | Complete/Optimal | Optimal trong game tree bounded nếu duyệt đủ depth đã đặt. |
 | Hạn chế | Không áp dụng trực tiếp cho 8-puzzle single-agent. |
 
-### 9.26. Alpha-Beta Pruning
+### 9.25. Alpha-Beta Pruning
 
 Alpha-Beta là Minimax có cắt nhánh. Nếu một nhánh chắc chắn không ảnh hưởng quyết định cuối, thuật toán bỏ qua nhánh đó.
 
@@ -1099,7 +1073,7 @@ if alpha >= beta: prune
 | Complete/Optimal | Cùng quyết định với Minimax nếu cùng depth/order. |
 | Hạn chế | Hiệu quả phụ thuộc thứ tự xét nước đi. |
 
-### 9.27. Expectimax
+### 9.26. Expectimax
 
 Expectimax dùng khi có chance node hoặc đối thủ hành động ngẫu nhiên. MAX chọn nước có expected utility cao nhất, còn chance node lấy trung bình có trọng số theo xác suất.
 
@@ -1228,6 +1202,9 @@ Các thành phần chính:
 |---|---|
 | `Bước trước / Previous step` | Quay lại trạng thái trước đó trong lời giải |
 | `Bước sau / Next step` | Đi tới trạng thái kế tiếp trong lời giải |
+| `Tự chạy / Play` và `Tạm dừng / Pause` | Tự động phát từng bước hoặc dừng đúng bước cần giải thích |
+| `Về đầu / Reset` | Trở về bước đầu tiên |
+| Tốc độ phát | Chọn khoảng thời gian giữa hai bước tự động |
 | Slider chọn bước | Nhảy trực tiếp tới một bước bất kỳ |
 | `Trạng thái trước bước đi` | Ma trận ở bước trước |
 | `Trạng thái hiện tại` | Ma trận sau khi áp dụng hành động |
@@ -1258,6 +1235,7 @@ So sánh tất cả thuật toán / Compare all algorithms
 ```
 
 App sẽ chạy toàn bộ thuật toán trên cùng một start state và trả về bảng so sánh.
+Mọi thuật toán dùng cùng heuristic, seed, giới hạn tài nguyên và thứ tự sinh successor để kết quả công bằng, tái lập được.
 
 ### 12.7. Algorithm Certificate và Report
 
@@ -1276,6 +1254,8 @@ Algorithm Certificate kiểm tra:
 - terminal state có đúng Goal không;
 - unsolvable input có bị dừng sớm trước khi mở rộng node không;
 - heuristic có trả giá trị hợp lệ không.
+- `termination_reason` cho biết run dừng vì đạt Goal, unsolvable, cạn frontier, giới hạn tài nguyên, local stop hay demo học thuật;
+- `path_verified`, `goal_reached` và `optimality_proven` tách riêng ba khẳng định học thuật khác nhau.
 
 Experiment Lab mặc định tắt trace (`max_trace_rows=0`) để benchmark không chậm khi demo. Các thuật toán tối ưu như BFS, UCS, A* và IDA* được dùng làm baseline cost khi điều kiện giới hạn đủ lớn; Greedy và local search được xem là kết quả thực nghiệm, không phải bảo đảm tối ưu.
 
@@ -1305,7 +1285,7 @@ Các kiểm thử chính:
 4. Unsolvable state bị phát hiện sớm.
 5. Trace table luôn có `Node`, `Frontier`, `Reached`, `Priority Rule`, `Selection Key`, `Generated Children`, `Skipped States`.
 6. Local Beam Search giải được puzzle một bước.
-7. `manhattan >= misplaced` trên các state gần goal và không vượt true distance trong vùng test nông.
+7. `manhattan >= misplaced`, admissible và consistent trên toàn bộ 181.440 trạng thái khả giải; đường kính không gian là 31.
 8. `validate_result()` pass với lời giải hợp lệ và fail rõ với path bị sửa sai.
 9. `explain_heuristic()` trả đúng totals cho `misplaced`, `manhattan` và đóng góp từng ô.
 10. `build_trace_story()` giải thích đúng selection rule cho A*, IDA* và Simulated Annealing.
@@ -1316,6 +1296,8 @@ Các kiểm thử chính:
 15. Giao diện song ngữ hoạt động.
 16. Ma trận Start/Goal hiển thị dạng 3x3 không có header cột, xếp dọc để tránh tràn layout.
 17. Phần học thuật hiển thị đúng trong cả Tiếng Việt và English.
+18. Run/Compare giữ nguyên Start đang hiển thị và dùng cùng cấu hình so sánh.
+19. AppTest bấm được Previous/Next/Reset/Play/Pause cho cả solution playback và trace playback.
 
 Lệnh kiểm thử:
 

@@ -87,6 +87,28 @@ def test_heuristics_are_ordered_and_admissible_near_goal() -> None:
     assert puzzle.DEFAULT_HEURISTICS == ["misplaced", "manhattan"]
 
 
+def test_heuristics_over_full_reachable_state_space() -> None:
+    distances = {puzzle.GOAL_STATE: 0}
+    frontier = deque([puzzle.GOAL_STATE])
+
+    while frontier:
+        state = frontier.popleft()
+        depth = distances[state]
+        misplaced = puzzle.misplaced_tiles(state)
+        manhattan = puzzle.manhattan_distance(state)
+        assert misplaced <= manhattan <= depth
+
+        for _, next_state in puzzle.neighbors(state):
+            assert misplaced <= 1 + puzzle.misplaced_tiles(next_state)
+            assert manhattan <= 1 + puzzle.manhattan_distance(next_state)
+            if next_state not in distances:
+                distances[next_state] = depth + 1
+                frontier.append(next_state)
+
+    assert len(distances) == 181_440
+    assert max(distances.values()) == 31
+
+
 def test_unsolvable_state_stops_before_expansion() -> None:
     result = puzzle.run_algorithm((1, 2, 3, 4, 5, 6, 8, 7, 0), "A*")
     assert not result.found
@@ -312,13 +334,12 @@ def test_six_group_registry_covers_coursework_spec() -> None:
         "Global Constraints",
         "CSP Backtracking",
         "Min-Conflicts",
-        "Constraint Graph",
         "Minimax",
         "Alpha-Beta Pruning",
         "Expectimax",
     }
     assert set(puzzle.DEFAULT_ALGORITHMS) == expected_algorithms
-    assert len(puzzle.DEFAULT_ALGORITHMS) == 27
+    assert len(puzzle.DEFAULT_ALGORITHMS) == 26
     assert puzzle.algorithm_groups() == [
         "Uninformed Search",
         "Informed Search",
@@ -332,6 +353,13 @@ def test_six_group_registry_covers_coursework_spec() -> None:
     assert puzzle.algorithm_run_mode("Partially Observable Search", "vi")["mode"] == "educational_complex"
     assert puzzle.algorithm_run_mode("CSP Backtracking", "en")["mode"] == "educational_csp"
     assert puzzle.algorithm_run_mode("Expectimax", "en")["mode"] == "educational_adversarial"
+
+    try:
+        puzzle.normalize_algorithm("Constraint Graph")
+    except ValueError as exc:
+        assert "Unknown algorithm" in str(exc)
+    else:
+        raise AssertionError("Constraint Graph should not remain in the algorithm registry")
 
 
 def test_educational_algorithms_return_canonical_results() -> None:
@@ -376,22 +404,75 @@ def test_adversarial_algorithms_use_caro_game_model() -> None:
         assert "MAX" in trace_text
 
 
-def test_constraint_graph_models_thu_duc_graph_coloring() -> None:
+def test_compare_algorithms_reports_group_steps_and_timing() -> None:
     start = (1, 2, 3, 4, 5, 6, 7, 0, 8)
-    result = puzzle.run_algorithm(start, "Constraint Graph", "manhattan", puzzle.TraceConfig(max_trace_rows=10))
-    trace_text = "\n".join(str(row) for row in result.trace_rows)
-    model_text = "\n".join(row["Definition"] for row in puzzle.algorithm_problem_model("Constraint Graph", lang="en"))
-    peas_text = "\n".join(row["Definition"] for row in puzzle.peas_model("Constraint Graph", lang="en"))
+    config = puzzle.TraceConfig(max_expansions=300, max_trace_rows=0, ids_max_depth=6, seed=10, randomize_successors=True)
+    table, results = puzzle.compare_algorithms(
+        start,
+        algorithms=["BFS", "A*", "CSP Backtracking"],
+        heuristic="manhattan",
+        config=config,
+        return_results=True,
+    )
+    rows = table.to_dict("records") if hasattr(table, "to_dict") else table
+    expected_columns = {"Group", "Algorithm", "Path Length", "Expanded", "Generated", "Runtime ms"}
 
-    assert "Thu Duc" in trace_text
-    assert "graph-coloring" in result.message.lower() or "graph coloring" in result.message.lower()
-    assert "X[0]" not in trace_text
-    assert "A[0]" not in trace_text
-    assert "Transition connects X[0]" not in trace_text
-    assert "region" in model_text.lower()
-    assert "color" in model_text.lower()
-    assert "static graph" in peas_text.lower()
-    assert "time-indexed planning CSP" not in peas_text
+    assert len(results) == 3
+    assert all(result.runtime_ms >= 0 for result in results)
+    assert all(isinstance(result.expanded, int) and isinstance(result.generated, int) for result in results)
+    assert all(expected_columns <= set(row) for row in rows)
+    assert [row["Algorithm"] for row in rows] == ["BFS", "A*", "CSP Backtracking"]
+
+
+def test_compare_algorithms_reuses_start_and_config() -> None:
+    start = (1, 2, 3, 4, 5, 6, 0, 7, 8)
+    config = puzzle.TraceConfig(max_expansions=500, max_trace_rows=0, seed=17, randomize_successors=True)
+    config_before = replace(config)
+
+    _, results = puzzle.compare_algorithms(
+        start,
+        algorithms=["BFS", "UCS", "A*"],
+        heuristic="manhattan",
+        config=config,
+        return_results=True,
+    )
+
+    assert config == config_before
+    assert all(result.start == start for result in results)
+    assert {result.path_cost for result in results} == {2}
+
+
+def test_certificate_distinguishes_outcomes_and_optimality() -> None:
+    easy = (1, 2, 3, 4, 5, 6, 0, 7, 8)
+    solved = puzzle.run_algorithm(easy, "A*", "manhattan", puzzle.TraceConfig(max_trace_rows=0))
+    solved_certificate = puzzle.validate_result(solved, "manhattan")
+    assert solved.termination_reason == "goal"
+    assert solved_certificate["path_verified"]
+    assert solved_certificate["goal_reached"]
+    assert solved_certificate["optimality_proven"]
+
+    greedy = puzzle.run_algorithm(easy, "Greedy", "manhattan", puzzle.TraceConfig(max_trace_rows=0))
+    assert greedy.found
+    assert not puzzle.validate_result(greedy, "manhattan")["optimality_proven"]
+
+    unsolvable = puzzle.run_algorithm((1, 2, 3, 4, 5, 6, 8, 7, 0), "A*", "manhattan")
+    unsolvable_certificate = puzzle.validate_result(unsolvable, "manhattan")
+    assert unsolvable.termination_reason == "unsolvable"
+    assert not unsolvable_certificate["goal_reached"]
+    assert not unsolvable_certificate["optimality_proven"]
+
+    limited = puzzle.run_algorithm(
+        puzzle.DEMO_PRESETS["hard_20"],
+        "BFS",
+        "manhattan",
+        puzzle.TraceConfig(max_expansions=1, max_trace_rows=0),
+    )
+    assert limited.termination_reason == "resource_limit"
+    assert not puzzle.validate_result(limited, "manhattan")["optimality_proven"]
+
+    educational = puzzle.run_algorithm(easy, "Minimax", "manhattan", puzzle.TraceConfig(max_trace_rows=5))
+    assert educational.termination_reason == "educational_demo"
+    assert not puzzle.validate_result(educational, "manhattan")["optimality_proven"]
 
 
 def test_peas_trace_preview_and_submission_pack_exports() -> None:
@@ -466,6 +547,7 @@ def run_all_tests() -> None:
         test_optimal_algorithms_and_path_validity,
         test_a_star_matches_true_distance_on_shallow_states,
         test_heuristics_are_ordered_and_admissible_near_goal,
+        test_heuristics_over_full_reachable_state_space,
         test_unsolvable_state_stops_before_expansion,
         test_standard_solvers_handle_goal_and_unsolvable_states_consistently,
         test_trace_disabled_does_not_crash_priority_search,
@@ -479,7 +561,9 @@ def run_all_tests() -> None:
         test_six_group_registry_covers_coursework_spec,
         test_educational_algorithms_return_canonical_results,
         test_adversarial_algorithms_use_caro_game_model,
-        test_constraint_graph_models_thu_duc_graph_coloring,
+        test_compare_algorithms_reports_group_steps_and_timing,
+        test_compare_algorithms_reuses_start_and_config,
+        test_certificate_distinguishes_outcomes_and_optimality,
         test_peas_trace_preview_and_submission_pack_exports,
         test_complex_environment_problem_formulations_match_algorithm_names,
         test_package_app_adapter_filters_algorithm_params,

@@ -70,7 +70,7 @@ hoặc bấm `Random Goal một phần`.
 - Với 8-puzzle, CSP được dùng như mô hình lập kế hoạch theo horizon.
 - Đây là demo học thuật, không quảng bá là solver chuẩn nhanh nhất.
 
-## 7. Demo Graph Coloring bằng Streamlit
+## 7. Demo Run/Compare trên Start đã chọn
 
 Trong app Streamlit chính:
 
@@ -78,20 +78,19 @@ Trong app Streamlit chính:
 python -m streamlit run .\streamlit_eight_puzzle_app.py
 ```
 
-Mở chế độ `Tô màu đồ thị Thủ Đức` trong sidebar.
+Mở chế độ `8-Puzzle Search` trong sidebar.
 
-1. Chọn số màu tối đa bằng slider.
-2. Chỉ vào bản đồ và bảng tô màu:
-   - phường là biến/node;
-   - cạnh giáp ranh là ràng buộc;
-   - màu là miền giá trị;
-   - hai phường giáp ranh không được trùng màu.
-3. Mở phần `Các bước tô màu` để giải thích thứ tự gán màu.
+1. Chọn preset, nhập Start thủ công hoặc bấm `Tự trộn ma trận`.
+2. Chọn nhóm thuật toán và thuật toán cần chạy.
+3. Bấm `Chạy thuật toán đã chọn`; xác nhận Start không đổi.
+4. Trong Path playback và Trace Player, dùng Bước trước/Bước sau/Về đầu, Play/Pause, tốc độ và slider.
+5. Bấm `So sánh nhóm đang chọn` để chạy toàn bộ nhóm trên cùng Start và cấu hình.
 
 Điểm cần nói:
-- Graph coloring không giải 8-puzzle.
-- Đây là CSP graph-coloring demo độc lập, dùng để minh họa biến, miền và ràng buộc.
-- App tách thành chế độ riêng để không nhầm graph coloring với solver 8-puzzle chuẩn.
+- Chỉ nút `Tự trộn ma trận` tạo Start solvable mới; Run/Compare không thay đổi bài đang trình bày.
+- Compare dùng cùng Start, heuristic, seed, giới hạn và successor order để kết quả công bằng, tái lập được.
+- Mỗi thuật toán vẫn có trace riêng để kiểm tra logic chọn node.
+- Certificate phân biệt path hợp lệ, đạt Goal, lý do kết thúc và chứng minh tối ưu.
 
 ## 8. Demo đối kháng/xác suất
 
@@ -131,7 +130,7 @@ Báo cáo nên có:
 - [ ] Có Node / Frontier / Reached rõ trong trace.
 - [ ] Có giải thích `misplaced` và `manhattan`.
 - [ ] Có demo unsolvable dừng sớm.
-- [ ] Có demo `Tô màu đồ thị Thủ Đức` cho graph coloring/CSP không phù hợp với 8-puzzle.
+- [ ] Run/Compare giữ nguyên Start đã chọn và có bảng số bước/thời gian.
 - [ ] Có báo cáo tải xuống.
 - [ ] Toàn bộ test local pass.
 
@@ -144,5 +143,6 @@ Báo cáo nên có:
 - [ ] Thuật toán không dùng heuristic có ghi chú rõ h(n) chỉ để giải thích/certificate.
 - [ ] Thuật toán Complex/CSP/Adversarial có chip hoặc ghi chú `mô phỏng học thuật`.
 - [ ] Tab `Trace` có Trace Player, Frontier/Reached sau mở rộng, và vẫn còn bảng trace gốc.
+- [ ] Path/Trace playback có Bước trước, Bước sau, Về đầu, Play, Pause và tốc độ phát.
 - [ ] Mobile `390x844` không có horizontal scroll.
 - [ ] Report Pack hiện đủ Markdown/DOCX/PDF/HTML/CSV.

@@ -68,7 +68,7 @@ X₄ = 4, X₅ = 5, X₆ = 6
 X₇ = 7, X₈ = 8, X₉ = 0
 ```
 
-### 4. Constraint Graph
+### 4. Đồ thị ràng buộc CSP
 
 ```
         X₁ ───────── X₂ ───────── X₃

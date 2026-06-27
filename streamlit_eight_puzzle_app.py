@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-import time
 from html import escape
 from typing import Any, Optional
 
 import streamlit as st
 
 import eight_puzzle_search_app as puzzle
-import thu_duc_graph_coloring as thu_duc
 from web.ui_theme import apply_theme
 from web.ui_text import HELP, text, help_text, localize_table, localize_trace_text, localize_algorithm_group
 from web.ui_views import (
-    show_page_header, show_thu_duc_graph_coloring_page, show_image_puzzle_page,
+    show_page_header, show_image_puzzle_page,
     show_goal_panel, show_board, heuristic_usage_note, show_grading_checklist,
     show_peas_model, show_problem_variant, show_academic_context, show_result,
     show_experiment_lab, show_interactive_game_panel,
@@ -21,6 +19,7 @@ from web.ui_views import (
     show_heuristic_inspector, show_priority_basis, show_algorithm_profile,
     current_partial_goal_pattern, partial_goal_controls,
     reset_game_state, clear_solver_outputs, load_demo_preset,
+    reset_playback_state,
     shuffle_start_state, current_shuffle_note,
     demo_readiness_html, trace_run_guide_html, board_matrix_html, metric_cards_html,
     image_board_html, playable_tile_grid, persist_game_image,
@@ -61,8 +60,6 @@ def initialize_state() -> None:
         st.session_state.last_shuffle_moves = 20
     if "last_shuffle_seed" not in st.session_state:
         st.session_state.last_shuffle_seed = 1
-    if "run_count" not in st.session_state:
-        st.session_state.run_count = 0
     if "last_result" not in st.session_state:
         st.session_state.last_result = None
     if "last_result_heuristic" not in st.session_state:
@@ -77,8 +74,6 @@ def initialize_state() -> None:
         st.session_state.last_experiment_heuristic = "manhattan"
     if "last_preset_name" not in st.session_state:
         st.session_state.last_preset_name = ""
-    if "playback_step" not in st.session_state:
-        st.session_state.playback_step = 0
     if "last_submission_pack" not in st.session_state:
         st.session_state.last_submission_pack = None
     if "last_submission_pack_key" not in st.session_state:
@@ -101,9 +96,6 @@ def initialize_state() -> None:
         st.session_state.game_image_signature = ""
 
 
-def next_run_seed() -> int:
-    st.session_state.run_count += 1
-    return int(time.time_ns() % 1_000_000_000) + st.session_state.run_count
 def main() -> None:
     st.set_page_config(
         page_title="8-Puzzle Search",
@@ -126,7 +118,6 @@ def main() -> None:
         feature_options = [
             text(lang, "feature_puzzle"),
             text(lang, "feature_image_puzzle"),
-            text(lang, "feature_thu_duc"),
         ]
         feature_mode = st.radio(text(lang, "feature_mode"), feature_options, key="feature_mode")
 
@@ -151,10 +142,6 @@ def main() -> None:
 
     if feature_mode == text(lang, "feature_image_puzzle"):
         show_image_puzzle_page(lang)
-        return
-        
-    if feature_mode == text(lang, "feature_thu_duc"):
-        show_thu_duc_graph_coloring_page(lang)
         return
         
     show_page_header(lang)
@@ -244,9 +231,6 @@ def main() -> None:
             st.markdown(caro_demo_panel_html(lang, algorithm), unsafe_allow_html=True)
             st.caption(f"{text(lang, 'heuristic_usage')}: {localize_trace_text(heuristic_usage_note(lang, algorithm), lang)}")
             partial_goal_controls(lang, algorithm)
-            if algorithm_group == "Constraint Satisfaction Problems" and algorithm == "Constraint Graph":
-                st.info(text(lang, "thu_duc_csp_hint"))
-                show_thu_duc_graph_coloring_page(lang)
             st.caption(f"{text(lang, 'algorithm')}: {algorithm} | {text(lang, 'heuristic')}: {heuristic}")
             run_clicked = st.button(
                 text(lang, "run_selected"),
@@ -270,11 +254,12 @@ def main() -> None:
                 else f"Đang chạy {algorithm} với {heuristic}..."
             )
             with st.spinner(run_message):
-                config = build_config(seed_override=next_run_seed(), randomize_successors=True)
+                config = build_config(randomize_successors=False)
                 st.session_state.last_result = puzzle.run_algorithm(st.session_state.start_state, algorithm, heuristic, config)
                 st.session_state.last_result_heuristic = heuristic
                 st.session_state.last_comparison = None
-                st.session_state.playback_step = 0
+                reset_playback_state("solution_playback", "trace_playback")
+                st.rerun()
         elif compare_clicked:
             algo_count = len(group_algorithms)
             compare_label = (
@@ -284,7 +269,7 @@ def main() -> None:
             )
             complete_label = "Comparison complete!" if lang == "en" else "So sánh hoàn tất!"
             with st.status(compare_label, expanded=True) as status:
-                config = build_config(seed_override=next_run_seed(), randomize_successors=True)
+                config = build_config(randomize_successors=False)
                 st.session_state.last_comparison = puzzle.compare_algorithms(
                     st.session_state.start_state,
                     algorithms=group_algorithms,
@@ -292,8 +277,9 @@ def main() -> None:
                     config=config,
                 )
                 st.session_state.last_result = None
-                st.session_state.playback_step = 0
+                reset_playback_state("solution_playback", "trace_playback")
                 status.update(label=complete_label, state="complete")
+                st.rerun()
 
         if st.session_state.last_result is not None:
             st.info(text(lang, "trace_result_hint"))

@@ -861,7 +861,7 @@ Tuy nhiên, ta có thể mô hình hóa **Goal State** như một CSP:
 1. **AllDifferent:** X₁ ≠ X₂ ≠ ... ≠ X₉
 2. **Position:** Mỗi ô phải ở vị trí đúng
 
-#### Constraint Graph
+#### Đồ thị ràng buộc CSP
 
 ```
     X₁ ───── X₂ ───── X₃

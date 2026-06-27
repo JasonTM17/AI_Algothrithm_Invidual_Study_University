@@ -102,6 +102,7 @@ class SearchResult:
     optimal: str = "No"
     complete: str = "No"
     notes: str = ""
+    termination_reason: str = ""
 
     def summary_row(self) -> Dict[str, Any]:
         return {
@@ -116,6 +117,7 @@ class SearchResult:
             "Optimal": self.optimal,
             "Complete": self.complete,
             "Memory": f"{self.memory_estimate_kb:.1f} KB",
+            "Termination": self.termination_reason,
             "Message": self.message,
         }
 
@@ -259,12 +261,6 @@ ALGORITHM_INFO: Dict[str, Dict[str, str]] = {
         "complete": "No",
         "suitable": "Educational local-repair CSP demonstration; better suited to large static CSPs",
     },
-    "Constraint Graph": {
-        "group": "Constraint Satisfaction Problems",
-        "optimal": "Not applicable; graph representation",
-        "complete": "Not applicable; no state-space solving",
-        "suitable": "Educational Thu Duc graph-coloring CSP demo",
-    },
     "Minimax": {
         "group": "Adversarial / Stochastic Search",
         "optimal": "Optimal only for the bounded Caro game tree, not for standard 8-puzzle",
@@ -309,7 +305,6 @@ PRIORITY_RULES: Dict[str, str] = {
     "Global Constraints": "Apply AllDifferent and transition constraints across whole state snapshots.",
     "CSP Backtracking": "Depth-bounded backtracking over legal action assignments with forward checking.",
     "Min-Conflicts": "Iteratively change the conflicted variable/action that most reduces conflicts.",
-    "Constraint Graph": "Graph coloring CSP: variables are Thu Duc regions, domains are colors, edges require adjacent regions to use different colors.",
     "Minimax": "MAX chooses moves that maximize utility while MIN chooses moves that minimize it.",
     "Alpha-Beta Pruning": "Minimax with alpha/beta bounds to skip provably irrelevant branches.",
     "Expectimax": "MAX chooses the action with best expected value over stochastic chance outcomes.",
@@ -389,8 +384,6 @@ ALGORITHM_ALIASES: Dict[str, str] = {
     "backtrackingsearch": "CSP Backtracking",
     "minconflicts": "Min-Conflicts",
     "min-conflicts": "Min-Conflicts",
-    "constraintgraph": "Constraint Graph",
-    "constraintgraphs": "Constraint Graph",
     "minimax": "Minimax",
     "alphabeta": "Alpha-Beta Pruning",
     "alphabetapruning": "Alpha-Beta Pruning",
@@ -443,18 +436,11 @@ def algorithm_run_mode(algorithm: str, lang: str = "en") -> Dict[str, str]:
     elif group == "Constraint Satisfaction Problems":
         mode = "educational_csp"
         label = "Mô phỏng CSP" if lang == "vi" else "CSP demo"
-        if canonical == "Constraint Graph":
-            description = (
-                "Demo tô màu đồ thị Thủ Đức: vùng là biến, màu là miền, cạnh giáp ranh là ràng buộc khác màu."
-                if lang == "vi"
-                else "Thu Duc graph-coloring demo: regions are variables, colors are domains, adjacency edges are different-color constraints."
-            )
-        else:
-            description = (
-                "Diễn đạt 8-puzzle bằng biến, miền giá trị và ràng buộc theo planning horizon."
-                if lang == "vi"
-                else "Represents 8-puzzle with variables, domains, and constraints over a planning horizon."
-            )
+        description = (
+            "Diễn đạt 8-puzzle bằng biến, miền giá trị và ràng buộc theo planning horizon."
+            if lang == "vi"
+            else "Represents 8-puzzle with variables, domains, and constraints over a planning horizon."
+        )
     else:
         mode = "educational_adversarial"
         label = "Mô phỏng đối kháng/xác suất" if lang == "vi" else "Adversarial/stochastic demo"
@@ -773,12 +759,6 @@ def algorithm_problem_model(
                 ("Goal/Quan sát", f"Goal đầy đủ:\n{board_string(GOAL_STATE)}"),
                 ("Cách giải", "LRTA*: cập nhật H(current), rồi chọn neighbor có 1 + H(neighbor) nhỏ nhất."),
             ],
-            "Constraint Graph": [
-                ("Dạng bài toán", "Graph coloring CSP cho bản đồ phường/khu vực Thủ Đức."),
-                ("Biến và miền", "Mỗi vùng là một biến; miền giá trị là tập màu được phép."),
-                ("Ràng buộc", "Hai vùng có cạnh giáp ranh không được dùng cùng màu."),
-                ("Cách giải", "Tô màu từng vùng sao cho không còn cạnh xung đột; đây là CSP tĩnh, không phải solver 8-puzzle."),
-            ],
         }
         default_rows = [
             ("Dạng bài toán", f"{canonical} trên 8-Puzzle chuẩn."),
@@ -814,12 +794,6 @@ def algorithm_problem_model(
             ("Goal/Observation", f"Full goal:\n{board_string(GOAL_STATE)}"),
             ("How it solves", "LRTA*: update H(current), then move to the neighbor minimizing 1 + H(neighbor)."),
         ],
-        "Constraint Graph": [
-            ("Problem type", "Graph coloring CSP over Thu Duc wards/regions."),
-            ("Variables and domains", "Each region is a variable; the domain is the available color palette."),
-            ("Constraints", "Adjacent regions connected by an edge must use different colors."),
-            ("How it solves", "Assign colors until no adjacency edge has a same-color conflict; this is a static CSP, not an 8-puzzle solver."),
-        ],
     }
     selected_en = models_en.get(
         canonical,
@@ -839,20 +813,6 @@ def peas_model(algorithm: Optional[str] = None, lang: str = "en") -> List[Dict[s
     canonical = normalize_algorithm(algorithm) if algorithm else "8-Puzzle Agent"
     info = ALGORITHM_INFO.get(canonical, {})
     group = info.get("group", "Standard 8-Puzzle")
-    if canonical == "Constraint Graph":
-        if lang == "vi":
-            return [
-                {"Algorithm": canonical, "PEAS": "Performance (Hiệu suất)", "Definition": "Tô màu hợp lệ bản đồ Thủ Đức với ít màu và không có cạnh xung đột."},
-                {"Algorithm": canonical, "PEAS": "Environment (Môi trường)", "Definition": "Đồ thị tĩnh: node là phường/khu vực Thủ Đức, edge là quan hệ giáp ranh."},
-                {"Algorithm": canonical, "PEAS": "Actuators (Bộ chấp hành)", "Definition": "Gán màu cho từng vùng theo miền màu cho phép."},
-                {"Algorithm": canonical, "PEAS": "Sensors (Cảm biến)", "Definition": "Quan sát màu đã gán, bậc của node và các cạnh còn xung đột."},
-            ]
-        return [
-            {"Algorithm": canonical, "PEAS": "Performance", "Definition": "Produce a valid Thu Duc map coloring with few colors and no conflicted adjacency edges."},
-            {"Algorithm": canonical, "PEAS": "Environment", "Definition": "A static graph: nodes are Thu Duc wards/regions, edges are adjacency relations."},
-            {"Algorithm": canonical, "PEAS": "Actuators", "Definition": "Assign one color from the allowed palette to each region."},
-            {"Algorithm": canonical, "PEAS": "Sensors", "Definition": "Observe assigned colors, node degrees, and remaining conflicted edges."},
-        ]
     if lang == "vi":
         group_environment = {
             "Uninformed Search": "Môi trường 8-Puzzle chuẩn: deterministic, fully observable, bảng 3x3, cost mỗi bước bằng 1.",
@@ -1078,6 +1038,21 @@ def _finish_result(
         path, actions = reconstruct_node_path(terminal_node)
         path_cost = len(actions)
     info = ALGORITHM_INFO[algorithm]
+    group = info["group"]
+    if found:
+        termination_reason = "goal"
+    elif group in {
+        "Complex Environments",
+        "Constraint Satisfaction Problems",
+        "Adversarial / Stochastic Search",
+    }:
+        termination_reason = "educational_demo"
+    elif group == "Local Search":
+        termination_reason = "local_stop"
+    elif "exhausted" in message.lower():
+        termination_reason = "frontier_exhausted"
+    else:
+        termination_reason = "resource_limit"
     return SearchResult(
         algorithm=algorithm,
         start=start,
@@ -1096,7 +1071,8 @@ def _finish_result(
         message=message,
         optimal=info["optimal"],
         complete=info["complete"],
-        notes=f"Group: {info['group']}",
+        notes=f"Group: {group}",
+        termination_reason=termination_reason,
     )
 
 
@@ -1111,6 +1087,7 @@ def _unsolvable_result(algorithm: str, start: State, goal: State, started_at: fl
         optimal=ALGORITHM_INFO[algorithm]["optimal"],
         complete=ALGORITHM_INFO[algorithm]["complete"],
         notes=f"Group: {ALGORITHM_INFO[algorithm]['group']}",
+        termination_reason="unsolvable",
     )
 
 
@@ -2406,12 +2383,6 @@ def _csp_static_demo(
             ("AllDifferent(goal)", "valid=True"),
             ("Transition global", "Exactly two positions change between consecutive states: blank and swapped tile."),
         ],
-        "Constraint Graph": [
-            ("Variables", "Thu Duc wards/regions are CSP variables in a graph coloring model."),
-            ("Domains", "Each region chooses one color from the available palette."),
-            ("Edges", "Adjacency edges require neighboring Thu Duc regions to use different colors."),
-            ("Goal", "Find a valid coloring with no adjacent same-color regions."),
-        ],
     }[algorithm]
     for step, (label, note) in enumerate(demo_rows, start=1):
         add_trace(
@@ -2433,11 +2404,7 @@ def _csp_static_demo(
             skipped_states=0,
         )
     found = start == goal
-    message = (
-        "Constraint Graph is a Thu Duc graph-coloring CSP demonstration; use the Streamlit CSP panel to inspect the colored map."
-        if algorithm == "Constraint Graph"
-        else f"{algorithm} is an educational CSP-planning demonstration; use CSP Backtracking for a bounded solver demo."
-    )
+    message = f"{algorithm} is an educational CSP-planning demonstration; use CSP Backtracking for a bounded solver demo."
     return _finish_result(
         algorithm=algorithm,
         start=start,
@@ -3192,6 +3159,21 @@ def validate_result(result: SearchResult, heuristic_name: str, goal: State = GOA
         errors.append(f"Heuristic validation failed: {exc}")
 
     certificate["error"] = "; ".join(errors)
+    certificate["path_verified"] = bool(result.found and certificate["path_valid"])
+    certificate["goal_reached"] = bool(result.found and certificate["terminal_matches_goal"])
+    optimal_solvers = {"BFS", "UCS", "IDS", "A*", "IDA*"}
+    normalized_heuristic = heuristic_name.lower().replace("-", "_").replace(" ", "_")
+    admissible_heuristic = normalized_heuristic in {"misplaced", "misplaced_tiles", "manhattan", "manhattan_distance"}
+    heuristic_condition_met = result.algorithm not in {"A*", "IDA*"} or admissible_heuristic
+    certificate["optimality_proven"] = bool(
+        result.algorithm in optimal_solvers
+        and heuristic_condition_met
+        and certificate["path_verified"]
+        and certificate["goal_reached"]
+        and certificate["cost_matches_actions"]
+        and result.termination_reason == "goal"
+    )
+    certificate["termination_reason"] = result.termination_reason
     return certificate
 
 
@@ -3968,8 +3950,9 @@ def compare_algorithms(
     """
 
     selected = list(algorithms or DEFAULT_ALGORITHMS)
+    shared_config = config or TraceConfig()
     results = [
-        run_algorithm(start, algorithm, heuristic=heuristic, config=config or TraceConfig(), goal=goal)
+        run_algorithm(start, algorithm, heuristic=heuristic, config=shared_config, goal=goal)
         for algorithm in selected
     ]
     rows = []
