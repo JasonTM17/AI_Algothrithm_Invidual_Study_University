@@ -35,7 +35,14 @@ và không yêu cầu chạy app desktop.
 Các chế độ demo trong Streamlit chính:
 
 - `8-Puzzle Search`: chọn Start/Goal, thuật toán, heuristic, trace, experiment và report.
-- `Trò chơi xếp hình từ ảnh`: tải ảnh lên hoặc dùng số thường để chơi 8-puzzle trực quan.
+- `Trò chơi xếp hình từ ảnh`: board số chơi được ngay; tải ảnh để đổi 8 ô thành mảnh ảnh, hỗ trợ Undo/Reset/Shuffle và chỉ đổi Start solver khi bấm `Dùng làm trạng thái bắt đầu`.
+
+Mỗi thuật toán trong 6 nhóm có một GIF chạy thật ngay tại vùng chọn thuật toán. GIF được sinh từ
+chính `run_algorithm` với Start/heuristic/seed cố định, không phải minh họa giả. Tạo lại toàn bộ 26 GIF:
+
+```powershell
+python .\scripts\generate-algorithm-demo-gifs.py
+```
 
 `Chạy thuật toán đã chọn` và `So sánh nhóm đang chọn` luôn dùng đúng ma trận Start đang hiển thị.
 Muốn tạo bài mới, người dùng chủ động bấm `Tự trộn ma trận`. Kết quả lời giải và trace đều có
@@ -44,7 +51,7 @@ Muốn tạo bài mới, người dùng chủ động bấm `Tự trộn ma tr�
 Chạy kiểm thử trước khi nộp:
 
 ```powershell
-python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\sidebar_game.py .\stage3_search_showcase_app.py .\8_puzzle_ai\app.py
+python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\stage3_search_showcase_app.py .\8_puzzle_ai\app.py
 python .\eight_puzzle_search_app.py --self-test
 python .\tests\test_search_behavior.py
 python .\tests\test_streamlit_constraint_graph_routing.py
@@ -66,6 +73,7 @@ Checklist nộp bài:
 
 - [ ] App chính chạy được bằng Streamlit.
 - [ ] Có đủ 6 nhóm thuật toán trong UI.
+- [ ] Cả 26 thuật toán có GIF chạy thật tương ứng trong UI.
 - [ ] Mỗi thuật toán có PEAS và dạng bài toán tương ứng.
 - [ ] Trace thể hiện rõ `Node`, `Frontier`, `Reached`, `Priority Rule`, `Selection Key`.
 - [ ] Heuristic trong UI chỉ có `misplaced` và `manhattan`.
@@ -111,6 +119,10 @@ Dự án này không chỉ là một game 8-puzzle. Đây là một **phòng th�
 ├── streamlit_eight_puzzle_app.py
 │   └── Entry point UI Streamlit chính, điều phối sidebar, run button, tabs và session state.
 ├── web/
+│   ├── algorithm_demo_assets.py
+│   │   └── Ánh xạ tên thuật toán sang GIF và render GIF đang chọn trong Streamlit.
+│   ├── assets/algorithm-demos/
+│   │   └── 26 GIF được sinh từ kết quả chạy core thật với cấu hình demo cố định.
 │   ├── ui_views.py
 │   │   └── Component UI: board, trace replay, heuristic inspector, report tab, path playback.
 │   ├── ui_text.py
@@ -119,8 +131,9 @@ Dự án này không chỉ là một game 8-puzzle. Đây là một **phòng th�
 │   │   └── Inject CSS theme.
 │   └── ui-theme.css
 │       └── Design tokens, layout, board tiles, trace cards, dataframe styling.
-├── sidebar_game.py
-│   └── Mini game xếp hình tương tác trong sidebar/page ảnh.
+├── scripts/
+│   └── generate-algorithm-demo-gifs.py
+│       └── Chạy toàn bộ thuật toán và dựng lại GIF demo xác định bằng Pillow.
 ├── stage3_search_showcase_app.py
 │   └── Showcase phụ cho trực quan hóa thuật toán.
 ├── 8_puzzle_ai/

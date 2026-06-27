@@ -200,29 +200,80 @@ def persist_game_image(uploaded_image: Any) -> bool:
     return True
 
 
-def image_board_html(state: puzzle.State, image_url: str, lang: str) -> str:
-    cells = []
-    for index, value in enumerate(state):
-        row, col = divmod(index, 3)
-        if value == 0:
-            label = "Ô trống 0" if lang == "vi" else "Blank tile 0"
-            cells.append(f'<div class="tile blank" aria-label="{escape(label)}">0</div>')
-        else:
-            label = f"Ô ảnh {value}" if lang == "vi" else f"Image tile {value}"
-            cells.append(
-                f'<div class="tile tile-{value}" data-tile="{value}" aria-label="{escape(label)}"></div>'
+def _image_tile_button_css(state: puzzle.State, image_url: str) -> str:
+    """Style Streamlit tile buttons with the uploaded image while keeping Python-side clicks."""
+    if not image_url:
+        return ""
+
+    moves = st.session_state.get("game_moves", 0)
+    safe_url = escape(image_url, quote=True)
+    selectors = [
+        (f'div.st-key-play_tile_{index}_{tile}_{moves} div.stButton > button', tile)
+        for index, tile in enumerate(state)
+    ]
+    image_selectors = [selector for selector, tile in selectors if tile != 0]
+    rules = [
+        '<style>',
+        f'{",".join(image_selectors)} {{'
+        f'background-image: url("{safe_url}") !important;'
+        'background-size: 300% 300% !important;'
+        'background-repeat: no-repeat !important;'
+        'border-color: rgba(255,255,255,0.82) !important;'
+        'color: transparent !important;'
+        'font-size: 0 !important;'
+        'opacity: 1 !important;'
+        '}',
+    ]
+    for selector, tile in selectors:
+        if tile == 0:
+            rules.append(
+                f'{selector} {{'
+                'background: repeating-linear-gradient(135deg, var(--accent-soft) 0 8px, transparent 8px 16px) !important;'
+                'border: 1px dashed var(--accent-strong) !important;'
+                'color: transparent !important;'
+                'box-shadow: none !important;'
+                'opacity: 1 !important;'
+                '}'
             )
-    return (
-        f'<div class="puzzle-board image-puzzle-board" role="grid" '
-        f'style="--puzzle-image: url({escape(image_url)});">{"".join(cells)}</div>'
-    )
+            rules.append(
+                f'{selector}::after {{'
+                'content: "0";'
+                'display: inline-flex; align-items: center; justify-content: center;'
+                'color: var(--accent-strong); font-size: 1rem; font-weight: 800;'
+                '}'
+            )
+            continue
+
+        row, col = divmod(tile - 1, 3)
+        rules.append(
+            f'{selector} {{'
+            f'background-position: {col * 50}% {row * 50}% !important;'
+            '}'
+        )
+        rules.append(
+            f'{selector}::after {{'
+            f'content: "{tile}";'
+            'display: inline-flex; align-items: center; justify-content: center;'
+            'width: 1.65rem; height: 1.65rem; border-radius: 999px;'
+            'background: var(--image-badge-bg); color: var(--image-text);'
+            'font-size: 0.8rem; font-weight: 800;'
+            'text-shadow: 0 1px 6px rgba(0,0,0,0.35);'
+            '}'
+        )
+    rules.append('</style>')
+    return "".join(rules)
 
 
 def playable_tile_grid(state: puzzle.State, lang: str) -> None:
+    image_url = st.session_state.get("game_image_url", "")
+    if image_url:
+        st.markdown(_image_tile_button_css(state, image_url), unsafe_allow_html=True)
+
     legal_tiles = {
         state[next_state.index(0)]
         for _action, next_state in puzzle.neighbors(state)
     }
+    st.markdown('<div class="play-board-shell native-play-board">', unsafe_allow_html=True)
     for row_start in range(0, 9, 3):
         cols = st.columns(3, gap="small")
         for offset, col in enumerate(cols):
@@ -239,66 +290,88 @@ def playable_tile_grid(state: puzzle.State, lang: str) -> None:
                 if st.button(label, key=f"play_tile_{index}_{tile}_{st.session_state.game_moves}", disabled=not movable, help=help_label, width="stretch"):
                     move_tile_in_game(tile)
                     st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
     note = "Bấm trực tiếp ô hợp lệ cạnh ô trống để di chuyển." if lang == "vi" else "Click a legal tile next to the blank to move it."
-    st.info(note)
+    st.caption(note)
 
 
 def show_image_puzzle_page(lang: str) -> None:
     st.markdown(
         f"""
-        <div class="app-hero">
-          <span class="app-kicker">8-Puzzle / Image Game</span>
-          <h1>{escape(text(lang, "image_game_title"))}</h1>
-          <p>{escape(text(lang, "image_game_note"))}</p>
+        <div class="app-hero image-game-hero">
+          <div class="hero-copy">
+            <span class="app-kicker">8-Puzzle / Image Game</span>
+            <h1>{escape(text(lang, "image_game_title"))}</h1>
+            <p>{escape(text(lang, "image_game_note"))}</p>
+          </div>
+          <div class="image-hero-card" aria-hidden="true">
+            <div class="image-hero-grid">
+              <span>1</span><span>2</span><span>3</span>
+              <span>4</span><span>5</span><span>6</span>
+              <span>7</span><span>8</span><span class="blank">0</span>
+            </div>
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    with st.container(border=True):
-        st.markdown(
-            f"""
-            <div class="panel-heading">
-              <h2>{escape(text(lang, "image_controls"))}</h2>
-              <span class="panel-badge">{escape(text(lang, "game_title"))}</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        uploaded_image = st.file_uploader(
-            text(lang, "image_upload"),
-            type=["png", "jpg", "jpeg", "webp"],
-            key="game_image_page_uploader",
-        )
-        if uploaded_image is not None and persist_game_image(uploaded_image):
-            st.rerun()
-        mode_text = text(lang, "image_mode_on") if st.session_state.game_image_url else text(lang, "image_mode_off")
-        st.caption(mode_text)
-        if st.session_state.game_image_url:
-            st.success(text(lang, "image_ready"))
-            if st.button(text(lang, "clear_image"), key="game_clear_image_page", width="stretch"):
-                st.session_state.game_image_url = ""
-                st.session_state.game_image_name = ""
-                st.session_state.game_image_signature = ""
+
+    control_col, game_col = st.columns([0.88, 1.35], gap="large")
+    with control_col:
+        with st.container(border=True):
+            st.markdown(
+                f"""
+                <div class="image-control-heading">
+                  <span class="app-kicker">{escape(text(lang, "image_controls"))}</span>
+                  <h2>{escape(text(lang, "image_setup_title"))}</h2>
+                  <p>{escape(text(lang, "image_upload_hint"))}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f"""
+                <div class="image-status-card">
+                  <strong>{escape(text(lang, "image_board_mode"))}</strong>
+                  <span>{escape(text(lang, "image_mode_on") if st.session_state.game_image_url else text(lang, "image_mode_off"))}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            uploaded_image = st.file_uploader(
+                text(lang, "image_upload"),
+                type=["png", "jpg", "jpeg", "webp"],
+                key="game_image_page_uploader",
+            )
+            if uploaded_image is not None and persist_game_image(uploaded_image):
                 st.rerun()
-        else:
-            st.info(text(lang, "image_game_note"))
-            
-        st.divider()
-        try:
-            import sidebar_game
-            theme_vars = {
-                "--background-color": st.get_option("theme.backgroundColor") or "#f7f5f2",
-                "--secondary-background-color": st.get_option("theme.secondaryBackgroundColor") or "#faf8f5",
-                "--text-color": st.get_option("theme.textColor") or "#1e1b18",
-                "--primary-color": st.get_option("theme.primaryColor") or "#0d9488",
-            }
-            st.components.v1.html(sidebar_game.get_sidebar_game_html("sidebar_puzzle.png", theme_vars), height=800)
-        except ImportError:
-            st.warning("Interactive image game unavailable. The sidebar_puzzle.png asset may be missing. Switch to number mode or upload a custom image." if lang == "en" else "Trò chơi xếp hình tương tác không khả dụng. Có thể thiếu file sidebar_puzzle.png. Thử chuyển sang chế độ số hoặc tải ảnh khác.")
-        except Exception as e:
-            st.error(f"{'Failed to load image puzzle game' if lang == 'en' else 'Không thể tải trò chơi xếp hình ảnh'}: {e}. {'Try refreshing the page or clearing the uploaded image.' if lang == 'en' else 'Thử làm mới trang hoặc xóa ảnh đã tải.'}")
-            
-        show_goal_panel(lang)
+
+            if st.session_state.game_image_url:
+                st.success(text(lang, "image_ready"))
+                if st.button(text(lang, "clear_image"), key="game_clear_image_page", width="stretch"):
+                    st.session_state.game_image_url = ""
+                    st.session_state.game_image_name = ""
+                    st.session_state.game_image_signature = ""
+                    st.rerun()
+            else:
+                st.caption(text(lang, "image_number_mode_hint"))
+
+            st.markdown(
+                f"""
+                <div class="image-help-card">
+                  <strong>{escape(text(lang, "image_play_steps_title"))}</strong>
+                  <ol>
+                    <li>{escape(text(lang, "image_play_step_upload"))}</li>
+                    <li>{escape(text(lang, "image_play_step_click"))}</li>
+                    <li>{escape(text(lang, "image_play_step_start"))}</li>
+                  </ol>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    with game_col:
+        show_interactive_game_panel(lang)
 
 
 def mini_board_html(state: puzzle.State) -> str:
@@ -1135,10 +1208,19 @@ def load_demo_preset(preset_name: str) -> None:
 
 
 def reset_game_state(state: puzzle.State | None = None) -> None:
-    st.session_state.game_state = state or st.session_state.start_state
+    target = state or st.session_state.get("game_initial_state") or st.session_state.start_state
+    st.session_state.game_state = target
+    st.session_state.game_initial_state = target
     st.session_state.game_moves = 0
     st.session_state.game_history = []
     st.session_state.game_message = ""
+
+
+def shuffle_game_state(scramble_moves: int = 20) -> None:
+    st.session_state.game_shuffle_count = st.session_state.get("game_shuffle_count", 0) + 1
+    st.session_state.game_last_shuffle_moves = scramble_moves
+    effective_seed = st.session_state.get("seed", 1) + 1000 + st.session_state.game_shuffle_count
+    reset_game_state(puzzle.generate_random_state(scramble_moves, effective_seed))
 
 
 def clear_solver_outputs() -> None:
@@ -1186,41 +1268,47 @@ def show_interactive_game_panel(lang: str) -> None:
     subtitle = text(lang, "game_note")
     solved_text = text(lang, "game_solved")
     progress_text = text(lang, "game_progress")
-    st.markdown(
-        f"""
-        <div class="game-panel">
-          <h3>{escape(title)}</h3>
-          <p class="dpad-note">{escape(subtitle)}</p>
-          <div class="game-meta">
-            <span class="game-pill">{escape(text(lang, "game_moves"))}: {st.session_state.game_moves}</span>
-            <span class="game-pill">h(n): {h_value}</span>
-            <span class="game-pill">{escape(solved_text if solved else progress_text)}</span>
-          </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    if st.session_state.game_image_url:
-        st.markdown(image_board_html(st.session_state.game_state, st.session_state.game_image_url, lang), unsafe_allow_html=True)
-        st.caption(text(lang, "click_tile_hint"))
-    playable_tile_grid(st.session_state.game_state, lang)
+    with st.container(border=True):
+        st.markdown(
+            f"""
+            <div class="game-panel image-game-board-card">
+              <h3>{escape(title)}</h3>
+              <p class="dpad-note">{escape(subtitle)}</p>
+              <div class="game-meta">
+                <span class="game-pill">{escape(text(lang, "game_moves"))}: {st.session_state.game_moves}</span>
+                <span class="game-pill">h(n): {h_value}</span>
+                <span class="game-pill">{escape(solved_text if solved else progress_text)}</span>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        playable_tile_grid(st.session_state.game_state, lang)
 
-    action_cols = st.columns(2)
-    with action_cols[0]:
-        if st.button(text(lang, "undo"), key="game_undo", disabled=not st.session_state.game_history, width="stretch"):
-            undo_game_move()
+        action_cols = st.columns(3)
+        with action_cols[0]:
+            if st.button(text(lang, "undo"), key="game_undo", disabled=not st.session_state.game_history, width="stretch"):
+                undo_game_move()
+                st.rerun()
+        with action_cols[1]:
+            if st.button(text(lang, "reset_game"), key="game_reset", width="stretch"):
+                reset_game_state()
+                st.rerun()
+        with action_cols[2]:
+            if st.button(text(lang, "shuffle_game"), key="game_shuffle", width="stretch"):
+                shuffle_game_state()
+                st.session_state.game_message = text(lang, "game_shuffled", moves=st.session_state.game_last_shuffle_moves)
+                st.rerun()
+        if st.button(text(lang, "use_as_start"), key="game_use_start", type="primary", width="stretch"):
+            selected_state = st.session_state.game_state
+            st.session_state.start_state = selected_state
+            reset_game_state(selected_state)
+            clear_solver_outputs()
+            st.session_state.last_preset_name = ""
+            st.session_state.game_message = text(lang, "game_start_synced")
             st.rerun()
-    with action_cols[1]:
-        if st.button(text(lang, "reset_game"), key="game_reset", width="stretch"):
-            reset_game_state()
-            st.rerun()
-    if st.button(text(lang, "use_as_start"), key="game_use_start", width="stretch"):
-        st.session_state.start_state = st.session_state.game_state
-        clear_solver_outputs()
-        st.session_state.last_preset_name = ""
-        st.rerun()
-    if st.session_state.game_message:
-        st.caption(st.session_state.game_message)
-    st.markdown("</div>", unsafe_allow_html=True)
+        if st.session_state.game_message:
+            st.caption(st.session_state.game_message)
 
 
 def show_result(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
@@ -1316,4 +1404,3 @@ def show_result(result: puzzle.SearchResult, lang: str, heuristic: str) -> None:
         with st.expander(text(lang, "grading_checklist"), expanded=False):
             show_grading_checklist(lang)
         st.text_area(text(lang, "report_preview"), value=report_markdown, height=420)
-

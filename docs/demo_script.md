@@ -15,12 +15,14 @@ Package `8_puzzle_ai/` là phần phụ để tham khảo/educational.
 2. Chọn nhóm `Informed Search`.
 3. Chọn thuật toán `A*`.
 4. Chọn heuristic `manhattan`.
-5. Bấm `Chạy thuật toán đã chọn`.
+5. Quan sát GIF `A*` chạy thật: board, `g/h/f`, selection key và lý do chọn bước.
+6. Bấm `Chạy thuật toán đã chọn`.
 
 Điểm cần nói:
 - A* chọn node theo `f(n)=g(n)+h(n)`.
 - Với Manhattan admissible, A* tối ưu trên 8-puzzle chuẩn.
 - Tab `Trace` giải thích Node, Frontier, Reached và “Why This Node?”.
+- Khi đổi thuật toán, GIF đổi theo đúng thuật toán đang chọn; toàn bộ 26 GIF được sinh từ core thật với seed cố định.
 
 ## 3. So sánh BFS, UCS, A*
 
@@ -125,6 +127,7 @@ Báo cáo nên có:
 
 - [ ] Chạy được Streamlit app chính.
 - [ ] Chạy được A* Manhattan và xem được trace.
+- [ ] Đổi thuật toán và thấy đúng GIF chạy thật tương ứng.
 - [ ] Chứng minh BFS/UCS/A* cùng optimal cost trên state nông.
 - [ ] Có PEAS cho thuật toán đang demo.
 - [ ] Có Node / Frontier / Reached rõ trong trace.

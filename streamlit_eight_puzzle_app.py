@@ -8,13 +8,14 @@ from typing import Any, Optional
 import streamlit as st
 
 import eight_puzzle_search_app as puzzle
+from web.algorithm_demo_assets import show_algorithm_demo
 from web.ui_theme import apply_theme
 from web.ui_text import HELP, text, help_text, localize_table, localize_trace_text, localize_algorithm_group
 from web.ui_views import (
     show_page_header, show_image_puzzle_page,
     show_goal_panel, show_board, heuristic_usage_note, show_grading_checklist,
     show_peas_model, show_problem_variant, show_academic_context, show_result,
-    show_experiment_lab, show_interactive_game_panel,
+    show_experiment_lab,
     show_path_player, show_certificate, show_trace_story, show_trace_replay_player,
     show_heuristic_inspector, show_priority_basis, show_algorithm_profile,
     current_partial_goal_pattern, partial_goal_controls,
@@ -22,7 +23,6 @@ from web.ui_views import (
     reset_playback_state,
     shuffle_start_state, current_shuffle_note,
     demo_readiness_html, trace_run_guide_html, board_matrix_html, metric_cards_html,
-    image_board_html, playable_tile_grid, persist_game_image,
     certificate_chips_html, certificate_rows, trace_glossary_rows,
     academic_problem_markdown, readiness_chip, trace_detail_card,
     caro_demo_panel_html,
@@ -82,12 +82,18 @@ def initialize_state() -> None:
         st.session_state.partial_goal_pattern_text = "1 2 ? ? ? ? ? ? ?"
     if "game_state" not in st.session_state:
         st.session_state.game_state = st.session_state.start_state
+    if "game_initial_state" not in st.session_state:
+        st.session_state.game_initial_state = st.session_state.game_state
     if "game_moves" not in st.session_state:
         st.session_state.game_moves = 0
     if "game_history" not in st.session_state:
         st.session_state.game_history = []
     if "game_message" not in st.session_state:
         st.session_state.game_message = ""
+    if "game_shuffle_count" not in st.session_state:
+        st.session_state.game_shuffle_count = 0
+    if "game_last_shuffle_moves" not in st.session_state:
+        st.session_state.game_last_shuffle_moves = 20
     if "game_image_url" not in st.session_state:
         st.session_state.game_image_url = ""
     if "game_image_name" not in st.session_state:
@@ -229,6 +235,7 @@ def main() -> None:
             )
             st.markdown(demo_readiness_html(lang, algorithm, heuristic), unsafe_allow_html=True)
             st.markdown(caro_demo_panel_html(lang, algorithm), unsafe_allow_html=True)
+            show_algorithm_demo(algorithm, lang)
             st.caption(f"{text(lang, 'heuristic_usage')}: {localize_trace_text(heuristic_usage_note(lang, algorithm), lang)}")
             partial_goal_controls(lang, algorithm)
             st.caption(f"{text(lang, 'algorithm')}: {algorithm} | {text(lang, 'heuristic')}: {heuristic}")

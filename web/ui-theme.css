@@ -1500,13 +1500,246 @@ div[data-testid="stDataFrame"] [role="gridcell"] {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
 }
 
+.image-game-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(170px, 240px) !important;
+  align-items: center !important;
+  padding: 1.1rem 1.3rem !important;
+}
+
+.image-game-hero h1 {
+  max-width: 680px !important;
+  font-size: clamp(2.1rem, 3.4vw, 3.45rem) !important;
+  line-height: 1.04 !important;
+}
+
+.image-game-hero p {
+  max-width: 760px !important;
+  margin-bottom: 0 !important;
+}
+
+.image-hero-card {
+  position: relative;
+  z-index: 1;
+  justify-self: end;
+  width: min(100%, 210px);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: var(--shadow-sm);
+  padding: 0.75rem;
+}
+
+.image-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.42rem;
+}
+
+.image-hero-grid span {
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--tile-bg-1), var(--tile-bg-2));
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 850;
+  box-shadow: var(--tile-shadow);
+}
+
+.image-hero-grid .blank {
+  color: var(--accent-strong);
+  border-style: dashed;
+  background: repeating-linear-gradient(135deg, var(--accent-soft) 0 8px, transparent 8px 16px);
+  box-shadow: none;
+}
+
+.image-game-page {
+  margin-top: 0.7rem;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.image-control-heading),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.image-game-board-card) {
+  height: 100%;
+  border-color: rgba(15, 23, 42, 0.10) !important;
+  border-radius: 22px !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.algorithm-demo-heading) {
+  margin: 0.75rem 0 !important;
+  padding: 0.68rem !important;
+  border-color: rgba(15, 150, 136, 0.20) !important;
+  border-radius: 18px !important;
+  background: linear-gradient(145deg, #f4fffd, #ffffff) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+.algorithm-demo-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.algorithm-demo-heading span {
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.algorithm-demo-heading strong {
+  color: var(--ink);
+  font-size: 0.86rem;
+  text-align: right;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.algorithm-demo-heading)
+div[data-testid="stImage"] img {
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+}
+
+.image-control-heading {
+  margin: 0 0 0.85rem;
+}
+
+.image-control-heading h2 {
+  margin: 0.2rem 0 0.25rem !important;
+  color: var(--ink) !important;
+  font-family: 'Outfit', Inter, system-ui, sans-serif !important;
+  font-size: clamp(1.55rem, 2.4vw, 2.2rem) !important;
+  line-height: 1.08 !important;
+}
+
+.image-control-heading p {
+  margin: 0 !important;
+  color: var(--muted) !important;
+  line-height: 1.55 !important;
+}
+
+.image-status-card,
+.image-help-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow-xs);
+  padding: 0.8rem 0.9rem;
+  margin: 0.65rem 0 0.8rem;
+}
+
+.image-status-card strong,
+.image-status-card span {
+  display: block;
+}
+
+.image-status-card strong,
+.image-help-card strong {
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.image-status-card span {
+  color: var(--accent-strong);
+  margin-top: 0.18rem;
+  font-weight: 780;
+}
+
+.image-help-card ol {
+  margin: 0.5rem 0 0 1.1rem;
+  padding: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+[data-testid="stFileUploaderDropzone"] {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1.5px dashed rgba(13, 148, 136, 0.42) !important;
+  border-radius: 18px !important;
+  min-height: 84px !important;
+  padding: 1rem !important;
+}
+
+[data-testid="stFileUploaderDropzone"]:hover {
+  border-color: rgba(13, 148, 136, 0.72) !important;
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.08) !important;
+}
+
+[data-testid="stFileUploaderDropzone"] button {
+  border-radius: 12px !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  background: #ffffff !important;
+  color: var(--ink) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+.image-game-board-card {
+  margin-top: 0 !important;
+  padding: 0.1rem 0 0.3rem !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.image-game-board-card .native-play-board {
+  margin-top: 0.4rem !important;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.image-game-board-card)
+div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-play_tile_"]) {
+  max-width: min(100%, 430px);
+  margin: 0 auto 0.5rem;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.image-game-board-card)
+div[class*="st-key-play_tile_"] div.stButton > button:disabled {
+  opacity: 0.82 !important;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.image-game-board-card)
+div[class*="st-key-play_tile_"] div.stButton > button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--accent-shadow);
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.image-game-board-card)
+div[class*="st-key-game_"] div.stButton > button {
+  min-height: 2.75rem;
+}
+
 @media (max-width: 1180px) {
   .app-hero {
     grid-template-columns: 1fr !important;
   }
 
+  .image-game-hero {
+    grid-template-columns: minmax(0, 1fr) 150px !important;
+  }
+
+  .image-hero-card {
+    justify-self: end;
+    max-width: 150px;
+  }
+
   .hero-stat-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  div[data-testid="stHorizontalBlock"]:has(.image-control-heading):has(.image-game-board-card) {
+    flex-direction: column !important;
+  }
+
+  div[data-testid="stHorizontalBlock"]:has(.image-control-heading):has(.image-game-board-card)
+  > div[data-testid="stColumn"] {
+    width: 100% !important;
+    flex: 1 1 100% !important;
   }
 }
 
@@ -1519,6 +1752,14 @@ div[data-testid="stDataFrame"] [role="gridcell"] {
   .app-hero {
     padding: 1rem !important;
     border-radius: 18px !important;
+  }
+
+  .image-game-hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  .image-hero-card {
+    display: none;
   }
 
   .app-hero h1 {
