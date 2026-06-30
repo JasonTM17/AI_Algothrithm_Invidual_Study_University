@@ -10,6 +10,8 @@ from PIL import Image
 from streamlit.testing.v1 import AppTest
 
 ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = ROOT / "src"
+sys.path.insert(0, str(SRC_ROOT))
 sys.path.insert(0, str(ROOT))
 
 import eight_puzzle_search_app as puzzle
@@ -24,10 +26,10 @@ def _source(path: str) -> str:
 def test_graph_coloring_entrypoints_are_removed() -> None:
     combined = "\n".join(
         [
-            _source("streamlit_eight_puzzle_app.py"),
+            _source("src/streamlit_eight_puzzle_app.py"),
             _source("web/ui_views.py"),
             _source("web/ui_text.py"),
-            _source("eight_puzzle_search_app.py"),
+            _source("src/eight_puzzle_search_app.py"),
         ]
     )
 
@@ -46,7 +48,7 @@ def test_graph_coloring_entrypoints_are_removed() -> None:
 
 
 def test_sidebar_features_are_puzzle_only() -> None:
-    source = _source("streamlit_eight_puzzle_app.py")
+    source = _source("src/streamlit_eight_puzzle_app.py")
     feature_block = source[source.index("feature_options = [") : source.index("feature_mode = st.radio")]
 
     assert "feature_puzzle" in feature_block
@@ -56,7 +58,7 @@ def test_sidebar_features_are_puzzle_only() -> None:
 
 
 def test_run_and_compare_use_displayed_start() -> None:
-    source = _source("streamlit_eight_puzzle_app.py")
+    source = _source("src/streamlit_eight_puzzle_app.py")
 
     assert "prepare_random_algorithm_run" not in source
     assert source.count("build_config(randomize_successors=False)") == 2
@@ -65,7 +67,7 @@ def test_run_and_compare_use_displayed_start() -> None:
 def test_image_game_page_uses_native_streamlit_game() -> None:
     combined = "\n".join(
         [
-            _source("streamlit_eight_puzzle_app.py"),
+            _source("src/streamlit_eight_puzzle_app.py"),
             _source("web/ui_views.py"),
         ]
     )
@@ -80,7 +82,7 @@ def test_image_game_page_uses_native_streamlit_game() -> None:
 
 
 def _open_image_game_page() -> AppTest:
-    app = AppTest.from_file(str(ROOT / "streamlit_eight_puzzle_app.py"), default_timeout=30).run()
+    app = AppTest.from_file(str(SRC_ROOT / "streamlit_eight_puzzle_app.py"), default_timeout=30).run()
     assert not app.exception
     app.radio(key="feature_mode").set_value("Trò chơi xếp hình từ ảnh").run()
     assert not app.exception
@@ -147,7 +149,7 @@ def test_persist_game_image_accepts_uploaded_file_like_object() -> None:
 
 def test_algorithm_demo_gifs_cover_all_registered_algorithms() -> None:
     generator = _source("scripts/generate-algorithm-demo-gifs.py")
-    app_source = _source("streamlit_eight_puzzle_app.py")
+    app_source = _source("src/streamlit_eight_puzzle_app.py")
 
     assert "puzzle.run_algorithm(DEMO_START, algorithm" in generator
     assert "show_algorithm_demo(algorithm, lang)" in app_source
@@ -175,7 +177,7 @@ def test_readme_embeds_each_algorithm_demo_gif() -> None:
 
 
 def test_streamlit_run_compare_and_playback_controls() -> None:
-    app = AppTest.from_file(str(ROOT / "streamlit_eight_puzzle_app.py"), default_timeout=30).run()
+    app = AppTest.from_file(str(SRC_ROOT / "streamlit_eight_puzzle_app.py"), default_timeout=30).run()
     assert not app.exception
     displayed_start = tuple(app.session_state["start_state"])
 
@@ -196,7 +198,7 @@ def test_streamlit_run_compare_and_playback_controls() -> None:
         assert not app.session_state[f"{prefix}_playing"]
         assert not app.exception
 
-    compare_app = AppTest.from_file(str(ROOT / "streamlit_eight_puzzle_app.py"), default_timeout=30).run()
+    compare_app = AppTest.from_file(str(SRC_ROOT / "streamlit_eight_puzzle_app.py"), default_timeout=30).run()
     compare_start = tuple(compare_app.session_state["start_state"])
     compare_app.button(key="compare_all_full_width").click().run()
     assert not compare_app.exception

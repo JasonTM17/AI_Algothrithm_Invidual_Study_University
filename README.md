@@ -4,16 +4,16 @@
 
 App chính của bài nộp là:
 
-- Core thuật toán: `eight_puzzle_search_app.py`
-- Giao diện web (Streamlit): `streamlit_eight_puzzle_app.py`
+- Core thuật toán: `src/eight_puzzle_search_app.py`
+- Giao diện web (Streamlit): `src/streamlit_eight_puzzle_app.py`
 - Package phụ/educational: `8_puzzle_ai/`
-- Showcase phụ: `stage3_search_showcase_app.py`
+- Showcase phụ: `src/stage3_search_showcase_app.py`
 
 Chạy giao diện web chính:
 
 ```powershell
 python -m pip install -r requirements.txt
-python -m streamlit run .\streamlit_eight_puzzle_app.py
+python -m streamlit run .\src\streamlit_eight_puzzle_app.py
 ```
 
 Chạy package phụ/educational nếu cần đối chiếu thêm:
@@ -25,7 +25,7 @@ python -m streamlit run .\8_puzzle_ai\app.py
 Chạy showcase phụ:
 
 ```powershell
-python -m streamlit run .\stage3_search_showcase_app.py
+python -m streamlit run .\src\stage3_search_showcase_app.py
 ```
 
 Ghi chú về desktop/Tkinter: bản workspace hiện tại không có `eight_puzzle_tk_app.py`
@@ -88,8 +88,8 @@ Muốn tạo bài mới, người dùng chủ động bấm `Tự trộn ma tr�
 Chạy kiểm thử trước khi nộp:
 
 ```powershell
-python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\stage3_search_showcase_app.py .\8_puzzle_ai\app.py
-python .\eight_puzzle_search_app.py --self-test
+python -m py_compile .\src\eight_puzzle_search_app.py .\src\streamlit_eight_puzzle_app.py .\src\stage3_search_showcase_app.py .\8_puzzle_ai\app.py
+python .\src\eight_puzzle_search_app.py --self-test
 python .\tests\test_search_behavior.py
 python .\tests\test_streamlit_constraint_graph_routing.py
 python .\8_puzzle_ai\tests\test_puzzle.py
@@ -145,34 +145,23 @@ Dự án này không chỉ là một game 8-puzzle. Đây là một **phòng th�
 │   └── Tài liệu chính: mục tiêu, cách chạy, cấu trúc, lý thuyết, thuật toán, trace, kiểm thử.
 ├── requirements.txt
 │   └── Dependency tối thiểu cho Streamlit/Pandas và các phần xuất báo cáo.
-├── eight_puzzle_search_app.py
-│   ├── Core state-space 8-puzzle: parse state, validate state, solvability, neighbors.
-│   ├── Heuristic: misplaced tiles, Manhattan distance, helper giải thích h(n).
-│   ├── Solver chuẩn: BFS, DFS, UCS, IDS, Greedy, A*, IDA*, local search.
-│   ├── Demo học thuật: complex environment, CSP, adversarial/stochastic.
-│   ├── Trace engine: Node, Action, g, h, f, Frontier, Reached, Selection Key.
-│   ├── Certificate: kiểm tra path hợp lệ, goal đúng, cost đúng, unsolvable dừng sớm.
-│   └── Export: Markdown, DOCX, PDF, HTML, CSV benchmark.
-├── streamlit_eight_puzzle_app.py
-│   └── Entry point UI Streamlit chính, điều phối sidebar, run button, tabs và session state.
-├── web/
-│   ├── algorithm_demo_assets.py
-│   │   └── Ánh xạ tên thuật toán sang GIF và render GIF đang chọn trong Streamlit.
-│   ├── assets/algorithm-demos/
-│   │   └── 26 GIF được sinh từ kết quả chạy core thật với cấu hình demo cố định.
-│   ├── ui_views.py
-│   │   └── Component UI: board, trace replay, heuristic inspector, report tab, path playback.
-│   ├── ui_text.py
-│   │   └── Toàn bộ nhãn song ngữ Tiếng Việt/English và bảng học thuật.
-│   ├── ui_theme.py
-│   │   └── Inject CSS theme.
-│   └── ui-theme.css
-│       └── Design tokens, layout, board tiles, trace cards, dataframe styling.
-├── scripts/
-│   └── generate-algorithm-demo-gifs.py
-│       └── Chạy toàn bộ thuật toán và dựng lại GIF demo xác định bằng Pillow.
-├── stage3_search_showcase_app.py
-│   └── Showcase phụ cho trực quan hóa thuật toán.
+|-- src/
+|   |-- eight_puzzle_search_app.py
+|   |   `-- Core state-space 8-puzzle, heuristics, solvers, trace, certificate, exports.
+|   |-- streamlit_eight_puzzle_app.py
+|   |   `-- Main Streamlit UI entry point.
+|   `-- stage3_search_showcase_app.py
+|       `-- Optional showcase UI for search-tree visualization.
+|-- web/
+|   |-- algorithm_demo_assets.py
+|   |-- assets/algorithm-demos/
+|   |   `-- 26 deterministic GIF demos generated from real core runs.
+|   |-- ui_views.py
+|   |-- ui_text.py
+|   |-- ui_theme.py
+|   `-- ui-theme.css
+|-- scripts/
+|   `-- generate-algorithm-demo-gifs.py
 ├── 8_puzzle_ai/
 │   ├── app.py
 │   │   └── Streamlit app phụ để đối chiếu package educational.
@@ -348,20 +337,21 @@ Trong chương trình:
 
 Phiên bản chính cần chạy và demo là:
 
-- Core thuật toán: `eight_puzzle_search_app.py`
-- Giao diện Streamlit chính: `streamlit_eight_puzzle_app.py`
-- Lệnh chạy khuyến nghị: `python -m streamlit run .\streamlit_eight_puzzle_app.py`
+- Core thuật toán: `src/eight_puzzle_search_app.py`
+- Giao diện Streamlit chính: `src/streamlit_eight_puzzle_app.py`
+- Lệnh chạy khuyến nghị: `python -m streamlit run .\src\streamlit_eight_puzzle_app.py`
 
 Thư mục `8_puzzle_ai/` là package phụ phục vụ tham khảo và minh họa thêm. Các nhóm `Complex Environments`, `Constraint Satisfaction` và `Adversarial Search` trong package này là demo học thuật, không phải solver tự nhiên của bài toán 8-Puzzle chuẩn.
 
 ```text
 D:\Trí tuệ nhân tạo
-├── eight_puzzle_search_app.py
-├── streamlit_eight_puzzle_app.py
-└── README.md
+|-- src/
+|   |-- eight_puzzle_search_app.py
+|   `-- streamlit_eight_puzzle_app.py
+`-- README.md
 ```
 
-### 4.1. `eight_puzzle_search_app.py`
+### 4.1. `src/eight_puzzle_search_app.py`
 
 File lõi chứa:
 
@@ -380,7 +370,7 @@ File lõi chứa:
 - Self-test.
 - Hàm `launch_jupyter_app()` cho môi trường Jupyter nếu có `ipywidgets`.
 
-### 4.2. `streamlit_eight_puzzle_app.py`
+### 4.2. `src/streamlit_eight_puzzle_app.py`
 
 File giao diện web Streamlit chứa:
 
@@ -405,7 +395,7 @@ File giao diện web Streamlit chứa:
 ### 5.1. Chạy giao diện Streamlit
 
 ```powershell
-python -m streamlit run .\streamlit_eight_puzzle_app.py
+python -m streamlit run .\src\streamlit_eight_puzzle_app.py
 ```
 
 Sau khi chạy, mở:
@@ -417,13 +407,13 @@ http://127.0.0.1:8501
 ### 5.2. Chạy demo bằng terminal
 
 ```powershell
-python .\eight_puzzle_search_app.py --demo
+python .\src\eight_puzzle_search_app.py --demo
 ```
 
 ### 5.3. Chạy self-test
 
 ```powershell
-python .\eight_puzzle_search_app.py --self-test
+python .\src\eight_puzzle_search_app.py --self-test
 ```
 
 Nếu thành công, chương trình in:
@@ -435,6 +425,8 @@ Self-test passed.
 ### 5.4. Dùng trong Jupyter
 
 ```python
+import sys
+sys.path.insert(0, "src")
 from eight_puzzle_search_app import launch_jupyter_app
 launch_jupyter_app()
 ```
@@ -1325,10 +1317,10 @@ Các kiểm thử chính:
 Lệnh kiểm thử:
 
 ```powershell
-python .\eight_puzzle_search_app.py --self-test
+python .\src\eight_puzzle_search_app.py --self-test
 python .\tests\test_search_behavior.py
 python .\8_puzzle_ai\tests\test_puzzle.py
-python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\8_puzzle_ai\app.py
+python -m py_compile .\src\eight_puzzle_search_app.py .\src\streamlit_eight_puzzle_app.py .\src\stage3_search_showcase_app.py .\8_puzzle_ai\app.py
 ```
 
 ## 15. Nhận xét học thuật

@@ -1,7 +1,7 @@
 """Stage 3 showcase UI for the 8-Puzzle Search Lab.
 
 This app is intentionally additive: it reuses the existing core engine from
-`eight_puzzle_search_app.py` and gives the project a portfolio-style demo page
+`src/eight_puzzle_search_app.py` and gives the project a portfolio-style demo page
 with search-tree visualization, step-by-step explanation, and BFS vs A*
 comparison.
 """
@@ -9,10 +9,16 @@ comparison.
 from __future__ import annotations
 
 from collections import deque
+from pathlib import Path
+import sys
 from typing import Any, Dict, List, Sequence, Set, Tuple
 
 import pandas as pd
 import streamlit as st
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 import eight_puzzle_search_app as puzzle
 
@@ -332,13 +338,13 @@ App này đã sẵn sàng để deploy như một Streamlit app riêng.
 
 ```bash
 python -m pip install -r requirements.txt
-python -m streamlit run stage3_search_showcase_app.py
+python -m streamlit run src/stage3_search_showcase_app.py
 ```
 
 Khi deploy lên Streamlit Community Cloud, chọn entry point:
 
 ```text
-stage3_search_showcase_app.py
+src/stage3_search_showcase_app.py
 ```
 """
         )

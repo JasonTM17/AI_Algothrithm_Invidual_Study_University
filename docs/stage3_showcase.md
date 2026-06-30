@@ -7,7 +7,7 @@ The new app is additive and does not replace the main Streamlit coursework app.
 
 ```bash
 python -m pip install -r requirements.txt
-python -m streamlit run stage3_search_showcase_app.py
+python -m streamlit run src/stage3_search_showcase_app.py
 ```
 
 ## Features
@@ -79,7 +79,7 @@ The repository now includes:
 
 ## Recommended demo script
 
-1. Open `stage3_search_showcase_app.py`.
+1. Open `src/stage3_search_showcase_app.py`.
 2. Select `easy_2` or `medium_10`.
 3. Show the Search Tree tab and explain Start, Goal, neighbors, and heuristic values.
 4. Open Explain Step-by-Step and choose A*.

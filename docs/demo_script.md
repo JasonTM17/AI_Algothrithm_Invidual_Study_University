@@ -3,10 +3,10 @@
 ## 1. Mở app chính
 
 ```powershell
-python -m streamlit run .\streamlit_eight_puzzle_app.py
+python -m streamlit run .\src\streamlit_eight_puzzle_app.py
 ```
 
-App chính gồm core `eight_puzzle_search_app.py` và UI `streamlit_eight_puzzle_app.py`.
+App chính gồm core `src/eight_puzzle_search_app.py` và UI `src/streamlit_eight_puzzle_app.py`.
 Package `8_puzzle_ai/` là phần phụ để tham khảo/educational.
 
 ## 2. Demo thuật toán solver chuẩn
@@ -77,7 +77,7 @@ hoặc bấm `Random Goal một phần`.
 Trong app Streamlit chính:
 
 ```powershell
-python -m streamlit run .\streamlit_eight_puzzle_app.py
+python -m streamlit run .\src\streamlit_eight_puzzle_app.py
 ```
 
 Mở chế độ `8-Puzzle Search` trong sidebar.

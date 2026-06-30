@@ -4,8 +4,8 @@ Secondary package implementation of AI search algorithms for the 8-puzzle proble
 
 The canonical app for demos and reports is the root-level pair:
 
-- `../eight_puzzle_search_app.py`
-- `../streamlit_eight_puzzle_app.py`
+- `../src/eight_puzzle_search_app.py`
+- `../src/streamlit_eight_puzzle_app.py`
 
 This package is kept as an educational/reference implementation. Complex environment and CSP algorithms are simulations for explaining AI concepts. Adversarial algorithms use a Caro mini-game because the standard deterministic 8-puzzle is single-player.
 

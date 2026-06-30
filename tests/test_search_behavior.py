@@ -10,7 +10,9 @@ from pathlib import Path
 from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = ROOT / "src"
 PACKAGE_ROOT = ROOT / "8_puzzle_ai"
+sys.path.insert(0, str(SRC_ROOT))
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(PACKAGE_ROOT))
 

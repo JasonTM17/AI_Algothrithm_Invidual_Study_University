@@ -6,7 +6,7 @@ This document explains how to publish the main Streamlit 8-Puzzle AI lab.
 
 ```bash
 python -m pip install -r requirements.txt
-python -m streamlit run streamlit_eight_puzzle_app.py
+python -m streamlit run src/streamlit_eight_puzzle_app.py
 ```
 
 Open:
@@ -20,7 +20,7 @@ http://localhost:8501
 Recommended entry point:
 
 ```text
-streamlit_eight_puzzle_app.py
+src/streamlit_eight_puzzle_app.py
 ```
 
 Suggested settings:
@@ -28,7 +28,7 @@ Suggested settings:
 ```text
 Repository: JasonTM17/AI_Algothrithm_Invidual_Study_University
 Branch: main
-Main file path: streamlit_eight_puzzle_app.py
+Main file path: src/streamlit_eight_puzzle_app.py
 Python dependencies: requirements.txt
 ```
 
@@ -37,7 +37,7 @@ General flow:
 1. Push the merged project to GitHub.
 2. Open Streamlit Community Cloud.
 3. Create a new app from the GitHub repository.
-4. Select the branch and set the main file path to `streamlit_eight_puzzle_app.py`.
+4. Select the branch and set the main file path to `src/streamlit_eight_puzzle_app.py`.
 5. Deploy.
 
 Official documentation: https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app
@@ -70,5 +70,5 @@ Expected commands:
 
 ```bash
 python -m pip install --upgrade pip && python -m pip install -r requirements.txt
-python -m streamlit run streamlit_eight_puzzle_app.py --server.address=0.0.0.0 --server.port=$PORT
+python -m streamlit run src/streamlit_eight_puzzle_app.py --server.address=0.0.0.0 --server.port=$PORT
 ```

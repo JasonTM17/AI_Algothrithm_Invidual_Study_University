@@ -3521,7 +3521,7 @@ def coursework_grading_checklist(lang: str = "en") -> List[Dict[str, Any]]:
             {
                 "Item": "App chính",
                 "Status": "Sẵn sàng",
-                "Evidence": "Chạy `python -m streamlit run .\\streamlit_eight_puzzle_app.py`.",
+                "Evidence": "Chạy `python -m streamlit run .\\src\\streamlit_eight_puzzle_app.py`.",
                 "Why it matters": "Bạn nộp đúng codepath chính, không nhầm package phụ.",
             },
             {
@@ -3571,7 +3571,7 @@ def coursework_grading_checklist(lang: str = "en") -> List[Dict[str, Any]]:
         {
             "Item": "Canonical app",
             "Status": "Ready",
-            "Evidence": "Run `python -m streamlit run .\\streamlit_eight_puzzle_app.py`.",
+            "Evidence": "Run `python -m streamlit run .\\src\\streamlit_eight_puzzle_app.py`.",
             "Why it matters": "The lecturer opens the intended app path, not the supporting package.",
         },
         {

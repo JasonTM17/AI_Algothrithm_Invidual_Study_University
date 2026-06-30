@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 from html import escape
+from pathlib import Path
+import sys
 from typing import Any, Optional
 
 import streamlit as st
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 import eight_puzzle_search_app as puzzle
 from web.algorithm_demo_assets import show_algorithm_demo

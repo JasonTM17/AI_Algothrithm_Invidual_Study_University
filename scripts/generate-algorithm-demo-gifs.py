@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 
 import eight_puzzle_search_app as puzzle  # noqa: E402
 from web.algorithm_demo_assets import ASSET_DIR, algorithm_demo_path  # noqa: E402

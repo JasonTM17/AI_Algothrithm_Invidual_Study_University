@@ -26,7 +26,7 @@ jobs:
           python -m pip install -r 8_puzzle_ai\requirements.txt
 
       - name: Core self-test
-        run: python .\eight_puzzle_search_app.py --self-test
+        run: python .\src\eight_puzzle_search_app.py --self-test
 
       - name: Behavior regression tests
         run: python .\tests\test_search_behavior.py
@@ -35,4 +35,4 @@ jobs:
         run: python .\8_puzzle_ai\tests\test_puzzle.py
 
       - name: Python compile check
-        run: python -m py_compile .\eight_puzzle_search_app.py .\streamlit_eight_puzzle_app.py .\8_puzzle_ai\app.py
+        run: python -m py_compile .\src\eight_puzzle_search_app.py .\src\streamlit_eight_puzzle_app.py .\src\stage3_search_showcase_app.py .\8_puzzle_ai\app.py
